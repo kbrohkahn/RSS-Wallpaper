@@ -90,7 +90,7 @@ public class DownloadWallpaperService extends IntentService {
     private void downloadEntry(Entry entry) {
         try {
             String fileExtension = entry.imageLink.substring(entry.imageLink.lastIndexOf('.'));
-            String outputFilePath = getFilesDir() + entry.title + fileExtension;
+            String outputFilePath = getFilesDir().getPath() + "/" + entry.title + fileExtension;
 
             File oldFile = new File(outputFilePath);
             if (!oldFile.exists()) {
@@ -145,7 +145,7 @@ public class DownloadWallpaperService extends IntentService {
     public static class FeedParser {
         private String feedStartTag = "rss";
         private String channelStartTag = "channel";
-        private String entryTag = "entry";
+        private String entryTag = "item";
         private String entryTitleTag = "title";
         private String entryLinkTag = "link";
         private String entryPublishedTag = "pubDate";
@@ -196,9 +196,13 @@ public class DownloadWallpaperService extends IntentService {
 
                 String name = parser.getName();
                 if (name.equals(channelStartTag)) {
-                    parser.nextToken();
-                    
+                    parser.require(XmlPullParser.START_TAG, ns, channelStartTag);
+
                     while (parser.next() != XmlPullParser.END_TAG) {
+                        if (parser.getEventType() != XmlPullParser.START_TAG) {
+                            continue;
+                        }
+
                         name = parser.getName();
                         if (name.equals(entryTag)) {
                             entries.add(readEntry(parser));
@@ -217,7 +221,7 @@ public class DownloadWallpaperService extends IntentService {
          */
         private Entry readEntry(XmlPullParser parser)
                 throws XmlPullParserException, IOException, ParseException {
-            parser.require(XmlPullParser.START_TAG, ns, "entry");
+            parser.require(XmlPullParser.START_TAG, ns, entryTag);
             String title = null;
             String link = null;
             String imageLink = null;
@@ -268,12 +272,13 @@ public class DownloadWallpaperService extends IntentService {
          */
         private String readAlternateLink(XmlPullParser parser, String tag)
                 throws IOException, XmlPullParserException {
-            String link = null;
             parser.require(XmlPullParser.START_TAG, ns, tag);
-            String relType = parser.getAttributeValue(null, entryImageLinkAttribute);
-            if (relType.equals("alternate")) {
-                link = parser.getAttributeValue(null, "href");
-            }
+            String link = parser.getAttributeValue(null, entryImageLinkAttribute);
+
+//            if (relType.equals("alternate")) {
+//                link = parser.getAttributeValue(null, "href");
+//            }
+
             while (true) {
                 if (parser.nextTag() == XmlPullParser.END_TAG) break;
                 // Intentionally break; consumes any remaining sub-tags.

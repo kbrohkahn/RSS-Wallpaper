@@ -29,15 +29,15 @@ public class ChangeWallpaperService extends Service {
     private static final String NASA_RSS_LINK_A = "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss";
 //    private static final String NASA_RSS_LINK_B = "http://apod.nasa.gov/apod.rss";
 
-    private Timer timer;
     private List<String> filesToShuffle;
     private int currentFileIndex = -1;
 
-    private int numberToShuffle;
+    private int numberToShuffle = 7;
 
     private static final int changeWallpaperInterval = 60 * 60 * 1000;
     private static final int downloadWallpaperInterval = 24 * 60 * 60 * 1000;
     private Random random = new Random();
+    private Timer timer = new Timer();;
 
     public ChangeWallpaperService() {
     }
@@ -78,8 +78,6 @@ public class ChangeWallpaperService extends Service {
 
         // start download
         startDownloadIntent();
-
-        timer = new Timer();
 
         // download wallpaper daily at 0300
         Calendar downloadTime = Calendar.getInstance();
