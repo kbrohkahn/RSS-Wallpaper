@@ -31,6 +31,7 @@ import java.util.List;
  * helper methods.
  */
 public class DownloadWallpaperService extends IntentService {
+    private static final String TAG = "DownloadWallpaperService";
 
     private static final String ACTION_DOWNLOAD_RSS = "com.brohkahn.nasawallpaper.action.DOWNLOAD_RSS";
 
@@ -73,10 +74,10 @@ public class DownloadWallpaperService extends IntentService {
 
             // parse xml
             FeedParser feedParser = new FeedParser();
-            List<Entry> entries = feedParser.parse(input);
+            List<FeedItem> entries = feedParser.parse(input);
 
-            for (Entry entry : entries) {
-                downloadEntry(entry);
+            for (FeedItem entry : entries) {
+                downloadFeedItem(entry);
             }
             input.close();
 
@@ -87,7 +88,7 @@ public class DownloadWallpaperService extends IntentService {
 
     }
 
-    private void downloadEntry(Entry entry) {
+    private void downloadFeedItem(FeedItem entry) {
         try {
             String fileExtension = entry.imageLink.substring(entry.imageLink.lastIndexOf('.'));
             String outputFilePath = getFilesDir().getPath() + "/" + entry.title + fileExtension;
@@ -128,19 +129,6 @@ public class DownloadWallpaperService extends IntentService {
         LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
     }
 
-    public static class Entry {
-        private final String title;
-        private final String link;
-        private final String imageLink;
-        private final long published;
-
-        Entry(String title, String link, String imageLink, long published) {
-            this.title = title;
-            this.link = link;
-            this.imageLink = imageLink;
-            this.published = published;
-        }
-    }
 
     public static class FeedParser {
         private String feedStartTag = "rss";
@@ -157,14 +145,14 @@ public class DownloadWallpaperService extends IntentService {
         private static final String ns = null;
 
         /**
-         * Parse an Atom feed, returning a collection of Entry objects.
+         * Parse an Atom feed, returning a collection of FeedItem objects.
          *
          * @param in Atom feed, as a stream.
-         * @return List of {@link com.brohkahn.nasawallpaper.DownloadWallpaperService.Entry} objects.
+         * @return List of {@link com.brohkahn.nasawallpaper.FeedItem} objects.
          * @throws org.xmlpull.v1.XmlPullParserException on error parsing feed.
          * @throws java.io.IOException                   on I/O error.
          */
-        public List<Entry> parse(InputStream in)
+        private List<FeedItem> parse(InputStream in)
                 throws XmlPullParserException, IOException, ParseException {
             try {
                 XmlPullParser parser = Xml.newPullParser();
@@ -181,12 +169,12 @@ public class DownloadWallpaperService extends IntentService {
          * Decode a feed attached to an XmlPullParser.
          *
          * @param parser Incoming XMl
-         * @return List of {@link com.brohkahn.nasawallpaper.DownloadWallpaperService.Entry} objects.
+         * @return List of {@link com.brohkahn.nasawallpaper.FeedItem} objects.
          * @throws org.xmlpull.v1.XmlPullParserException on error parsing feed.
          * @throws java.io.IOException                   on I/O error.
          */
-        private List<Entry> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException, ParseException {
-            List<Entry> entries = new ArrayList<>();
+        private List<FeedItem> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException, ParseException {
+            List<FeedItem> entries = new ArrayList<>();
 
             parser.require(XmlPullParser.START_TAG, ns, feedStartTag);
             while (parser.next() != XmlPullParser.END_TAG) {
@@ -205,7 +193,7 @@ public class DownloadWallpaperService extends IntentService {
 
                         name = parser.getName();
                         if (name.equals(entryTag)) {
-                            entries.add(readEntry(parser));
+                            entries.add(readFeedItem(parser));
                         } else {
                             skip(parser);
                         }
@@ -219,7 +207,7 @@ public class DownloadWallpaperService extends IntentService {
          * Parses the contents of an entry. If it encounters a title, summary, or link tag, hands them
          * off to their respective "read" methods for processing. Otherwise, skips the tag.
          */
-        private Entry readEntry(XmlPullParser parser)
+        private FeedItem readFeedItem(XmlPullParser parser)
                 throws XmlPullParserException, IOException, ParseException {
             parser.require(XmlPullParser.START_TAG, ns, entryTag);
             String title = null;
@@ -244,14 +232,13 @@ public class DownloadWallpaperService extends IntentService {
                     skip(parser);
                 }
             }
-            return new Entry(title, link, imageLink, publishedOn);
+            return new FeedItem(title, link, imageLink, publishedOn);
         }
 
 
         /**
          * Reads the body of a basic XML tag, which is guaranteed not to contain any nested elements.
-         * <p>
-         * <p>You probably want to call readTag().
+         * You probably want to call readTag().
          *
          * @param parser Current parser object
          * @param tag    XML element tag name to parse

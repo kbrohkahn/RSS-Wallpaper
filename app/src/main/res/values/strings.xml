@@ -4,4 +4,8 @@
     <string name="permission_request_message">This app requires access to the internet to download RSS feeds and new wallpapers, please continue to allow access.</string>
     <string name="permission_request_positive_button">Ok</string>
     <string name="permission_request_negative_button">Uninstall</string>
+
+    <string name="key_number_to_shuffle">numberToShuffle</string>
+    <string name="key_set_home_screen">setHomeScreen</string>
+    <string name="key_set_lock_screen">setLockScreen</string>
 </resources>

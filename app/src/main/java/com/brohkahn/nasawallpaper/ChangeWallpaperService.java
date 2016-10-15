@@ -7,12 +7,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+
+import com.brohkahn.loggerlibrary.LogDBHelper;
+import com.brohkahn.loggerlibrary.LogEntry;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,13 +33,17 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class ChangeWallpaperService extends Service {
+    private static final String TAG = "ChangeWallpaperService";
+
     private static final String NASA_RSS_LINK_A = "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss";
 //    private static final String NASA_RSS_LINK_B = "http://apod.nasa.gov/apod.rss";
 
     private List<String> filesToShuffle;
     private int currentFileIndex = -1;
 
-    private int numberToShuffle = 7;
+    private int numberToShuffle;
+    private boolean setHomeWallpaper;
+    private boolean setLockWallpaper;
 
     private static final int changeWallpaperInterval = 60 * 60 * 1000;
     private static final int downloadWallpaperInterval = 24 * 60 * 60 * 1000;
@@ -42,10 +53,8 @@ public class ChangeWallpaperService extends Service {
     public ChangeWallpaperService() {
     }
 
-
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
@@ -56,6 +65,13 @@ public class ChangeWallpaperService extends Service {
             startActivity(new Intent(this, MainActivity.class));
             return START_NOT_STICKY;
         }
+
+        final SharedPreferences preferences=PreferenceManager.getDefaultSharedPreferences(this);
+        final Resources resources = getResources();
+
+        numberToShuffle = preferences.getInt(resources.getString(R.string.key_number_to_shuffle), 7);
+        setHomeWallpaper = preferences.getBoolean(resources.getString(R.string.key_set_home_screen), true);
+        setLockWallpaper = preferences.getBoolean(resources.getString(R.string.key_set_home_screen), false);
 
         // instantiate file list
         updateFilesList();
@@ -115,7 +131,14 @@ public class ChangeWallpaperService extends Service {
         Bitmap newWallpaper = BitmapFactory.decodeFile(filesToShuffle.get(newIndex));
 
         try {
-            myWallpaperManager.setBitmap(newWallpaper);
+            if (setHomeWallpaper) {
+                myWallpaperManager.setBitmap(newWallpaper);
+            }
+
+            if (setLockWallpaper && Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
+                myWallpaperManager.setBitmap(newWallpaper, null, true, WallpaperManager.FLAG_LOCK);
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
             setNewWallpaper();
