@@ -8,13 +8,17 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 public class LogDBHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
     private static final String TAG = "LogDBHelper";
 
+    public static String DB_NAME = "";
+    
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + LogDBEntry.TABLE_NAME + " (" +
                     LogDBEntry._ID + " INTEGER PRIMARY KEY," +
@@ -28,8 +32,8 @@ public class LogDBHelper extends SQLiteOpenHelper {
             "DROP TABLE IF EXISTS " + LogDBEntry.TABLE_NAME;
 
 
-    private LogDBHelper(Context context, String databaseName) {
-        super(context, databaseName, null, DATABASE_VERSION);
+    private LogDBHelper(Context context, String DB_NAME) {
+        super(context, DB_NAME, null, DATABASE_VERSION);
     }
 
     public void onCreate(SQLiteDatabase db) {
@@ -87,29 +91,69 @@ public class LogDBHelper extends SQLiteOpenHelper {
         return entry;
     }
 
-    public static void saveLogEntry(Context context, String databaseName, String message, String tag, String function, LogEntry.LogLevel type) {
+    private List<LogEntry> getAllEntries() {
+        SQLiteDatabase db = getReadableDatabase();
+
+        String query = String.format(Locale.US, "SELECT * FROM %s", LogDBEntry.TABLE_NAME);
+
+        Cursor cursor = db.rawQuery(query, null);
+
+        List<LogEntry> entries = new ArrayList<>();
+        boolean entriesInCursor = cursor.moveToFirst();
+        while (entriesInCursor) {
+            int id = cursor.getInt(cursor.getColumnIndexOrThrow(LogDBEntry._ID));
+            String message = cursor.getString(cursor.getColumnIndexOrThrow(LogDBEntry.COLUMN_MESSAGE));
+            String logClass = cursor.getString(cursor.getColumnIndexOrThrow(LogDBEntry.COLUMN_CLASS));
+            String logFunction = cursor.getString(cursor.getColumnIndexOrThrow(LogDBEntry.COLUMN_FUNCTION));
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(cursor.getLong(cursor.getColumnIndexOrThrow(LogDBEntry.COLUMN_TIME)));
+            int levelIndex = cursor.getInt(cursor.getColumnIndexOrThrow(LogDBEntry.COLUMN_LEVEL));
+
+            entries.add(new LogEntry(id, message, logClass, logFunction, calendar, levelIndex));
+
+            entriesInCursor = cursor.moveToNext();
+        }
+
+        cursor.close();
+        return entries;
+
+    }
+
+    public static void saveLogEntry(Context context, String message, String tag, String function, LogEntry.LogLevel type) {
         if (BuildConfig.DEBUG) {
             Log.d(tag, String.format(Locale.US, "%s at %s: %s", type.toString(), function, message));
         }
 
-        LogDBHelper helper = new LogDBHelper(context, databaseName);
+        LogDBHelper helper = new LogDBHelper(context, DB_NAME);
         helper.saveLogEntry(message, tag, function, type);
         helper.close();
     }
 
-    public static LogEntry getLogEntry(Context context, String databaseName, int id) {
-        LogDBHelper helper = new LogDBHelper(context, databaseName);
+    public static LogEntry getLogEntry(Context context, int id) {
+        LogDBHelper helper = new LogDBHelper(context, DB_NAME);
         LogEntry entry = helper.getLogEntry(id);
         helper.close();
         return entry;
     }
 
-    private static class LogDBEntry implements BaseColumns {
-        private static final String TABLE_NAME = "log_entries";
-        private static final String COLUMN_MESSAGE = "message";
-        private static final String COLUMN_CLASS = "class";
-        private static final String COLUMN_FUNCTION = "function";
-        private static final String COLUMN_TIME = "creation_time";
-        private static final String COLUMN_LEVEL = "level";
+    public static Cursor getAllEntries(Context context) {
+        LogDBHelper helper = new LogDBHelper(context, DB_NAME);
+
+        SQLiteDatabase db = helper.getReadableDatabase();
+
+        String query = String.format(Locale.US, "SELECT * FROM %s", LogDBEntry.TABLE_NAME);
+        Cursor cursor = db.rawQuery(query, null);
+
+        helper.close();
+        return cursor;
+    }
+
+    public static class LogDBEntry implements BaseColumns {
+        public static final String TABLE_NAME = "log_entries";
+        public static final String COLUMN_MESSAGE = "message";
+        public static final String COLUMN_CLASS = "class";
+        public static final String COLUMN_FUNCTION = "function";
+        public static final String COLUMN_TIME = "creation_time";
+        public static final String COLUMN_LEVEL = "level";
     }
 }

@@ -1,11 +1,19 @@
 <resources>
     <string name="app_name">NASA Wallpaper</string>
+    <string name="developer_email">kevin@broh-kahn.com</string>
     <string name="permission_request_title">Internet Access Required</string>
     <string name="permission_request_message">This app requires access to the internet to download RSS feeds and new wallpapers, please continue to allow access.</string>
-    <string name="permission_request_positive_button">Ok</string>
+    <string name="permission_request_positive_button">OK</string>
     <string name="permission_request_negative_button">Uninstall</string>
+
+    <string name="action_view_logs">View logs</string>
+    <string name="activity_logs">Logs</string>
+    <string name="activity_about">About</string>
+    <!--<string name="activity_help">Help</string>-->
+    <string name="activity_main">NASA Wallpaper</string>
 
     <string name="key_number_to_shuffle">numberToShuffle</string>
     <string name="key_set_home_screen">setHomeScreen</string>
     <string name="key_set_lock_screen">setLockScreen</string>
+
 </resources>
