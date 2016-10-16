@@ -11,6 +11,7 @@ public class LogViewEntry extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_log_view_entry);
 
         int ID = getIntent().getIntExtra(EXTRA_KEY_LOG_ENTRY_ID, -1);

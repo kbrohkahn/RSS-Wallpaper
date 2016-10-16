@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import com.brohkahn.loggerlibrary.ErrorHandler;
 import com.brohkahn.loggerlibrary.LogViewList;
 
 public class MainActivity extends AppCompatActivity {
@@ -23,6 +24,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+       Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, true));
+
+        int j = 1 / 0;
+
         setContentView(R.layout.activity_main);
 
         int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
@@ -47,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 .setNegativeButton(R.string.permission_request_negative_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        Uri packageUri = Uri.parse("package:" +getApplicationContext().getPackageName());
+                        Uri packageUri = Uri.parse("package:" + getApplicationContext().getPackageName());
                         Intent uninstallIntent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE, packageUri);
                         startActivity(uninstallIntent);
                     }
@@ -61,7 +67,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String permissions[], @NonNull int[] grantResults) {
+                                           @NonNull String permissions[],
+                                           @NonNull int[] grantResults) {
         switch (requestCode) {
             case REQUEST_INTERNET_PERMISSION: {
                 // If request is cancelled, the result arrays are empty.

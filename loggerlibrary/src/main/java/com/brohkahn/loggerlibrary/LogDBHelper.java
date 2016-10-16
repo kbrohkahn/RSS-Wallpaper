@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.Locale;
 
 public class LogDBHelper extends SQLiteOpenHelper {
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
     private static final String TAG = "LogDBHelper";
 
-    public static String DB_NAME = "";
+    private static final String DB_NAME = "LOG_ENTRIES";
 
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + LogDBEntry.TABLE_NAME + " (" +
@@ -33,7 +33,7 @@ public class LogDBHelper extends SQLiteOpenHelper {
 //            "ALTER TABLE " + LogDBEntry.TABLE_NAME +
 //                    " ADD COLUMN " + LogDBEntry.COLUMN_STACK_TRACE + " TEXT;";
 
-    public LogDBHelper(Context context, String DB_NAME) {
+    public LogDBHelper(Context context) {
         super(context, DB_NAME, null, DATABASE_VERSION);
     }
 
@@ -47,12 +47,6 @@ public class LogDBHelper extends SQLiteOpenHelper {
 //        if (oldVersion < 2) {
 //            db.execSQL(SQL_ALTER_TABLE_V2);
 //        }
-
-    }
-
-    @Override
-    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        onUpgrade(db, oldVersion, newVersion);
     }
 
     private long saveLogEntry(String message, String stackTrace, String logClass, String logFunction, LogEntry.LogLevel level) {
@@ -131,13 +125,13 @@ public class LogDBHelper extends SQLiteOpenHelper {
             Log.d(tag, String.format(Locale.US, "%s at %s: %s", type.toString(), function, message));
         }
 
-        LogDBHelper helper = new LogDBHelper(context, DB_NAME);
+        LogDBHelper helper = new LogDBHelper(context);
         helper.saveLogEntry(message, stackTrace, tag, function, type);
         helper.close();
     }
 
     public static LogEntry getLogEntry(Context context, int id) {
-        LogDBHelper helper = new LogDBHelper(context, DB_NAME);
+        LogDBHelper helper = new LogDBHelper(context);
         LogEntry entry = helper.getLogEntry(id);
         helper.close();
         return entry;

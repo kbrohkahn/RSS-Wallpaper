@@ -18,6 +18,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.brohkahn.loggerlibrary.ErrorHandler;
 import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
@@ -39,7 +40,7 @@ public class ChangeWallpaperService extends Service {
 //    private static final String NASA_RSS_LINK_B = "http://apod.nasa.gov/apod.rss";
 
     private List<String> filesToShuffle;
-    private int currentFileIndex = -1;
+    private int currentFileIndex = 0;
 
     private int numberToShuffle;
     private boolean setHomeWallpaper;
@@ -48,7 +49,8 @@ public class ChangeWallpaperService extends Service {
     private static final int changeWallpaperInterval = 60 * 60 * 1000;
     private static final int downloadWallpaperInterval = 24 * 60 * 60 * 1000;
     private Random random = new Random();
-    private Timer timer = new Timer();;
+    private Timer timer;
+    ;
 
     public ChangeWallpaperService() {
     }
@@ -60,13 +62,20 @@ public class ChangeWallpaperService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, false));
+
+        if (timer != null) {
+            timer.cancel();
+        }
+        timer = new Timer();
+
         int internetPermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
         if (internetPermissionCheck != PackageManager.PERMISSION_GRANTED) {
             startActivity(new Intent(this, MainActivity.class));
             return START_NOT_STICKY;
         }
 
-        final SharedPreferences preferences=PreferenceManager.getDefaultSharedPreferences(this);
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         final Resources resources = getResources();
 
         numberToShuffle = preferences.getInt(resources.getString(R.string.key_number_to_shuffle), 7);
@@ -102,11 +111,11 @@ public class ChangeWallpaperService extends Service {
         downloadTime.set(Calendar.MINUTE, 0);
         downloadTime.set(Calendar.SECOND, 0);
         downloadTime.set(Calendar.MILLISECOND, 0);
-        timer.cancel();
         timer.scheduleAtFixedRate(downloadRSSTask, downloadTime.getTime(), downloadWallpaperInterval);
 
         return super.onStartCommand(intent, flags, startId);
     }
+
 
     public void startTimerAndRunNow() {
         timer.scheduleAtFixedRate(changeWallpaperTask, 0, changeWallpaperInterval);
@@ -121,6 +130,8 @@ public class ChangeWallpaperService extends Service {
     };
 
     private void setNewWallpaper() {
+        logEvent("Setting new wallpaper.", "setNewWallpaper()");
+
         int newIndex = currentFileIndex;
         int fileCount = filesToShuffle.size();
         while (fileCount > 1 && newIndex == currentFileIndex) {
@@ -132,6 +143,8 @@ public class ChangeWallpaperService extends Service {
         Bitmap newWallpaper = BitmapFactory.decodeFile(filesToShuffle.get(newIndex));
 
         try {
+            logEvent(String.format("Setting wallpaper to %s.", filesToShuffle.get(newIndex)), "setNewWallpaper()");
+
             if (setHomeWallpaper) {
                 myWallpaperManager.setBitmap(newWallpaper);
             }
@@ -142,8 +155,16 @@ public class ChangeWallpaperService extends Service {
 
         } catch (IOException e) {
             e.printStackTrace();
-            setNewWallpaper();
+            logException(e, "setNewWallpaper()");
         }
+    }
+
+    private void logEvent(String message, String function) {
+        LogDBHelper.saveLogEntry(this, message, null, TAG, function, LogEntry.LogLevel.Trace);
+    }
+
+    private void logException(Exception e, String function) {
+        LogDBHelper.saveLogEntry(this, e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
     }
 
     private void updateFilesList() {

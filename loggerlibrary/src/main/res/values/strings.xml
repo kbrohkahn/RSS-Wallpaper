@@ -14,4 +14,7 @@
     <string name="function">Function</string>
     <string name="stack_trace">Stack Trace</string>
 
+    <string name="app_name">Logger Library</string>
+    <string name="developer_email">kevin@broh-kahn.com</string>
+
 </resources>

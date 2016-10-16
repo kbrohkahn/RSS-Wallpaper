@@ -25,7 +25,7 @@ public class LogViewList extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_view_list);
 
-        LogDBHelper helper = new LogDBHelper(this, LogDBHelper.DB_NAME);
+        LogDBHelper helper = new LogDBHelper(this);
 
         SQLiteDatabase db = helper.getReadableDatabase();
 
