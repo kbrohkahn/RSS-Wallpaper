@@ -102,6 +102,7 @@ public class ChangeWallpaperService extends Service {
         downloadTime.set(Calendar.MINUTE, 0);
         downloadTime.set(Calendar.SECOND, 0);
         downloadTime.set(Calendar.MILLISECOND, 0);
+        timer.cancel();
         timer.scheduleAtFixedRate(downloadRSSTask, downloadTime.getTime(), downloadWallpaperInterval);
 
         return super.onStartCommand(intent, flags, startId);

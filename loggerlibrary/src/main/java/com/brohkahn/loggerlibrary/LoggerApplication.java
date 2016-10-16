@@ -25,17 +25,19 @@ public class LoggerApplication extends Application {
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread thread, Throwable e) {
-                handleUncaughtException(thread, e);
+                handleUncaughtException(e);
             }
         });
 
         super.onCreate();
     }
 
-    public void handleUncaughtException(Thread thread, Throwable e) {
+    public void handleUncaughtException(Throwable e) {
         final String errorString = getStackTraceString(e);
+        e.printStackTrace();
 
-        LogDBHelper.saveLogEntry(this, errorString, "N/A", "N/A", LogEntry.LogLevel.Error);
+        LogDBHelper.saveLogEntry(this, e.getLocalizedMessage(), errorString, "N/A", "N/A", LogEntry.LogLevel.Error);
+        System.exit(1);
 
         final Resources resources = getResources();
         String title = resources.getString(R.string.crash_dialog_title);

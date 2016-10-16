@@ -1,12 +1,17 @@
 <resources>
-    <string name="crash_dialog_title">Error: You've found a bug</string>
-    <string name="crash_dialog_message">Congratulations, you've found a bug with %1$s! We're sorry for the inconvenience,
-    of course this shouldn't be happening with our app. Please send a bug report to %2$s to help us solve the issue!</string>
+    <string name="crash_dialog_title">Error: You\'ve found a bug</string>
+    <string name="crash_dialog_message">Congratulations, you\'ve found a bug with %1$s! We\'re sorry for the inconvenience,
+    of course this shouldn\'t be happening with our app. Please send a bug report to %2$s to help us solve the issue!</string>
     <string name="crash_dialog_positive_button">Submit Report</string>
     <string name="crash_dialog_negative_button">Cancel</string>
 
     <string name="crash_email_subject">%1$s Crash Report</string>
     <string name="crash_email_body">Enter additional message below (what you were doing when the app crashed):\n</string>
 
+    <string name="time">Time</string>
+    <string name="message">Message</string>
+    <string name="log_class">Class</string>
+    <string name="function">Function</string>
+    <string name="stack_trace">Stack Trace</string>
 
 </resources>

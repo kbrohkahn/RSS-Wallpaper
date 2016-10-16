@@ -15,7 +15,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
-import com.brohkahn.loggerlibrary.LogViewer;
+import com.brohkahn.loggerlibrary.LogViewList;
 
 public class MainActivity extends AppCompatActivity {
     private final int REQUEST_INTERNET_PERMISSION = 0;
@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main, menu);
         return true;
@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.action_settings:
-                startActivity(new Intent(this, LogViewer.class));
+                startActivity(new Intent(this, LogViewList.class));
                 return true;
             case R.id.action_about:
                 startActivity(new Intent(this, About.class));
