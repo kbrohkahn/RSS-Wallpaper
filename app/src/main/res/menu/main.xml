@@ -3,12 +3,21 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_next_item"
+        android:icon="@drawable/ic_fast_forward_white_24dp"
+        android:title="@string/action_view_logs"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_settings"
         android:title="@string/action_view_logs"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_about"
         android:title="@string/activity_about"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_restart"
+        android:title="@string/restart_service"
         app:showAsAction="never" />
 
 </menu>

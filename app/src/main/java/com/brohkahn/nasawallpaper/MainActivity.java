@@ -1,10 +1,14 @@
 package com.brohkahn.nasawallpaper;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -13,20 +17,24 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.brohkahn.loggerlibrary.ErrorHandler;
+import com.brohkahn.loggerlibrary.LogDBHelper;
+import com.brohkahn.loggerlibrary.LogEntry;
 import com.brohkahn.loggerlibrary.LogViewList;
 
 public class MainActivity extends AppCompatActivity {
-    private final int REQUEST_INTERNET_PERMISSION = 0;
+    private static final String TAG = "MainActivity";
+
+    private final int REQUEST_PERMISSIONS = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,14 +44,22 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            showPermissionDialog();
-        }
+        int internetPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
+        int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
+        if (internetPermission != PackageManager.PERMISSION_GRANTED || wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
+            logEvent("Missing permissions.", "onCreate(Bundle savedInstanceState)", LogEntry.LogLevel.Message);
 
-        final String keyCurrentItem = getResources().getString(R.string.key_current_item);
+            showPermissionDialog();
+        } else {
+            updateCurrentItem();
+        }
+    }
+
+    public void updateCurrentItem() {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-        int currentItemId = settings.getInt(keyCurrentItem, 0);
+        final Resources resources = getResources();
+        int currentItemId = settings.getInt(resources.getString(R.string.key_current_item), 0);
+        String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
 
         FeedItem currentItem = FeedDBHelper.getFeedItem(this, currentItemId);
         if (currentItem != null) {
@@ -51,22 +67,31 @@ public class MainActivity extends AppCompatActivity {
             ((TextView) findViewById(R.id.current_item_published)).setText(currentItem.published.toString());
             ((TextView) findViewById(R.id.current_item_link)).setText(currentItem.link);
 
-            Bitmap image = BitmapFactory.decodeFile(getFilesDir().getPath() + "/" + currentItem.imageName);
+            Bitmap image = BitmapFactory.decodeFile(imageDirectory + currentItem.imageName);
 
             ((ImageView) findViewById(R.id.current_item_image)).setImageBitmap(image);
         }
-
     }
 
-    public void restartServiceButtonClick(View view) {
-        restartService();
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter mStatusIntentFilter = new IntentFilter(Constants.WALLPAPER_UPDATED);
+        LocalBroadcastManager.getInstance(this).registerReceiver(wallpaperUpdated, mStatusIntentFilter);
     }
 
-    public void restartService() {
-        Intent serviceIntent = new Intent(this, ChangeWallpaperService.class);
-        stopService(serviceIntent);
-        startService(serviceIntent);
+    @Override
+    protected void onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(wallpaperUpdated);
+        super.onPause();
     }
+
+    private BroadcastReceiver wallpaperUpdated = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateCurrentItem();
+        }
+    };
 
     public void showPermissionDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
@@ -90,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestInternetPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, REQUEST_INTERNET_PERMISSION);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET, Manifest.permission.SET_WALLPAPER}, REQUEST_PERMISSIONS);
     }
 
     @Override
@@ -98,16 +123,27 @@ public class MainActivity extends AppCompatActivity {
                                            @NonNull String permissions[],
                                            @NonNull int[] grantResults) {
         switch (requestCode) {
-            case REQUEST_INTERNET_PERMISSION: {
+            case REQUEST_PERMISSIONS: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    logEvent("All permissions received :)",
+                            "onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults)",
+                            LogEntry.LogLevel.Message);
+
                     restartService();
                 } else {
                     showPermissionDialog();
                 }
             }
         }
+    }
+
+    public void restartService() {
+        logEvent("Restarting service.", "restartService()", LogEntry.LogLevel.Message);
+        Intent serviceIntent = new Intent(this, ChangeWallpaperService.class);
+        stopService(serviceIntent);
+        startService(serviceIntent);
     }
 
     @Override
@@ -127,8 +163,21 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_about:
                 startActivity(new Intent(this, About.class));
                 return true;
+            case R.id.action_restart:
+                restartService();
+                return true;
+            case R.id.action_next_item:
+                logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
+                Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
+                LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    private void logEvent(String message, String function, LogEntry.LogLevel level) {
+        LogDBHelper.saveLogEntry(this, message, null, TAG, function, level);
+    }
+
 }

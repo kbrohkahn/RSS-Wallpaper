@@ -9,6 +9,10 @@ public class FeedItem {
     public String imageName;
     public Date published;
 
+    public String imageLink;
+    public boolean downloaded;
+    public boolean enabled;
+
     FeedItem(int id, String title, String link, String imageName, Date published) {
         this.id = id;
         this.title = title;

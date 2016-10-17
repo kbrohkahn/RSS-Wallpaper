@@ -28,7 +28,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
                     FeedDBEntry.COLUMN_PUBLISHED + " LONG, " +
                     FeedDBEntry.COLUMN_DOWNLOADED + " INTEGER, " +
                     FeedDBEntry.COLUMN_IMAGE_NAME + " TEXT UNIQUE, " +
-                    FeedDBEntry.COLUMN_IGNORE + " INTEGER)";
+                    FeedDBEntry.COLUMN_ENABLED + " INTEGER)";
 
 //    private static final String SQL_ALTER_TABLE_V2 =
 //            "ALTER TABLE " + FeedDBEntry.TABLE_NAME +
@@ -57,16 +57,21 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 
         List<FeedItem> items = new ArrayList<>();
         for (int i = 0; i < cursor.getCount(); i++) {
-            cursor.move(i);
+            cursor.moveToPosition(i);
 
             int id = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry._ID));
             String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_TITLE));
             String link = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_LINK));
-            String imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_LINK));
+            String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_NAME));
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(cursor.getLong(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_PUBLISHED)));
 
-            items.add(new FeedItem(id, title, link, imageLink, calendar.getTime()));
+            FeedItem item = new FeedItem(id, title, link, imageName, calendar.getTime());
+            item.downloaded = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_DOWNLOADED)) == 1;
+            item.enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_ENABLED)) == 1;
+            item.imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_LINK));
+
+            items.add(item);
         }
 
         cursor.close();
@@ -81,48 +86,48 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         values.put(FeedDBEntry.COLUMN_LINK, link);
         values.put(FeedDBEntry.COLUMN_IMAGE_LINK, imageLink);
         values.put(FeedDBEntry.COLUMN_PUBLISHED, published.getTime());
+        values.put(FeedDBEntry.COLUMN_ENABLED, 1);
+        values.put(FeedDBEntry.COLUMN_DOWNLOADED, 0);
 
         return db.insert(FeedDBEntry.TABLE_NAME, null, values);
     }
 
-
     private boolean updateImageDownload(int id, String imageName) {
-        SQLiteDatabase db = getReadableDatabase();
-
-        String query = String.format(Locale.US, "UPDATE %s SET %s=1, %s=%s WHERE %s=%d",
+        String query = String.format(Locale.US, "UPDATE %s SET %s=1, %s='%s' WHERE %s=%d",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_DOWNLOADED,
                 FeedDBEntry.COLUMN_IMAGE_NAME,
-                imageName,
+                imageName.replace("'", "''"),
                 FeedDBEntry._ID,
                 id);
 
-        Cursor cursor = db.rawQuery(query, null);
-        boolean success = cursor.moveToFirst() && cursor.getInt(0) == 1;
-        cursor.close();
-        return success;
+        return runUpdateQuery(query);
     }
 
-    private boolean updateIgnoredImage(int id, boolean ignore) {
-        SQLiteDatabase db = getReadableDatabase();
-
+    private boolean updateIgnoredImage(int id, boolean enabled) {
         String query = String.format(Locale.US, "UPDATE %s SET %s=%d, WHERE %s=%d",
                 FeedDBEntry.TABLE_NAME,
-                FeedDBEntry.COLUMN_IGNORE,
-                ignore ? 1 : 0,
+                FeedDBEntry.COLUMN_ENABLED,
+                enabled ? 1 : 0,
                 FeedDBEntry._ID,
                 id);
 
+        return runUpdateQuery(query);
+    }
+
+    private boolean runUpdateQuery(String query) {
+        SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(query, null);
         boolean success = cursor.moveToFirst() && cursor.getInt(0) == 1;
         cursor.close();
         return success;
     }
 
-    public static void saveFeedItem(Context context, String title, String link, String imageLink, Date published) {
+    public static long saveFeedItem(Context context, String title, String link, String imageLink, Date published) {
         FeedDBHelper helper = new FeedDBHelper(context);
-        helper.saveFeedEntry(title, link, imageLink, published);
+        long resultId = helper.saveFeedEntry(title, link, imageLink, published);
         helper.close();
+        return resultId;
     }
 
     public static FeedItem getFeedItem(Context context, int id) {
@@ -146,19 +151,26 @@ public class FeedDBHelper extends SQLiteOpenHelper {
     }
 
     public static List<FeedItem> getRecentItems(Context context, int count) {
-        String query = String.format(Locale.US, "SELECT TOP %d * FROM %s WHERE %s=1 ORDER BY %s DESC",
-                count,
+        String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=1 ORDER BY %s DESC LIMIT %d",
                 FeedDBEntry.TABLE_NAME,
-                FeedDBEntry.COLUMN_IGNORE,
+                FeedDBEntry.COLUMN_ENABLED,
+                FeedDBEntry.COLUMN_PUBLISHED,
+                count);
+        return getItemsFromQuery(context, query);
+    }
+
+    public static List<FeedItem> getAllItems(Context context) {
+        String query = String.format(Locale.US, "SELECT * FROM %s ORDER BY %s DESC",
+                FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_PUBLISHED);
         return getItemsFromQuery(context, query);
     }
 
-    public static boolean feedItemExists(Context context, String imageLink) {
+    public static boolean feedItemExists(Context context, String imageName) {
         String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s='%s'",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_IMAGE_LINK,
-                imageLink);
+                imageName);
         return getItemsFromQuery(context, query).size() > 0;
     }
 
@@ -176,9 +188,9 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         return success;
     }
 
-    public static boolean updateItemImageIgnore(Context context, int id, boolean ignore) {
+    public static boolean updateItemImageIgnore(Context context, int id, boolean enabled) {
         FeedDBHelper helper = new FeedDBHelper(context);
-        boolean success = helper.updateIgnoredImage(id, ignore);
+        boolean success = helper.updateIgnoredImage(id, enabled);
         helper.close();
         return success;
     }
@@ -191,7 +203,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         private static final String COLUMN_PUBLISHED = "published";
         private static final String COLUMN_DOWNLOADED = "downloaded";
         private static final String COLUMN_IMAGE_NAME = "image_name";
-        private static final String COLUMN_IGNORE = "ignore";
+        private static final String COLUMN_ENABLED = "enabled";
     }
 }
 

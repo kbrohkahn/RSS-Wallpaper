@@ -12,11 +12,15 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 
 import com.brohkahn.loggerlibrary.ErrorHandler;
 import com.brohkahn.loggerlibrary.LogDBHelper;
@@ -39,6 +43,7 @@ public class ChangeWallpaperService extends Service {
     private int numberToShuffle;
     private boolean setHomeWallpaper;
     private boolean setLockWallpaper;
+    private String imageDirectory;
 
     private static final int changeWallpaperInterval = 60 * 60 * 1000;
     private static final int downloadWallpaperInterval = 24 * 60 * 60 * 1000;
@@ -57,8 +62,9 @@ public class ChangeWallpaperService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, false));
 
-        int internetPermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
-        if (internetPermissionCheck != PackageManager.PERMISSION_GRANTED) {
+        int internetPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
+        int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
+        if (internetPermission != PackageManager.PERMISSION_GRANTED || wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
             startActivity(new Intent(this, MainActivity.class));
             return START_NOT_STICKY;
         }
@@ -69,17 +75,12 @@ public class ChangeWallpaperService extends Service {
         numberToShuffle = preferences.getInt(resources.getString(R.string.key_number_to_shuffle), 7);
         setHomeWallpaper = preferences.getBoolean(resources.getString(R.string.key_set_home_screen), true);
         setLockWallpaper = preferences.getBoolean(resources.getString(R.string.key_set_home_screen), false);
+        imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
 
-        // setup receiver
+        // setup changeWallpaperNow
         // The filter's action is BROADCAST_ACTION
-        IntentFilter mStatusIntentFilter = new IntentFilter(Constants.DOWNLOAD_COMPLETE_BROADCAST);
-
-        // Adds a data filter for the HTTP scheme
-        mStatusIntentFilter.addDataScheme("http");
-
-        // Registers the DownloadStateReceiver and its intent filters
-        ResponseReceiver mDownloadStateReceiver = new ResponseReceiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mDownloadStateReceiver, mStatusIntentFilter);
+        IntentFilter mStatusIntentFilter = new IntentFilter(Constants.SET_WALLPAPER_ACTION);
+        LocalBroadcastManager.getInstance(this).registerReceiver(changeWallpaperNow, mStatusIntentFilter);
 
         // start download immediately
         startDownloadIntent();
@@ -94,14 +95,9 @@ public class ChangeWallpaperService extends Service {
 
         timer = new Timer();
         timer.scheduleAtFixedRate(downloadRSSTask, downloadTime.getTime(), downloadWallpaperInterval);
+        timer.scheduleAtFixedRate(changeWallpaperTask, 0, changeWallpaperInterval);
 
         return super.onStartCommand(intent, flags, startId);
-    }
-
-    public void startTimerAndRunNow() {
-        logEvent("Starting wallpaper timer.", "startTimerAndRunNow()");
-
-        timer.scheduleAtFixedRate(changeWallpaperTask, 0, changeWallpaperInterval);
     }
 
     private TimerTask changeWallpaperTask = new TimerTask() {
@@ -112,45 +108,68 @@ public class ChangeWallpaperService extends Service {
     };
 
     private void setNewWallpaper() {
+        logEvent("Setting new wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Message);
+
         final String keyCurrentItem = getResources().getString(R.string.key_current_item);
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 //        long currentItemId = settings.getLong(keyCurrentItem, 0);
 
         List<FeedItem> itemsToShuffle = FeedDBHelper.getRecentItems(this, numberToShuffle);
-        int newItemIndex = random.nextInt(itemsToShuffle.size());
+        int count = itemsToShuffle.size();
+        if (count == 0) {
+            logEvent("No available images to set as wallpaper", "setNewWallpaper()", LogEntry.LogLevel.Warning);
+            return;
+        }
+
+        // get new random item
+        int newItemIndex = random.nextInt(count);
         FeedItem newItem = itemsToShuffle.get(newItemIndex);
 
-        // get image from storage
-        WallpaperManager myWallpaperManager = WallpaperManager.getInstance(getApplicationContext());
-        Bitmap newWallpaper = BitmapFactory.decodeFile(getFilesDir().getPath() + "/" + newItem.imageName);
-
         logEvent(String.format(Locale.US, "Setting wallpaper to %s with id of %d.", newItem.title, newItem.id),
-                "setNewWallpaper()");
-
+                "setNewWallpaper()",
+                LogEntry.LogLevel.Message);
         try {
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putInt(keyCurrentItem, newItem.id);
-            editor.apply();
+            WallpaperManager myWallpaperManager = WallpaperManager.getInstance(getApplicationContext());
+            Bitmap newWallpaper = BitmapFactory.decodeFile(imageDirectory + newItem.imageName);
+
+            WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+            Display display = wm.getDefaultDisplay();
+            Point size = new Point();
+            display.getSize(size);
+            int screenHeight = size.y;
+
+            int newWidth = newWallpaper.getWidth() * screenHeight / newWallpaper.getHeight();
 
             if (setHomeWallpaper) {
-                myWallpaperManager.setBitmap(newWallpaper);
+                myWallpaperManager.setBitmap(Bitmap.createScaledBitmap(newWallpaper, newWidth, screenHeight, false));
+                logEvent("Successfully set wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Message);
             }
 
             if (setLockWallpaper && Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
                 myWallpaperManager.setBitmap(newWallpaper, null, true, WallpaperManager.FLAG_LOCK);
+                logEvent("Successfully set lock screen wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Message);
             }
-
         } catch (IOException e) {
             e.printStackTrace();
             logException(e, "setNewWallpaper()");
+        } finally {
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putInt(keyCurrentItem, newItem.id);
+            editor.apply();
+
+            Intent localIntent = new Intent(Constants.WALLPAPER_UPDATED);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+
         }
     }
 
-    private void logEvent(String message, String function) {
-        LogDBHelper.saveLogEntry(this, message, null, TAG, function, LogEntry.LogLevel.Trace);
+    private void logEvent(String message, String function, LogEntry.LogLevel level) {
+        Log.d(TAG, function + ": " + message);
+        LogDBHelper.saveLogEntry(this, message, null, TAG, function, level);
     }
 
     private void logException(Exception e, String function) {
+        Log.d(TAG, function + ": " + e.getLocalizedMessage());
         LogDBHelper.saveLogEntry(this, e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
     }
 
@@ -167,17 +186,18 @@ public class ChangeWallpaperService extends Service {
 
     @Override
     public void onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(changeWallpaperNow);
+
         timer.cancel();
         timer.purge();
         timer = null;
         super.onDestroy();
     }
 
-    // Broadcast receiver for receiving status updates from the IntentService
-    private class ResponseReceiver extends BroadcastReceiver {
+    private BroadcastReceiver changeWallpaperNow = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            startTimerAndRunNow();
+            setNewWallpaper();
         }
-    }
+    };
 }
