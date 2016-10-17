@@ -57,7 +57,6 @@ public class LogDBHelper extends SQLiteOpenHelper {
         values.put(LogDBEntry.COLUMN_STACK_TRACE, stackTrace);
         values.put(LogDBEntry.COLUMN_CLASS, logClass);
         values.put(LogDBEntry.COLUMN_FUNCTION, logFunction);
-        values.put(LogDBEntry.COLUMN_MESSAGE, message);
         values.put(LogDBEntry.COLUMN_TIME, java.util.Calendar.getInstance().getTimeInMillis());
         values.put(LogDBEntry.COLUMN_LEVEL, level.ordinal());
 

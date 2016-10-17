@@ -18,6 +18,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
         final String keyCurrentItem = getResources().getString(R.string.key_current_item);
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-        long currentItemId = settings.getLong(keyCurrentItem, 0);
+        int currentItemId = settings.getInt(keyCurrentItem, 0);
 
         FeedItem currentItem = FeedDBHelper.getFeedItem(this, currentItemId);
         if (currentItem != null) {
@@ -55,6 +56,16 @@ public class MainActivity extends AppCompatActivity {
             ((ImageView) findViewById(R.id.current_item_image)).setImageBitmap(image);
         }
 
+    }
+
+    public void restartServiceButtonClick(View view) {
+        restartService();
+    }
+
+    public void restartService() {
+        Intent serviceIntent = new Intent(this, ChangeWallpaperService.class);
+        stopService(serviceIntent);
+        startService(serviceIntent);
     }
 
     public void showPermissionDialog() {
@@ -91,10 +102,7 @@ public class MainActivity extends AppCompatActivity {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    Intent serviceIntent = new Intent(this, ChangeWallpaperService.class);
-                    startService(serviceIntent);
-
+                    restartService();
                 } else {
                     showPermissionDialog();
                 }

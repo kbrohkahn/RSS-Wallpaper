@@ -129,7 +129,7 @@ public class ChangeWallpaperService extends Service {
 
         try {
             SharedPreferences.Editor editor = settings.edit();
-            editor.putLong(keyCurrentItem, newItem.id);
+            editor.putInt(keyCurrentItem, newItem.id);
             editor.apply();
 
             if (setHomeWallpaper) {

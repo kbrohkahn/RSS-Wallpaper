@@ -31,14 +31,20 @@
 
     <TextView
         android:id="@+id/current_item_link"
-        android:autoLink="web"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:autoLink="web" />
 
     <ImageView
         android:id="@+id/current_item_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/current_image" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="restartServiceButtonClick"
+        android:text="@string/restart_service" />
 
 </LinearLayout>

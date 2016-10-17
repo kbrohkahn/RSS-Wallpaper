@@ -21,7 +21,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + FeedDBEntry.TABLE_NAME + " (" +
-                    FeedDBEntry._ID + " INTEGER PRIMARY KEY," +
+                    FeedDBEntry._ID + " INTEGER PRIMARY KEY, " +
                     FeedDBEntry.COLUMN_TITLE + " TEXT, " +
                     FeedDBEntry.COLUMN_LINK + " TEXT UNIQUE, " +
                     FeedDBEntry.COLUMN_IMAGE_LINK + " TEXT, " +
@@ -56,9 +56,10 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(query, null);
 
         List<FeedItem> items = new ArrayList<>();
-        boolean itemsInCursor = cursor.moveToFirst();
-        while (itemsInCursor) {
-            long id = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry._ID));
+        for (int i = 0; i < cursor.getCount(); i++) {
+            cursor.move(i);
+
+            int id = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry._ID));
             String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_TITLE));
             String link = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_LINK));
             String imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_LINK));
@@ -66,8 +67,6 @@ public class FeedDBHelper extends SQLiteOpenHelper {
             calendar.setTimeInMillis(cursor.getLong(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_PUBLISHED)));
 
             items.add(new FeedItem(id, title, link, imageLink, calendar.getTime()));
-
-            itemsInCursor = cursor.moveToNext();
         }
 
         cursor.close();
@@ -87,7 +86,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
     }
 
 
-    private boolean updateImageDownload(long id, String imageName) {
+    private boolean updateImageDownload(int id, String imageName) {
         SQLiteDatabase db = getReadableDatabase();
 
         String query = String.format(Locale.US, "UPDATE %s SET %s=1, %s=%s WHERE %s=%d",
@@ -104,7 +103,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         return success;
     }
 
-    private boolean updateIgnoredImage(long id, boolean ignore) {
+    private boolean updateIgnoredImage(int id, boolean ignore) {
         SQLiteDatabase db = getReadableDatabase();
 
         String query = String.format(Locale.US, "UPDATE %s SET %s=%d, WHERE %s=%d",
@@ -126,7 +125,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         helper.close();
     }
 
-    public static FeedItem getFeedItem(Context context, long id) {
+    public static FeedItem getFeedItem(Context context, int id) {
         String query = String.format(Locale.US, "SELECT * FROM %s where %s=%d",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry._ID,
@@ -156,7 +155,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
     }
 
     public static boolean feedItemExists(Context context, String imageLink) {
-        String query = String.format(Locale.US, "SELECT COUNT(*) FROM %s WHERE %s='%s'",
+        String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s='%s'",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_IMAGE_LINK,
                 imageLink);
@@ -170,14 +169,14 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         return items;
     }
 
-    public static boolean updateItemImageDownload(Context context, long id, String imageName) {
+    public static boolean updateItemImageDownload(Context context, int id, String imageName) {
         FeedDBHelper helper = new FeedDBHelper(context);
         boolean success = helper.updateImageDownload(id, imageName);
         helper.close();
         return success;
     }
 
-    public static boolean updateItemImageIgnore(Context context, long id, boolean ignore) {
+    public static boolean updateItemImageIgnore(Context context, int id, boolean ignore) {
         FeedDBHelper helper = new FeedDBHelper(context);
         boolean success = helper.updateIgnoredImage(id, ignore);
         helper.close();
@@ -185,7 +184,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
     }
 
     private static class FeedDBEntry implements BaseColumns {
-        private static final String TABLE_NAME = "log_entries";
+        private static final String TABLE_NAME = "feed_entries";
         private static final String COLUMN_TITLE = "title";
         private static final String COLUMN_LINK = "link";
         private static final String COLUMN_IMAGE_LINK = "image_link";
