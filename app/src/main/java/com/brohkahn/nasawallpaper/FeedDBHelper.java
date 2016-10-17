@@ -14,22 +14,21 @@ import java.util.List;
 import java.util.Locale;
 
 public class FeedDBHelper extends SQLiteOpenHelper {
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 1;
     private static final String TAG = "FeedDBHelper";
 
-    private static final String DB_NAME = "NASA_WALLPAPER";
+    private static final String DB_NAME = "NASA_WALLPAPER.DB";
 
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + FeedDBEntry.TABLE_NAME + " (" +
                     FeedDBEntry._ID + " INTEGER PRIMARY KEY," +
                     FeedDBEntry.COLUMN_TITLE + " TEXT, " +
-                    FeedDBEntry.COLUMN_LINK + " TEXT, " +
+                    FeedDBEntry.COLUMN_LINK + " TEXT UNIQUE, " +
                     FeedDBEntry.COLUMN_IMAGE_LINK + " TEXT, " +
                     FeedDBEntry.COLUMN_PUBLISHED + " LONG, " +
                     FeedDBEntry.COLUMN_DOWNLOADED + " INTEGER, " +
-                    FeedDBEntry.COLUMN_IMAGE_NAME + " TEXT, " +
-                    FeedDBEntry.COLUMN_IGNORE + " INTEGER, " +
-                    FeedDBEntry.COLUMN_ACTIVE + " INTEGER)";
+                    FeedDBEntry.COLUMN_IMAGE_NAME + " TEXT UNIQUE, " +
+                    FeedDBEntry.COLUMN_IGNORE + " INTEGER)";
 
 //    private static final String SQL_ALTER_TABLE_V2 =
 //            "ALTER TABLE " + FeedDBEntry.TABLE_NAME +
@@ -51,69 +50,6 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 //        }
     }
 
-    private long saveFeedEntry(String title, String link, String imageLink, Date published) {
-        SQLiteDatabase db = getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(FeedDBEntry.COLUMN_TITLE, title);
-        values.put(FeedDBEntry.COLUMN_LINK, link);
-        values.put(FeedDBEntry.COLUMN_IMAGE_LINK, imageLink);
-        values.put(FeedDBEntry.COLUMN_PUBLISHED, published.getTime());
-
-        return db.insert(FeedDBEntry.TABLE_NAME, null, values);
-    }
-
-    private FeedItem getFeedItem(long id) {
-        SQLiteDatabase db = getReadableDatabase();
-
-        String query = String.format(Locale.US, "SELECT * FROM %s where %s=%d",
-                FeedDBEntry.TABLE_NAME,
-                FeedDBEntry._ID,
-                id);
-
-        Cursor cursor = db.rawQuery(query, null);
-
-        FeedItem item = null;
-        if (cursor.moveToFirst()) {
-            String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_TITLE));
-            String link = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_LINK));
-            String imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_LINK));
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(cursor.getLong(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_PUBLISHED)));
-
-            item = new FeedItem(id, title, link, imageLink, calendar.getTime());
-        }
-
-        cursor.close();
-        return item;
-    }
-
-    private List<FeedItem> getRecentItems(int count) {
-        String query = String.format(Locale.US, "SELECT TOP %d * FROM %s WHERE %s=1 ORDER BY %s DESC",
-                count,
-                FeedDBEntry.TABLE_NAME,
-                FeedDBEntry.COLUMN_IGNORE,
-                FeedDBEntry.COLUMN_PUBLISHED);
-
-        return getItems(query);
-    }
-
-    private List<FeedItem> getAllItems() {
-        String query = String.format(Locale.US, "SELECT * FROM %s ORDER BY %s DESC",
-                FeedDBEntry.TABLE_NAME,
-                FeedDBEntry.COLUMN_PUBLISHED);
-
-        return getItems(query);
-    }
-
-    private List<FeedItem> getItemsWithoutDownloads() {
-        String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=0",
-                FeedDBEntry.TABLE_NAME,
-                FeedDBEntry.COLUMN_DOWNLOADED);
-
-        return getItems(query);
-    }
-
     private List<FeedItem> getItems(String query) {
         SQLiteDatabase db = getReadableDatabase();
 
@@ -122,7 +58,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         List<FeedItem> items = new ArrayList<>();
         boolean itemsInCursor = cursor.moveToFirst();
         while (itemsInCursor) {
-            long id = cursor.getLong(cursor.getColumnIndexOrThrow(FeedDBEntry._ID));
+            long id = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry._ID));
             String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_TITLE));
             String link = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_LINK));
             String imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_LINK));
@@ -137,6 +73,19 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         cursor.close();
         return items;
     }
+
+    private long saveFeedEntry(String title, String link, String imageLink, Date published) {
+        SQLiteDatabase db = getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(FeedDBEntry.COLUMN_TITLE, title);
+        values.put(FeedDBEntry.COLUMN_LINK, link);
+        values.put(FeedDBEntry.COLUMN_IMAGE_LINK, imageLink);
+        values.put(FeedDBEntry.COLUMN_PUBLISHED, published.getTime());
+
+        return db.insert(FeedDBEntry.TABLE_NAME, null, values);
+    }
+
 
     private boolean updateImageDownload(long id, String imageName) {
         SQLiteDatabase db = getReadableDatabase();
@@ -177,23 +126,46 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         helper.close();
     }
 
-    public static FeedItem getFeedItem(Context context, int id) {
-        FeedDBHelper helper = new FeedDBHelper(context);
-        FeedItem item = helper.getFeedItem(id);
-        helper.close();
-        return item;
+    public static FeedItem getFeedItem(Context context, long id) {
+        String query = String.format(Locale.US, "SELECT * FROM %s where %s=%d",
+                FeedDBEntry.TABLE_NAME,
+                FeedDBEntry._ID,
+                id);
+        List<FeedItem> items = getItemsFromQuery(context, query);
+        if (items.size() > 0) {
+            return items.get(0);
+        } else {
+            return null;
+        }
     }
 
     public static List<FeedItem> getItemsWithoutImages(Context context) {
-        FeedDBHelper helper = new FeedDBHelper(context);
-        List<FeedItem> items = helper.getItemsWithoutDownloads();
-        helper.close();
-        return items;
+        String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=0",
+                FeedDBEntry.TABLE_NAME,
+                FeedDBEntry.COLUMN_DOWNLOADED);
+        return getItemsFromQuery(context, query);
     }
 
     public static List<FeedItem> getRecentItems(Context context, int count) {
+        String query = String.format(Locale.US, "SELECT TOP %d * FROM %s WHERE %s=1 ORDER BY %s DESC",
+                count,
+                FeedDBEntry.TABLE_NAME,
+                FeedDBEntry.COLUMN_IGNORE,
+                FeedDBEntry.COLUMN_PUBLISHED);
+        return getItemsFromQuery(context, query);
+    }
+
+    public static boolean feedItemExists(Context context, String imageLink) {
+        String query = String.format(Locale.US, "SELECT COUNT(*) FROM %s WHERE %s='%s'",
+                FeedDBEntry.TABLE_NAME,
+                FeedDBEntry.COLUMN_IMAGE_LINK,
+                imageLink);
+        return getItemsFromQuery(context, query).size() > 0;
+    }
+
+    private static List<FeedItem> getItemsFromQuery(Context context, String query) {
         FeedDBHelper helper = new FeedDBHelper(context);
-        List<FeedItem> items = helper.getRecentItems(count);
+        List<FeedItem> items = helper.getItems(query);
         helper.close();
         return items;
     }
@@ -221,7 +193,6 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         private static final String COLUMN_DOWNLOADED = "downloaded";
         private static final String COLUMN_IMAGE_NAME = "image_name";
         private static final String COLUMN_IGNORE = "ignore";
-        private static final String COLUMN_ACTIVE = "active";
     }
 }
 

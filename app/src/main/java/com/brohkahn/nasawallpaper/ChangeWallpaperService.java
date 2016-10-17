@@ -25,6 +25,7 @@ import com.brohkahn.loggerlibrary.LogEntry;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -35,9 +36,6 @@ public class ChangeWallpaperService extends Service {
     private static final String NASA_RSS_LINK_A = "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss";
 //    private static final String NASA_RSS_LINK_B = "http://apod.nasa.gov/apod.rss";
 
-    private List<FeedItem> itemsToShuffle;
-    private int currentFileIndex = 0;
-
     private int numberToShuffle;
     private boolean setHomeWallpaper;
     private boolean setLockWallpaper;
@@ -46,7 +44,6 @@ public class ChangeWallpaperService extends Service {
     private static final int downloadWallpaperInterval = 24 * 60 * 60 * 1000;
     private Random random = new Random();
     private Timer timer;
-    ;
 
     public ChangeWallpaperService() {
     }
@@ -59,11 +56,6 @@ public class ChangeWallpaperService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, false));
-
-        if (timer != null) {
-            timer.cancel();
-        }
-        timer = new Timer();
 
         int internetPermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
         if (internetPermissionCheck != PackageManager.PERMISSION_GRANTED) {
@@ -78,14 +70,6 @@ public class ChangeWallpaperService extends Service {
         setHomeWallpaper = preferences.getBoolean(resources.getString(R.string.key_set_home_screen), true);
         setLockWallpaper = preferences.getBoolean(resources.getString(R.string.key_set_home_screen), false);
 
-        // instantiate file list
-        updateItemList();
-
-        // immediately update wallpaper if we have images
-        if (itemsToShuffle.size() > 0) {
-            startTimerAndRunNow();
-        }
-
         // setup receiver
         // The filter's action is BROADCAST_ACTION
         IntentFilter mStatusIntentFilter = new IntentFilter(Constants.DOWNLOAD_COMPLETE_BROADCAST);
@@ -97,7 +81,7 @@ public class ChangeWallpaperService extends Service {
         ResponseReceiver mDownloadStateReceiver = new ResponseReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(mDownloadStateReceiver, mStatusIntentFilter);
 
-        // start download
+        // start download immediately
         startDownloadIntent();
 
         // download wallpaper daily at 0300
@@ -107,6 +91,8 @@ public class ChangeWallpaperService extends Service {
         downloadTime.set(Calendar.MINUTE, 0);
         downloadTime.set(Calendar.SECOND, 0);
         downloadTime.set(Calendar.MILLISECOND, 0);
+
+        timer = new Timer();
         timer.scheduleAtFixedRate(downloadRSSTask, downloadTime.getTime(), downloadWallpaperInterval);
 
         return super.onStartCommand(intent, flags, startId);
@@ -126,21 +112,25 @@ public class ChangeWallpaperService extends Service {
     };
 
     private void setNewWallpaper() {
-        logEvent("Setting new wallpaper.", "setNewWallpaper()");
+        final String keyCurrentItem = getResources().getString(R.string.key_current_item);
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+//        long currentItemId = settings.getLong(keyCurrentItem, 0);
 
-        int newIndex = currentFileIndex;
-        int fileCount = itemsToShuffle.size();
-        while (fileCount > 1 && newIndex == currentFileIndex) {
-            newIndex = random.nextInt(fileCount);
-        }
-        currentFileIndex = newIndex;
+        List<FeedItem> itemsToShuffle = FeedDBHelper.getRecentItems(this, numberToShuffle);
+        int newItemIndex = random.nextInt(itemsToShuffle.size());
+        FeedItem newItem = itemsToShuffle.get(newItemIndex);
 
+        // get image from storage
         WallpaperManager myWallpaperManager = WallpaperManager.getInstance(getApplicationContext());
-        String fileName = itemsToShuffle.get(newIndex).imageName;
-        Bitmap newWallpaper = BitmapFactory.decodeFile(getFilesDir().getPath() + "/" + fileName);
+        Bitmap newWallpaper = BitmapFactory.decodeFile(getFilesDir().getPath() + "/" + newItem.imageName);
+
+        logEvent(String.format(Locale.US, "Setting wallpaper to %s with id of %d.", newItem.title, newItem.id),
+                "setNewWallpaper()");
 
         try {
-            logEvent(String.format("Setting wallpaper to %s.", itemsToShuffle.get(newIndex)), "setNewWallpaper()");
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putLong(keyCurrentItem, newItem.id);
+            editor.apply();
 
             if (setHomeWallpaper) {
                 myWallpaperManager.setBitmap(newWallpaper);
@@ -164,11 +154,6 @@ public class ChangeWallpaperService extends Service {
         LogDBHelper.saveLogEntry(this, e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
     }
 
-    private void updateItemList() {
-        logEvent("Updating list of items.", "updateItemList()");
-        itemsToShuffle = FeedDBHelper.getRecentItems(this, numberToShuffle);
-    }
-
     private TimerTask downloadRSSTask = new TimerTask() {
         @Override
         public void run() {
@@ -183,6 +168,8 @@ public class ChangeWallpaperService extends Service {
     @Override
     public void onDestroy() {
         timer.cancel();
+        timer.purge();
+        timer = null;
         super.onDestroy();
     }
 
@@ -190,13 +177,7 @@ public class ChangeWallpaperService extends Service {
     private class ResponseReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            boolean noFilesInitially = itemsToShuffle.size() == 0;
-
-            updateItemList();
-
-            if (noFilesInitially) {
-                startTimerAndRunNow();
-            }
+            startTimerAndRunNow();
         }
     }
 }

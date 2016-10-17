@@ -6,6 +6,9 @@
     <string name="permission_request_positive_button">OK</string>
     <string name="permission_request_negative_button">Uninstall</string>
 
+    <string name="current_background">Current wallpaper</string>
+    <string name="current_image">Current image</string>
+
     <string name="action_view_logs">View logs</string>
     <string name="activity_logs">Logs</string>
     <string name="activity_about">About</string>
@@ -15,5 +18,6 @@
     <string name="key_number_to_shuffle">numberToShuffle</string>
     <string name="key_set_home_screen">setHomeScreen</string>
     <string name="key_set_lock_screen">setLockScreen</string>
+    <string name="key_current_item">currentItem</string>
 
 </resources>

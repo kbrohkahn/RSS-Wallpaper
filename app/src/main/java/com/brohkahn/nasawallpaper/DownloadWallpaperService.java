@@ -76,7 +76,6 @@ public class DownloadWallpaperService extends IntentService {
             feedParser.parse(input);
             input.close();
 
-
             List<FeedItem> entriesNeedingDownload = FeedDBHelper.getItemsWithoutImages(this);
             logEvent(this,
                     String.format(Locale.US, "XML parse complete, need to download %d images.", entriesNeedingDownload.size()),
@@ -91,7 +90,6 @@ public class DownloadWallpaperService extends IntentService {
             logException(this, e, "downloadFeedItems(String urlString)");
         }
     }
-
 
     private void downloadFeedItem(FeedItem entry) {
         try {
@@ -149,7 +147,7 @@ public class DownloadWallpaperService extends IntentService {
         private String entryImageLinkTag = "enclosure";
         private String entryImageLinkAttribute = "url";
 
-        private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM YYYY HH:mm zzz", Locale.US);
+        private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm zzz", Locale.US);
 
         private Context context;
 
@@ -241,13 +239,19 @@ public class DownloadWallpaperService extends IntentService {
                 }
             }
 
-            logEvent(context,
-                    String.format("Saving feed item title=%s, link=%s, imageLink=%s, published=%s",
-                            title, link, imageLink, publishedOn.toString()),
-                    "readFeedItem(XmlPullParser parser)");
-            FeedDBHelper.saveFeedItem(context, title, link, imageLink, publishedOn);
-        }
+            if (FeedDBHelper.feedItemExists(context, imageLink)) {
+                logEvent(context,
+                        String.format("Image %s already exists.", title),
+                        "readFeedItem(XmlPullParser parser)");
 
+            } else {
+                logEvent(context,
+                        String.format("Saving feed item title=%s, link=%s, imageLink=%s, published=%s",
+                                title, link, imageLink, publishedOn.toString()),
+                        "readFeedItem(XmlPullParser parser)");
+                FeedDBHelper.saveFeedItem(context, title, link, imageLink, publishedOn);
+            }
+        }
 
         /**
          * Reads the body of a basic XML tag, which is guaranteed not to contain any nested elements.
@@ -319,10 +323,7 @@ public class DownloadWallpaperService extends IntentService {
                 }
             }
         }
-
-
     }
-
 
     private static void logEvent(Context context, String message, String function) {
         LogDBHelper.saveLogEntry(context, message, null, TAG, function, LogEntry.LogLevel.Trace);

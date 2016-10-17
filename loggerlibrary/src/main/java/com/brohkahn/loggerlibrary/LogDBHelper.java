@@ -17,7 +17,7 @@ public class LogDBHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 2;
     private static final String TAG = "LogDBHelper";
 
-    private static final String DB_NAME = "LOG_ENTRIES";
+    private static final String DB_NAME = "LOG_ENTRIES.DB";
 
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + LogDBEntry.TABLE_NAME + " (" +
