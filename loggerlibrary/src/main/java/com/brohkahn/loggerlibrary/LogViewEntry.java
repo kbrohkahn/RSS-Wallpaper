@@ -20,7 +20,7 @@ public class LogViewEntry extends AppCompatActivity {
         findViewById(R.id.log_entry_layout).setBackgroundColor(getResources().getColor(LogEntry.getColorId(entry.level)));
 
         TextView timeTextView = (TextView) findViewById(R.id.log_entry_time);
-        timeTextView.setText(entry.time.getTime().toString());
+        timeTextView.setText(entry.time.toString());
 
         TextView messageTextView = (TextView) findViewById(R.id.log_entry_message);
         messageTextView.setText(entry.message);

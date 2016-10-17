@@ -1,6 +1,6 @@
 package com.brohkahn.loggerlibrary;
 
-import java.util.Calendar;
+import java.util.Date;
 
 public class LogEntry {
     public int id;
@@ -8,7 +8,7 @@ public class LogEntry {
     public String stackTrace;
     public String logClass;
     public String function;
-    public Calendar time;
+    public Date time;
     public LogLevel level;
 
     public enum LogLevel {
@@ -18,7 +18,7 @@ public class LogEntry {
         Message
     }
 
-    public LogEntry(int id, String message, String stackTrace, String logClass, String logFunction, Calendar time, int levelIndex) {
+    public LogEntry(int id, String message, String stackTrace, String logClass, String logFunction, Date time, int levelIndex) {
         this.id = id;
         this.message = message;
         this.stackTrace = stackTrace;

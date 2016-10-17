@@ -7,29 +7,26 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.util.Xml;
 
+import com.brohkahn.loggerlibrary.ErrorHandler;
+import com.brohkahn.loggerlibrary.LogDBHelper;
+import com.brohkahn.loggerlibrary.LogEntry;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.Date;
 import java.text.ParseException;
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
-/**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
- */
 public class DownloadWallpaperService extends IntentService {
     private static final String TAG = "DownloadWallpaperService";
 
@@ -54,7 +51,7 @@ public class DownloadWallpaperService extends IntentService {
             final String action = intent.getAction();
             if (ACTION_DOWNLOAD_RSS.equals(action)) {
                 final String feedUrl = intent.getStringExtra(EXTRA_FEED_URL);
-                startDownload(feedUrl);
+                downloadFeedItems(feedUrl);
             }
         }
     }
@@ -63,64 +60,77 @@ public class DownloadWallpaperService extends IntentService {
      * Handle action Foo in the provided background thread with the provided
      * parameters.
      */
-    private void startDownload(String urlString) {
+    private void downloadFeedItems(String urlString) {
         try {
             URL url = new URL(urlString);
             URLConnection connection = url.openConnection();
             connection.connect();
 
             // download the file
+            logEvent(this, "Downloading RSS file.", "downloadFeedItems(String urlString)");
             InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
             // parse xml
-            FeedParser feedParser = new FeedParser();
-            List<FeedItem> entries = feedParser.parse(input);
-
-            for (FeedItem entry : entries) {
-                downloadFeedItem(entry);
-            }
+            logEvent(this, "Parsing XML.", "downloadFeedItems(String urlString)");
+            FeedParser feedParser = new FeedParser(this);
+            feedParser.parse(input);
             input.close();
 
-            broadcastCompletion();
-        } catch (Exception e) {
-            Log.e("Error: ", e.getMessage());
-        }
 
+            List<FeedItem> entriesNeedingDownload = FeedDBHelper.getItemsWithoutImages(this);
+            logEvent(this,
+                    String.format(Locale.US, "XML parse complete, need to download %d images.", entriesNeedingDownload.size()),
+                    "downloadFeedItems(String urlString)");
+            for (FeedItem entry : entriesNeedingDownload) {
+                downloadFeedItem(entry);
+            }
+
+            broadcastCompletion();
+        } catch (XmlPullParserException | ParseException | IOException e) {
+            Log.e("Error: ", e.getMessage());
+            logException(this, e, "downloadFeedItems(String urlString)");
+        }
     }
+
 
     private void downloadFeedItem(FeedItem entry) {
         try {
-            String fileExtension = entry.imageLink.substring(entry.imageLink.lastIndexOf('.'));
-            String outputFilePath = getFilesDir().getPath() + "/" + entry.title + fileExtension;
+            logEvent(this, String.format(Locale.US, "Downloading feed image for %s.", entry.title),
+                    "downloadFeedItem(FeedItem entry)");
 
-            File oldFile = new File(outputFilePath);
-            if (!oldFile.exists()) {
-                URL url = new URL(entry.imageLink);
-                URLConnection connection = url.openConnection();
-                connection.connect();
+            String fileExtension = entry.imageName.substring(entry.imageName.lastIndexOf('.'));
+            String fileName = entry.title.replace(' ', '_') + fileExtension;
+            String outputFilePath = getFilesDir().getPath() + "/" + fileName;
 
-                // download the file
-                InputStream input = new BufferedInputStream(url.openStream(), 8192);
+            URL url = new URL(entry.imageName);
+            URLConnection connection = url.openConnection();
+            connection.connect();
 
-                // Output stream
-                OutputStream output = new FileOutputStream(outputFilePath);
+            // download the file
+            InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
-                byte data[] = new byte[1024];
+            // Output stream
+            OutputStream output = new FileOutputStream(outputFilePath);
 
-                int count;
-                while ((count = input.read(data)) != -1) {
-                    output.write(data, 0, count);
-                }
+            byte data[] = new byte[1024];
 
-                // flushing output
-                output.flush();
-
-                // closing streams
-                output.close();
-                input.close();
+            int count;
+            while ((count = input.read(data)) != -1) {
+                output.write(data, 0, count);
             }
+
+            output.flush();
+            output.close();
+            input.close();
+
+            FeedDBHelper.updateItemImageDownload(this, entry.id, fileName);
+
+            logEvent(this, String.format(Locale.US, "Successfully downloaded and saved feed image for %s.", entry.title),
+                    "downloadFeedItem(FeedItem entry)");
+
         } catch (Exception e) {
             Log.e("Error: ", e.getMessage());
+            logException(this, e, "downloadFeedItem(FeedItem entry)");
         }
     }
 
@@ -128,7 +138,6 @@ public class DownloadWallpaperService extends IntentService {
         Intent localIntent = new Intent(Constants.DOWNLOAD_COMPLETE_BROADCAST);
         LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
     }
-
 
     public static class FeedParser {
         private String feedStartTag = "rss";
@@ -140,42 +149,42 @@ public class DownloadWallpaperService extends IntentService {
         private String entryImageLinkTag = "enclosure";
         private String entryImageLinkAttribute = "url";
 
+        private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM YYYY HH:mm zzz", Locale.US);
 
-        // We don't use XML namespaces
+        private Context context;
+
         private static final String ns = null;
+
+        private FeedParser(Context context) {
+            this.context = context;
+        }
 
         /**
          * Parse an Atom feed, returning a collection of FeedItem objects.
          *
          * @param in Atom feed, as a stream.
-         * @return List of {@link com.brohkahn.nasawallpaper.FeedItem} objects.
          * @throws org.xmlpull.v1.XmlPullParserException on error parsing feed.
          * @throws java.io.IOException                   on I/O error.
          */
-        private List<FeedItem> parse(InputStream in)
+        private void parse(InputStream in)
                 throws XmlPullParserException, IOException, ParseException {
-            try {
-                XmlPullParser parser = Xml.newPullParser();
-                parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-                parser.setInput(in, null);
-                parser.nextTag();
-                return readFeed(parser);
-            } finally {
-                in.close();
-            }
+            logEvent(context, "Parsing feed.", "parse(InputStream in)");
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(in, null);
+            parser.nextTag();
+            readFeed(parser);
+            in.close();
         }
 
         /**
          * Decode a feed attached to an XmlPullParser.
          *
          * @param parser Incoming XMl
-         * @return List of {@link com.brohkahn.nasawallpaper.FeedItem} objects.
          * @throws org.xmlpull.v1.XmlPullParserException on error parsing feed.
          * @throws java.io.IOException                   on I/O error.
          */
-        private List<FeedItem> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException, ParseException {
-            List<FeedItem> entries = new ArrayList<>();
-
+        private void readFeed(XmlPullParser parser) throws XmlPullParserException, IOException, ParseException {
             parser.require(XmlPullParser.START_TAG, ns, feedStartTag);
             while (parser.next() != XmlPullParser.END_TAG) {
                 if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -193,27 +202,26 @@ public class DownloadWallpaperService extends IntentService {
 
                         name = parser.getName();
                         if (name.equals(entryTag)) {
-                            entries.add(readFeedItem(parser));
+                            readFeedItem(parser);
                         } else {
                             skip(parser);
                         }
                     }
                 }
             }
-            return entries;
         }
 
         /**
          * Parses the contents of an entry. If it encounters a title, summary, or link tag, hands them
          * off to their respective "read" methods for processing. Otherwise, skips the tag.
          */
-        private FeedItem readFeedItem(XmlPullParser parser)
+        private void readFeedItem(XmlPullParser parser)
                 throws XmlPullParserException, IOException, ParseException {
             parser.require(XmlPullParser.START_TAG, ns, entryTag);
             String title = null;
             String link = null;
             String imageLink = null;
-            long publishedOn = 0;
+            Date publishedOn = new Date();
 
             while (parser.next() != XmlPullParser.END_TAG) {
                 if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -227,12 +235,17 @@ public class DownloadWallpaperService extends IntentService {
                 } else if (name.equals(entryImageLinkTag)) {
                     imageLink = readAlternateLink(parser, entryImageLinkTag);
                 } else if (name.equals(entryPublishedTag)) {
-                    publishedOn = Date.parse(readBasicTag(parser, entryPublishedTag));
+                    publishedOn = dateFormat.parse(readBasicTag(parser, entryPublishedTag));
                 } else {
                     skip(parser);
                 }
             }
-            return new FeedItem(title, link, imageLink, publishedOn);
+
+            logEvent(context,
+                    String.format("Saving feed item title=%s, link=%s, imageLink=%s, published=%s",
+                            title, link, imageLink, publishedOn.toString()),
+                    "readFeedItem(XmlPullParser parser)");
+            FeedDBHelper.saveFeedItem(context, title, link, imageLink, publishedOn);
         }
 
 
@@ -306,5 +319,16 @@ public class DownloadWallpaperService extends IntentService {
                 }
             }
         }
+
+
+    }
+
+
+    private static void logEvent(Context context, String message, String function) {
+        LogDBHelper.saveLogEntry(context, message, null, TAG, function, LogEntry.LogLevel.Trace);
+    }
+
+    private static void logException(Context context, Exception e, String function) {
+        LogDBHelper.saveLogEntry(context, e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
     }
 }

@@ -84,7 +84,7 @@ public class LogDBHelper extends SQLiteOpenHelper {
             calendar.setTimeInMillis(cursor.getLong(cursor.getColumnIndexOrThrow(LogDBEntry.COLUMN_TIME)));
             int levelIndex = cursor.getInt(cursor.getColumnIndexOrThrow(LogDBEntry.COLUMN_LEVEL));
 
-            entry = new LogEntry(id, message, stackTrace, logClass, logFunction, calendar, levelIndex);
+            entry = new LogEntry(id, message, stackTrace, logClass, logFunction, calendar.getTime(), levelIndex);
         }
 
         cursor.close();
@@ -110,7 +110,7 @@ public class LogDBHelper extends SQLiteOpenHelper {
             calendar.setTimeInMillis(cursor.getLong(cursor.getColumnIndexOrThrow(LogDBEntry.COLUMN_TIME)));
             int levelIndex = cursor.getInt(cursor.getColumnIndexOrThrow(LogDBEntry.COLUMN_LEVEL));
 
-            entries.add(new LogEntry(id, message, stackTrace, logClass, logFunction, calendar, levelIndex));
+            entries.add(new LogEntry(id, message, stackTrace, logClass, logFunction, calendar.getTime(), levelIndex));
 
             entriesInCursor = cursor.moveToNext();
         }

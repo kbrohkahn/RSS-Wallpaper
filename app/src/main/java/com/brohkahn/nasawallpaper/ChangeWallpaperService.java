@@ -22,12 +22,8 @@ import com.brohkahn.loggerlibrary.ErrorHandler;
 import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.Timer;
@@ -39,7 +35,7 @@ public class ChangeWallpaperService extends Service {
     private static final String NASA_RSS_LINK_A = "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss";
 //    private static final String NASA_RSS_LINK_B = "http://apod.nasa.gov/apod.rss";
 
-    private List<String> filesToShuffle;
+    private List<FeedItem> itemsToShuffle;
     private int currentFileIndex = 0;
 
     private int numberToShuffle;
@@ -83,10 +79,10 @@ public class ChangeWallpaperService extends Service {
         setLockWallpaper = preferences.getBoolean(resources.getString(R.string.key_set_home_screen), false);
 
         // instantiate file list
-        updateFilesList();
+        updateItemList();
 
         // immediately update wallpaper if we have images
-        if (filesToShuffle.size() > 0) {
+        if (itemsToShuffle.size() > 0) {
             startTimerAndRunNow();
         }
 
@@ -116,10 +112,10 @@ public class ChangeWallpaperService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
-
     public void startTimerAndRunNow() {
-        timer.scheduleAtFixedRate(changeWallpaperTask, 0, changeWallpaperInterval);
+        logEvent("Starting wallpaper timer.", "startTimerAndRunNow()");
 
+        timer.scheduleAtFixedRate(changeWallpaperTask, 0, changeWallpaperInterval);
     }
 
     private TimerTask changeWallpaperTask = new TimerTask() {
@@ -133,17 +129,18 @@ public class ChangeWallpaperService extends Service {
         logEvent("Setting new wallpaper.", "setNewWallpaper()");
 
         int newIndex = currentFileIndex;
-        int fileCount = filesToShuffle.size();
+        int fileCount = itemsToShuffle.size();
         while (fileCount > 1 && newIndex == currentFileIndex) {
             newIndex = random.nextInt(fileCount);
         }
         currentFileIndex = newIndex;
 
         WallpaperManager myWallpaperManager = WallpaperManager.getInstance(getApplicationContext());
-        Bitmap newWallpaper = BitmapFactory.decodeFile(filesToShuffle.get(newIndex));
+        String fileName = itemsToShuffle.get(newIndex).imageName;
+        Bitmap newWallpaper = BitmapFactory.decodeFile(getFilesDir().getPath() + "/" + fileName);
 
         try {
-            logEvent(String.format("Setting wallpaper to %s.", filesToShuffle.get(newIndex)), "setNewWallpaper()");
+            logEvent(String.format("Setting wallpaper to %s.", itemsToShuffle.get(newIndex)), "setNewWallpaper()");
 
             if (setHomeWallpaper) {
                 myWallpaperManager.setBitmap(newWallpaper);
@@ -167,18 +164,9 @@ public class ChangeWallpaperService extends Service {
         LogDBHelper.saveLogEntry(this, e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
     }
 
-    private void updateFilesList() {
-        File[] files = getFilesDir().listFiles();
-        Arrays.sort(files, new Comparator<File>() {
-            public int compare(File f1, File f2) {
-                return Long.valueOf(f1.lastModified()).compareTo(f2.lastModified());
-            }
-        });
-
-        filesToShuffle = new ArrayList<>();
-        for (int i = 0; i < numberToShuffle && i < files.length; i++) {
-            filesToShuffle.add(files[i].getAbsolutePath());
-        }
+    private void updateItemList() {
+        logEvent("Updating list of items.", "updateItemList()");
+        itemsToShuffle = FeedDBHelper.getRecentItems(this, numberToShuffle);
     }
 
     private TimerTask downloadRSSTask = new TimerTask() {
@@ -190,9 +178,6 @@ public class ChangeWallpaperService extends Service {
 
     private void startDownloadIntent() {
         DownloadWallpaperService.startDownloadRSSAction(this, NASA_RSS_LINK_A);
-//        Intent msgIntent = new Intent(this, DownloadWallpaperService.class);
-//        msgIntent.putExtra(DownloadWallpaperService.EXTRA_FEED_URL, NASA_RSS_LINK_A);
-//        startService(msgIntent);
     }
 
     @Override
@@ -203,14 +188,11 @@ public class ChangeWallpaperService extends Service {
 
     // Broadcast receiver for receiving status updates from the IntentService
     private class ResponseReceiver extends BroadcastReceiver {
-        private ResponseReceiver() {
-        }
-
         @Override
         public void onReceive(Context context, Intent intent) {
-            boolean noFilesInitially = filesToShuffle.size() == 0;
+            boolean noFilesInitially = itemsToShuffle.size() == 0;
 
-            updateFilesList();
+            updateItemList();
 
             if (noFilesInitially) {
                 startTimerAndRunNow();

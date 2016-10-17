@@ -1,15 +1,19 @@
 package com.brohkahn.nasawallpaper;
 
+import java.util.Date;
+
 public class FeedItem {
+    public long id;
     public String title;
     public String link;
-    public String imageLink;
-    public long published;
+    public String imageName;
+    public Date published;
 
-    FeedItem(String title, String link, String imageLink, long published) {
+    FeedItem(long id, String title, String link, String imageName, Date published) {
+        this.id = id;
         this.title = title;
         this.link = link;
-        this.imageLink = imageLink;
+        this.imageName = imageName;
         this.published = published;
     }
 }

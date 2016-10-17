@@ -41,8 +41,8 @@ public class ErrorHandler implements Thread.UncaughtExceptionHandler {
             intent.putExtra(ErrorDialogActivity.EXTRA_KEY_DEVELOPER_EMAIL, developerEmail );
             intent.putExtra(ErrorDialogActivity.EXTRA_KEY_ERROR_STRING, errorString);
             context.getApplicationContext().startActivity(intent);
-
         } else {
+
             System.exit(1);
         }
 
