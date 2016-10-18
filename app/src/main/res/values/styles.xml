@@ -8,13 +8,6 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="default_button" parent="android:Widget.DeviceDefault.Button.Borderless">
-        <item name="android:gravity">center</item>
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_weight">1</item>
-    </style>
-
     <style name="feed_item_text" parent="Base.TextAppearance.AppCompat.Medium">
         <item name="android:gravity">center</item>
         <item name="android:layout_width">match_parent</item>

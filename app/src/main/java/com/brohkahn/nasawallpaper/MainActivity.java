@@ -13,6 +13,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -96,6 +97,10 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver wallpaperUpdated = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            logEvent("Received wallpaperUpdated broadcast.",
+                    "onReceive(Context context, Intent intent)",
+                    LogEntry.LogLevel.Trace);
+
             updateCurrentItem();
         }
     };
@@ -164,6 +169,9 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
+            case R.id.action_view_items_all:
+                startActivity(new Intent(this, FeedItemListView.class));
+                return true;
             case R.id.action_view_logs:
                 startActivity(new Intent(this, LogViewList.class));
                 return true;
@@ -187,19 +195,21 @@ public class MainActivity extends AppCompatActivity {
         logEvent("Disabling current item", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
         FeedDBHelper.updateItemImageEnabled(this, currentItemId, false);
         getNewWallpaper();
-        getNewWallpaper();
     }
 
     private void getNewWallpaper() {
-        logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
         showToast("Setting new wallpaper, this may take a few seconds.");
+        logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 
-        Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
+        final Context context = this;
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
+                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+            }
+        });
 
-    public void viewAllItems(View view) {
-        startActivity(new Intent(this, FeedItemListView.class));
     }
 
     private void showToast(String message) {

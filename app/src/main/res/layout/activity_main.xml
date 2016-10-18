@@ -42,26 +42,35 @@
 
         <ImageView
             android:id="@+id/current_item_image"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/current_image" />
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/current_image"
+            android:scaleType="fitXY" />
 
 
-        <Button
-            style="@style/default_button"
-            android:onClick="blockCurrentWallpaper"
-            android:text="@string/action_disable" />
+        <LinearLayout
+            style="?android:attr/buttonBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <Button
-            style="@style/default_button"
-            android:onClick="getNewWallpaper"
-            android:text="@string/action_next_item" />
+            <Button
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="blockCurrentWallpaper"
+                android:text="@string/action_disable" />
 
-        <Button
-            style="@style/default_button"
-            android:onClick="viewAllItems"
-            android:text="@string/action_view_items_all" />
+            <Button
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="getNewWallpaper"
+                android:text="@string/action_next_item" />
 
+        </LinearLayout>
 
     </LinearLayout>
 

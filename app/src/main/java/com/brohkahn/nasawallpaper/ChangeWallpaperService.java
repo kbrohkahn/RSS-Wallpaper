@@ -196,6 +196,9 @@ public class ChangeWallpaperService extends Service {
     private BroadcastReceiver changeWallpaperNow = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            logEvent("Received changeWallpaperNow broadcast.",
+                    "onReceive(Context context, Intent intent)",
+                    LogEntry.LogLevel.Trace);
             setNewWallpaper();
         }
     };
