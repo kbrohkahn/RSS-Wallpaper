@@ -159,7 +159,6 @@ public class ChangeWallpaperService extends Service {
 
             Intent localIntent = new Intent(Constants.WALLPAPER_UPDATED);
             LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-
         }
     }
 

@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.brohkahn.nasawallpaper">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.SET_WALLPAPER"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
 
     <application
         android:allowBackup="true"
@@ -19,6 +19,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".FeedItemListView"
+            android:label="@string/action_view_items_all">
+        </activity>
+
+        <activity android:name=".FeedItemView" />
+
         <receiver
             android:name=".MyReceiver"
             android:enabled="true"
@@ -33,7 +40,7 @@
             android:enabled="true" />
         <service
             android:name=".DownloadWallpaperService"
-            android:exported="false"/>
+            android:exported="false" />
     </application>
 
 </manifest>

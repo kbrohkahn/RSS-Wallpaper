@@ -23,8 +23,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.brohkahn.loggerlibrary.ErrorHandler;
 import com.brohkahn.loggerlibrary.LogDBHelper;
@@ -35,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     private final int REQUEST_PERMISSIONS = 0;
+
+    private int currentItemId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     public void updateCurrentItem() {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         final Resources resources = getResources();
-        int currentItemId = settings.getInt(resources.getString(R.string.key_current_item), 0);
+        currentItemId = settings.getInt(resources.getString(R.string.key_current_item), 0);
         String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
 
         FeedItem currentItem = FeedDBHelper.getFeedItem(this, currentItemId);
@@ -70,6 +74,9 @@ public class MainActivity extends AppCompatActivity {
             Bitmap image = BitmapFactory.decodeFile(imageDirectory + currentItem.imageName);
 
             ((ImageView) findViewById(R.id.current_item_image)).setImageBitmap(image);
+        } else {
+            ((TextView) findViewById(R.id.current_item_title)).setText("");
+
         }
     }
 
@@ -157,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.action_settings:
+            case R.id.action_view_logs:
                 startActivity(new Intent(this, LogViewList.class));
                 return true;
             case R.id.action_about:
@@ -166,18 +173,40 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_restart:
                 restartService();
                 return true;
-            case R.id.action_next_item:
-                logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
-                Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
+    public void getNewWallpaper(View view) {
+        getNewWallpaper();
+    }
+
+    public void blockCurrentWallpaper(View view) {
+        logEvent("Disabling current item", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
+        FeedDBHelper.updateItemImageEnabled(this, currentItemId, false);
+        getNewWallpaper();
+        getNewWallpaper();
+    }
+
+    private void getNewWallpaper() {
+        logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
+        showToast("Setting new wallpaper, this may take a few seconds.");
+
+        Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    public void viewAllItems(View view) {
+        startActivity(new Intent(this, FeedItemListView.class));
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
     private void logEvent(String message, String function, LogEntry.LogLevel level) {
         LogDBHelper.saveLogEntry(this, message, null, TAG, function, level);
     }
-
 }

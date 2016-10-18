@@ -2,13 +2,19 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!--<item-->
+        <!--android:id="@+id/action_block"-->
+        <!--android:icon="@drawable/ic_block_white_24dp"-->
+        <!--android:title="@string/action_disable"-->
+        <!--app:showAsAction="ifRoom" />-->
+
+    <!--<item-->
+        <!--android:id="@+id/action_next_item"-->
+        <!--android:icon="@drawable/ic_fast_forward_white_24dp"-->
+        <!--android:title="@string/action_next_item"-->
+        <!--app:showAsAction="ifRoom" />-->
     <item
-        android:id="@+id/action_next_item"
-        android:icon="@drawable/ic_fast_forward_white_24dp"
-        android:title="@string/action_view_logs"
-        app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/action_settings"
+        android:id="@+id/action_view_logs"
         android:title="@string/action_view_logs"
         app:showAsAction="never" />
     <item

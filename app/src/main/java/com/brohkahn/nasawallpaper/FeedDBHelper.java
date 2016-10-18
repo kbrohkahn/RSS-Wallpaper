@@ -34,7 +34,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 //            "ALTER TABLE " + FeedDBEntry.TABLE_NAME +
 //                    " ADD COLUMN " + FeedDBEntry.COLUMN_STACK_TRACE + " TEXT;";
 
-    private FeedDBHelper(Context context) {
+    public FeedDBHelper(Context context) {
         super(context, DB_NAME, null, DATABASE_VERSION);
     }
 
@@ -104,8 +104,8 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         return runUpdateQuery(query);
     }
 
-    private boolean updateIgnoredImage(int id, boolean enabled) {
-        String query = String.format(Locale.US, "UPDATE %s SET %s=%d, WHERE %s=%d",
+    private boolean updateImageEnabled(int id, boolean enabled) {
+        String query = String.format(Locale.US, "UPDATE %s SET %s=%d WHERE %s=%d",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_ENABLED,
                 enabled ? 1 : 0,
@@ -188,22 +188,22 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         return success;
     }
 
-    public static boolean updateItemImageIgnore(Context context, int id, boolean enabled) {
+    public static boolean updateItemImageEnabled(Context context, int id, boolean enabled) {
         FeedDBHelper helper = new FeedDBHelper(context);
-        boolean success = helper.updateIgnoredImage(id, enabled);
+        boolean success = helper.updateImageEnabled(id, enabled);
         helper.close();
         return success;
     }
 
-    private static class FeedDBEntry implements BaseColumns {
-        private static final String TABLE_NAME = "feed_entries";
-        private static final String COLUMN_TITLE = "title";
-        private static final String COLUMN_LINK = "link";
-        private static final String COLUMN_IMAGE_LINK = "image_link";
-        private static final String COLUMN_PUBLISHED = "published";
-        private static final String COLUMN_DOWNLOADED = "downloaded";
-        private static final String COLUMN_IMAGE_NAME = "image_name";
-        private static final String COLUMN_ENABLED = "enabled";
+    public static class FeedDBEntry implements BaseColumns {
+        public static final String TABLE_NAME = "feed_entries";
+        public static final String COLUMN_TITLE = "title";
+        public static final String COLUMN_LINK = "link";
+        public static final String COLUMN_IMAGE_LINK = "image_link";
+        public static final String COLUMN_PUBLISHED = "published";
+        public static final String COLUMN_DOWNLOADED = "downloaded";
+        public static final String COLUMN_IMAGE_NAME = "image_name";
+        public static final String COLUMN_ENABLED = "enabled";
     }
 }
 
