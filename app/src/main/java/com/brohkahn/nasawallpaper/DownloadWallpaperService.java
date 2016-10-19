@@ -52,11 +52,11 @@ public class DownloadWallpaperService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
-            final String action = intent.getAction();
+            String action = intent.getAction();
             if (ACTION_DOWNLOAD_RSS.equals(action)) {
                 imageDirectory = PreferenceManager.getDefaultSharedPreferences(this).getString(getResources().getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
 
-                final String feedUrl = intent.getStringExtra(EXTRA_FEED_URL);
+                String feedUrl = intent.getStringExtra(EXTRA_FEED_URL);
                 downloadFeedItems(feedUrl);
             }
         }

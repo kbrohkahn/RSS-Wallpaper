@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void updateCurrentItem() {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-        final Resources resources = getResources();
+        Resources resources = getResources();
         currentItemId = settings.getInt(resources.getString(R.string.key_current_item), 0);
         String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
 
@@ -201,12 +201,12 @@ public class MainActivity extends AppCompatActivity {
         showToast("Setting new wallpaper, this may take a few seconds.");
         logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 
-        final Context context = this;
         new Handler().post(new Runnable() {
             @Override
             public void run() {
                 Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
-                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
             }
         });
 

@@ -69,8 +69,8 @@ public class ChangeWallpaperService extends Service {
             return START_NOT_STICKY;
         }
 
-        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        final Resources resources = getResources();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Resources resources = getResources();
 
         numberToShuffle = preferences.getInt(resources.getString(R.string.key_number_to_shuffle), 7);
         setHomeWallpaper = preferences.getBoolean(resources.getString(R.string.key_set_home_screen), true);
@@ -110,7 +110,7 @@ public class ChangeWallpaperService extends Service {
     private void setNewWallpaper() {
         logEvent("Setting new wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Message);
 
-        final String keyCurrentItem = getResources().getString(R.string.key_current_item);
+        String keyCurrentItem = getResources().getString(R.string.key_current_item);
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 //        long currentItemId = settings.getLong(keyCurrentItem, 0);
 
@@ -149,6 +149,10 @@ public class ChangeWallpaperService extends Service {
                 myWallpaperManager.setBitmap(newWallpaper, null, true, WallpaperManager.FLAG_LOCK);
                 logEvent("Successfully set lock screen wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Message);
             }
+
+            newWallpaper.recycle();
+            newWallpaper = null;
+
         } catch (IOException e) {
             e.printStackTrace();
             logException(e, "setNewWallpaper()");

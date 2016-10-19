@@ -66,9 +66,8 @@ public class FeedItemListView extends AppCompatActivity {
         public FeedItemListAdaper(Context context, Cursor cursor, int flags) {
             super(context, cursor, flags);
 
-
-            final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            final Resources resources = getResources();
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+            Resources resources = getResources();
             imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
             imageDimension = (int) resources.getDimension(R.dimen.icon_size);
         }
@@ -96,7 +95,7 @@ public class FeedItemListView extends AppCompatActivity {
 
 
                 // First decode with inJustDecodeBounds=true to check dimensions
-                final BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+                BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
                 bitmapOptions.inJustDecodeBounds = true;
                 BitmapFactory.decodeFile(imageDirectory + imageName, bitmapOptions);
 
