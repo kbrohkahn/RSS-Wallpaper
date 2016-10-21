@@ -66,7 +66,7 @@ public class ErrorDialogActivity extends AppCompatActivity {
         String filename = String.format("%s Crash %s", appName, Calendar.getInstance().getTime().toString());
         FileOutputStream outputStream;
         try {
-            outputStream = openFileOutput(filename, Context.MODE_WORLD_READABLE);
+            outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
             outputStream.write(errorString.getBytes());
             outputStream.close();
         } catch (Exception e) {

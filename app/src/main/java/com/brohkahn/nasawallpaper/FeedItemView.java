@@ -22,15 +22,19 @@ public class FeedItemView extends AppCompatActivity {
         setContentView(com.brohkahn.loggerlibrary.R.layout.activity_log_view_entry);
 
         final int ID = getIntent().getIntExtra(EXTRA_KEY_FEED_ITEM_ID, -1);
-        FeedItem item = FeedDBHelper.getFeedItem(this, ID);
+
+        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext(), false);
+        FeedItem item = feedDBHelper.getFeedItem(ID);
+        feedDBHelper.close();
 
         if (item == null) {
-            LogDBHelper.saveLogEntry(this,
-                    String.format(Locale.US, "Unable to find feed item with id of %d", ID),
+            LogDBHelper logDBHelper = LogDBHelper.getHelper(getApplicationContext(), true);
+            logDBHelper.saveLogEntry(String.format(Locale.US, "Unable to find feed item with id of %d", ID),
                     null,
                     TAG,
                     "onCreate(Bundle savedInstanceState)",
                     LogEntry.LogLevel.Warning);
+            logDBHelper.close();
             finish();
             return;
         }
@@ -58,6 +62,8 @@ public class FeedItemView extends AppCompatActivity {
     }
 
     private void updateItemEnabled(int itemId, boolean enabled) {
-        FeedDBHelper.updateItemImageEnabled(this, itemId, enabled);
+        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext(), true);
+        feedDBHelper.updateImageEnabled(itemId, enabled);
+        feedDBHelper.close();
     }
 }

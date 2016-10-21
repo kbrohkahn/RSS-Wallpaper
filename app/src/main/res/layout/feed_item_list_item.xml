@@ -18,6 +18,9 @@
         android:id="@+id/feed_item_icon"
         android:layout_width="@dimen/icon_size"
         android:layout_height="@dimen/icon_size"
+        android:scaleType="fitXY"
+        android:foregroundGravity="center"
+        android:layout_marginRight="@dimen/default_margin"
         android:contentDescription="@string/current_image" />
 
     <TextView

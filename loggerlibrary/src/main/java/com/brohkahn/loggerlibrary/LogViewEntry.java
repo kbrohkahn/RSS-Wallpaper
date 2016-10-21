@@ -14,8 +14,11 @@ public class LogViewEntry extends AppCompatActivity {
 
         setContentView(R.layout.activity_log_view_entry);
 
-        int ID = getIntent().getIntExtra(EXTRA_KEY_LOG_ENTRY_ID, -1);
-        LogEntry entry = LogDBHelper.getLogEntry(this, ID);
+        // get entry from ID
+        int id = getIntent().getIntExtra(EXTRA_KEY_LOG_ENTRY_ID, -1);
+        LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext(), false);
+        LogEntry entry = helper.getLogEntry(id);
+        helper.close();
 
         findViewById(R.id.log_entry_layout).setBackgroundColor(getResources().getColor(LogEntry.getColorId(entry.level)));
 

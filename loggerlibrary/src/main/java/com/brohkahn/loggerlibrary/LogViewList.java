@@ -4,56 +4,71 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class LogViewList extends AppCompatActivity {
-    Cursor logEntryCursor;
+    LogViewListAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_view_list);
 
-        LogDBHelper helper = new LogDBHelper(this);
-
-        SQLiteDatabase db = helper.getReadableDatabase();
-
-        String query = String.format(Locale.US, "SELECT * FROM %s ORDER BY %s DESC",
-                LogDBHelper.LogDBEntry.TABLE_NAME,
-                LogDBHelper.LogDBEntry.COLUMN_TIME);
-        logEntryCursor = db.rawQuery(query, null);
-
-
-        LogViewListAdaper adapter = new LogViewListAdaper(this, logEntryCursor, 0);
+        CursorLoader cursorLoader = new CursorLoader(getApplicationContext(),
+                Uri.EMPTY,
+                LogDBHelper.LogDBEntry.getAllColumns(),
+                null,
+                null,
+                LogDBHelper.LogDBEntry.COLUMN_TIME + " DESC") {
+            @Override
+            public Cursor loadInBackground() {
+                LogDBHelper dbHelper = LogDBHelper.getHelper(getApplicationContext(), false);
+                SQLiteDatabase db = dbHelper.getReadableDatabase();
+                return db.query(LogDBHelper.LogDBEntry.TABLE_NAME,
+                        getProjection(),
+                        getSelection(),
+                        getSelectionArgs(),
+                        null,
+                        null,
+                        this.getSortOrder(),
+                        "5000");
+            }
+        };
+        adapter = new LogViewListAdapter(this, cursorLoader.loadInBackground(), 0);
 
         ListView listView = (ListView) findViewById(R.id.log_list_view);
         listView.setAdapter(adapter);
-
-        helper.close();
-
     }
 
     @Override
     protected void onDestroy() {
-        logEntryCursor.close();
+        adapter.getCursor().close();
+        adapter.changeCursor(null);
+        adapter = null;
+
         super.onDestroy();
     }
 
-    public class LogViewListAdaper extends CursorAdapter {
+    public class LogViewListAdapter extends CursorAdapter {
         private SimpleDateFormat dateFormat;
 
-        public LogViewListAdaper(Context context, Cursor cursor, int flags) {
+        private LogViewListAdapter(Context context, Cursor cursor, int flags) {
             super(context, cursor, flags);
 
             dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
@@ -62,9 +77,9 @@ public class LogViewList extends AppCompatActivity {
         public void bindView(View view, Context context, Cursor cursor) {
             TextView dateTextView = (TextView) view.findViewById(R.id.list_item_date);
             long dateInMillis = cursor.getLong(cursor.getColumnIndexOrThrow(LogDBHelper.LogDBEntry.COLUMN_TIME));
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(dateInMillis);
-            dateTextView.setText(dateFormat.format(calendar.getTime()));
+            Date date = new Date();
+            date.setTime(dateInMillis);
+            dateTextView.setText(dateFormat.format(date));
 
             TextView messageTextView = (TextView) view.findViewById(R.id.list_item_message);
             String message = cursor.getString(cursor.getColumnIndexOrThrow(LogDBHelper.LogDBEntry.COLUMN_MESSAGE));
@@ -93,4 +108,26 @@ public class LogViewList extends AppCompatActivity {
         intent.putExtra(LogViewEntry.EXTRA_KEY_LOG_ENTRY_ID, ID);
         startActivity(intent);
     }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.log_list_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        if (item.getItemId() == R.id.delete_logs) {
+            LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext(), true);
+            helper.deleteLogs();
+            helper.close();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
 }

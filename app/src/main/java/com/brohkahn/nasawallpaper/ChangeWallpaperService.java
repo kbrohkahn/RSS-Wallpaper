@@ -21,6 +21,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.brohkahn.loggerlibrary.ErrorHandler;
 import com.brohkahn.loggerlibrary.LogDBHelper;
@@ -50,6 +51,9 @@ public class ChangeWallpaperService extends Service {
     private Random random = new Random();
     private Timer timer;
 
+    public static Bitmap currentImage;
+
+
     public ChangeWallpaperService() {
     }
 
@@ -60,7 +64,7 @@ public class ChangeWallpaperService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, false));
+//        Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, false));
 
         int internetPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
         int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
@@ -114,7 +118,10 @@ public class ChangeWallpaperService extends Service {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 //        long currentItemId = settings.getLong(keyCurrentItem, 0);
 
-        List<FeedItem> itemsToShuffle = FeedDBHelper.getRecentItems(this, numberToShuffle);
+        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this, false);
+        List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItems(numberToShuffle);
+        feedDBHelper.close();
+
         int count = itemsToShuffle.size();
         if (count == 0) {
             logEvent("No available images to set as wallpaper", "setNewWallpaper()", LogEntry.LogLevel.Warning);
@@ -129,29 +136,50 @@ public class ChangeWallpaperService extends Service {
                 "setNewWallpaper()",
                 LogEntry.LogLevel.Message);
         try {
-            WallpaperManager myWallpaperManager = WallpaperManager.getInstance(getApplicationContext());
-            Bitmap newWallpaper = BitmapFactory.decodeFile(imageDirectory + newItem.imageName);
-
+            // get screen height (output wallpaper height)
             WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
             Display display = wm.getDefaultDisplay();
             Point size = new Point();
             display.getSize(size);
             int screenHeight = size.y;
 
-            int newWidth = newWallpaper.getWidth() * screenHeight / newWallpaper.getHeight();
+            // First decode with inJustDecodeBounds=true to check dimensions
+            BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+            bitmapOptions.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(imageDirectory + newItem.imageName, bitmapOptions);
 
+            // Calculate inSampleSize
+            int imageHeight = bitmapOptions.outHeight;
+            int inSampleSize = 1;
+            while (imageHeight > screenHeight) {
+                imageHeight /= 2;
+                inSampleSize *= 2;
+            }
+
+            // Decode bitmap with inSampleSize set
+            bitmapOptions.inSampleSize = inSampleSize;
+            bitmapOptions.inJustDecodeBounds = false;
+            currentImage = BitmapFactory.decodeFile(imageDirectory + newItem.imageName, bitmapOptions);
+
+            WallpaperManager myWallpaperManager = WallpaperManager.getInstance(this);
             if (setHomeWallpaper) {
-                myWallpaperManager.setBitmap(Bitmap.createScaledBitmap(newWallpaper, newWidth, screenHeight, false));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    myWallpaperManager.setBitmap(currentImage, null, true, WallpaperManager.FLAG_SYSTEM);
+                } else {
+                    myWallpaperManager.setBitmap(currentImage);
+                }
+
                 logEvent("Successfully set wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Message);
             }
 
-            if (setLockWallpaper && Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
-                myWallpaperManager.setBitmap(newWallpaper, null, true, WallpaperManager.FLAG_LOCK);
-                logEvent("Successfully set lock screen wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Message);
+            if (setLockWallpaper) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    myWallpaperManager.setBitmap(currentImage, null, true, WallpaperManager.FLAG_LOCK);
+                    logEvent("Successfully set lock screen wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Message);
+                } else {
+                    Toast.makeText(this, "Not available before Android 7.0 Nougat.", Toast.LENGTH_SHORT).show();
+                }
             }
-
-            newWallpaper.recycle();
-            newWallpaper = null;
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -168,12 +196,16 @@ public class ChangeWallpaperService extends Service {
 
     private void logEvent(String message, String function, LogEntry.LogLevel level) {
         Log.d(TAG, function + ": " + message);
-        LogDBHelper.saveLogEntry(this, message, null, TAG, function, level);
+        LogDBHelper helper = LogDBHelper.getHelper(this, true);
+        helper.saveLogEntry(message, null, TAG, function, level);
+        helper.close();
     }
 
     private void logException(Exception e, String function) {
         Log.d(TAG, function + ": " + e.getLocalizedMessage());
-        LogDBHelper.saveLogEntry(this, e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
+        LogDBHelper helper = LogDBHelper.getHelper(this, true);
+        helper.saveLogEntry(e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
+        helper.close();
     }
 
     private TimerTask downloadRSSTask = new TimerTask() {

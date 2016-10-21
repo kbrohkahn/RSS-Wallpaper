@@ -1,16 +1,7 @@
 package com.brohkahn.loggerlibrary;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.net.Uri;
-import android.os.Environment;
-import android.support.v7.app.AlertDialog;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Calendar;
 
 public class ErrorHandler implements Thread.UncaughtExceptionHandler {
     private Context context;
@@ -33,12 +24,15 @@ public class ErrorHandler implements Thread.UncaughtExceptionHandler {
     public void uncaughtException(Thread t, Throwable e) {
         final String errorString = getStackTraceString(e);
         e.printStackTrace();
-        LogDBHelper.saveLogEntry(context, e.getLocalizedMessage(), errorString, className, "Unknown", LogEntry.LogLevel.Error);
+
+        LogDBHelper logDBHelper = LogDBHelper.getHelper(context.getApplicationContext(), true);
+        logDBHelper.saveLogEntry(e.getLocalizedMessage(), errorString, className, "Unknown", LogEntry.LogLevel.Error);
+        logDBHelper.close();
 
         if (isInForeground) {
             final Intent intent = new Intent(context, ErrorDialogActivity.class);
             intent.putExtra(ErrorDialogActivity.EXTRA_KEY_APPLICATION_NAME, appName);
-            intent.putExtra(ErrorDialogActivity.EXTRA_KEY_DEVELOPER_EMAIL, developerEmail );
+            intent.putExtra(ErrorDialogActivity.EXTRA_KEY_DEVELOPER_EMAIL, developerEmail);
             intent.putExtra(ErrorDialogActivity.EXTRA_KEY_ERROR_STRING, errorString);
             context.getApplicationContext().startActivity(intent);
         } else {

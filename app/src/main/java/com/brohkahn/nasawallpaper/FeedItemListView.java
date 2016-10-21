@@ -7,8 +7,10 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -29,41 +31,55 @@ import java.util.Locale;
 public class FeedItemListView extends AppCompatActivity {
     public static final String TAG = "FeedItemListView";
 
-    private Cursor feedItemCursor;
+    public FeedItemListAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.feed_item_list_view);
 
-        FeedDBHelper helper = new FeedDBHelper(this);
+        CursorLoader cursorLoader = new CursorLoader(getApplicationContext(),
+                Uri.EMPTY,
+                FeedDBHelper.FeedDBEntry.getAllColumns(),
+                null,
+                null,
+                FeedDBHelper.FeedDBEntry.COLUMN_PUBLISHED + " DESC") {
+            @Override
+            public Cursor loadInBackground() {
+                FeedDBHelper dbHelper = FeedDBHelper.getHelper(getApplicationContext(), false);
+                SQLiteDatabase db = dbHelper.getReadableDatabase();
+                return db.query(FeedDBHelper.FeedDBEntry.TABLE_NAME,
+                        getProjection(),
+                        getSelection(),
+                        getSelectionArgs(),
+                        null,
+                        null,
+                        this.getSortOrder(),
+                        "100");
+            }
+        };
 
-        SQLiteDatabase db = helper.getReadableDatabase();
-
-        String query = String.format(Locale.US, "SELECT * FROM %s ORDER BY %s DESC",
-                FeedDBHelper.FeedDBEntry.TABLE_NAME,
-                FeedDBHelper.FeedDBEntry.COLUMN_PUBLISHED);
-        feedItemCursor = db.rawQuery(query, null);
-
-        FeedItemListAdaper adapter = new FeedItemListAdaper(this, feedItemCursor, 0);
+        adapter = new FeedItemListAdapter(this, cursorLoader.loadInBackground(), 0);
 
         ListView listView = (ListView) findViewById(R.id.feed_item_list_view);
         listView.setAdapter(adapter);
 
-        helper.close();
     }
+
 
     @Override
     protected void onDestroy() {
-        feedItemCursor.close();
+        adapter.getCursor().close();
+        adapter.changeCursor(null);
+        adapter = null;
         super.onDestroy();
     }
 
-    public class FeedItemListAdaper extends CursorAdapter {
+    public class FeedItemListAdapter extends CursorAdapter {
         private String imageDirectory;
         private int imageDimension;
 
-        public FeedItemListAdaper(Context context, Cursor cursor, int flags) {
+        public FeedItemListAdapter(Context context, Cursor cursor, int flags) {
             super(context, cursor, flags);
 
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -93,14 +109,12 @@ public class FeedItemListView extends AppCompatActivity {
                 // get bitmap
                 String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry.COLUMN_IMAGE_NAME));
 
-
                 // First decode with inJustDecodeBounds=true to check dimensions
                 BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
                 bitmapOptions.inJustDecodeBounds = true;
                 BitmapFactory.decodeFile(imageDirectory + imageName, bitmapOptions);
 
                 // Calculate inSampleSize
-
                 int imageHeight = bitmapOptions.outHeight;
                 int imageWidth = bitmapOptions.outWidth;
                 int inSampleSize = 1;
@@ -111,8 +125,6 @@ public class FeedItemListView extends AppCompatActivity {
                 }
 
                 bitmapOptions.inSampleSize = inSampleSize;
-
-                // Decode bitmap with inSampleSize set
                 bitmapOptions.inJustDecodeBounds = false;
 
                 // load imageView, scale bitmap, and set image
@@ -123,7 +135,6 @@ public class FeedItemListView extends AppCompatActivity {
                         "bindView(View view, Context context, Cursor cursor)",
                         LogEntry.LogLevel.Trace);
             }
-
 
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -139,7 +150,9 @@ public class FeedItemListView extends AppCompatActivity {
     }
 
     private void updateItemEnabled(int itemId, boolean enabled) {
-        FeedDBHelper.updateItemImageEnabled(this, itemId, enabled);
+        FeedDBHelper helper = FeedDBHelper.getHelper(getApplicationContext(), true);
+        helper.updateImageEnabled(itemId, enabled);
+        helper.close();
     }
 
     public void displayFeedItem(int ID) {
@@ -150,6 +163,8 @@ public class FeedItemListView extends AppCompatActivity {
 
     private void logEvent(String message, String function, LogEntry.LogLevel level) {
         Log.d(TAG, function + ": " + message);
-        LogDBHelper.saveLogEntry(this, message, null, TAG, function, level);
+        LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext(), true);
+        helper.saveLogEntry(message, null, TAG, function, level);
+        helper.close();
     }
 }

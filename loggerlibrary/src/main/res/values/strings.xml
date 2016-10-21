@@ -8,6 +8,8 @@
     <string name="crash_email_subject">%1$s Crash Report</string>
     <string name="crash_email_body">Enter additional message below (what you were doing when the app crashed):\n</string>
 
+    <string name="delete_logs">Delete logs</string>
+
     <string name="time">Time</string>
     <string name="message">Message</string>
     <string name="log_class">Class</string>

@@ -37,6 +37,9 @@ public class DownloadWallpaperService extends IntentService {
 
     private String imageDirectory;
 
+    private static LogDBHelper logDBHelper;
+    private static FeedDBHelper feedDBHelper;
+
     public DownloadWallpaperService() {
 
         super("DownloadWallpaperService");
@@ -51,6 +54,9 @@ public class DownloadWallpaperService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        logDBHelper = LogDBHelper.getHelper(this, true);
+        feedDBHelper = FeedDBHelper.getHelper(this, true);
+
         if (intent != null) {
             String action = intent.getAction();
             if (ACTION_DOWNLOAD_RSS.equals(action)) {
@@ -73,18 +79,17 @@ public class DownloadWallpaperService extends IntentService {
             connection.connect();
 
             // download the file
-            logEvent(this, "Downloading RSS file.", "downloadFeedItems(String urlString)", LogEntry.LogLevel.Message);
+            logEvent("Downloading RSS file.", "downloadFeedItems(String urlString)", LogEntry.LogLevel.Message);
             InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
             // parse xml
-            logEvent(this, "Parsing XML.", "downloadFeedItems(String urlString)", LogEntry.LogLevel.Message);
-            FeedParser feedParser = new FeedParser(this);
+            logEvent("Parsing XML.", "downloadFeedItems(String urlString)", LogEntry.LogLevel.Message);
+            FeedParser feedParser = new FeedParser();
             feedParser.parse(input);
             input.close();
 
-            List<FeedItem> entriesNeedingDownload = FeedDBHelper.getItemsWithoutImages(this);
-            logEvent(this,
-                    String.format(Locale.US, "XML parse complete, need to download %d images.", entriesNeedingDownload.size()),
+            List<FeedItem> entriesNeedingDownload = feedDBHelper.getItemsWithoutImages();
+            logEvent(String.format(Locale.US, "XML parse complete, need to download %d images.", entriesNeedingDownload.size()),
                     "downloadFeedItems(String urlString)",
                     LogEntry.LogLevel.Message);
             for (FeedItem entry : entriesNeedingDownload) {
@@ -94,13 +99,13 @@ public class DownloadWallpaperService extends IntentService {
             broadcastCompletion();
         } catch (XmlPullParserException | ParseException | IOException e) {
             Log.e("Error: ", e.getMessage());
-            logException(this, e, "downloadFeedItems(String urlString)");
+            logException(e, "downloadFeedItems(String urlString)");
         }
     }
 
     private void downloadFeedItem(FeedItem entry) {
         try {
-            logEvent(this, String.format(Locale.US, "Downloading feed image for %s.", entry.title),
+            logEvent(String.format(Locale.US, "Downloading feed image for %s.", entry.title),
                     "downloadFeedItem(FeedItem entry)",
                     LogEntry.LogLevel.Message);
 
@@ -133,21 +138,30 @@ public class DownloadWallpaperService extends IntentService {
             output.close();
             input.close();
 
-            FeedDBHelper.updateItemImageDownload(this, entry.id, imageName);
+            feedDBHelper.updateImageDownload(entry.id, imageName);
 
-            logEvent(this, String.format(Locale.US, "Successfully downloaded and saved feed image for %s.", entry.title),
+            logEvent(String.format(Locale.US, "Successfully downloaded and saved feed image for %s.", entry.title),
                     "downloadFeedItem(FeedItem entry)",
                     LogEntry.LogLevel.Message);
 
         } catch (Exception e) {
             Log.e("Error: ", e.getMessage());
-            logException(this, e, "downloa(FeedItem entry)");
+            logException(e, "downloa(FeedItem entry)");
         }
     }
+
 
     private void broadcastCompletion() {
         Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
+        feedDBHelper.close();
+        feedDBHelper = null;
+
+        logDBHelper.close();
+        logDBHelper = null;
+
+        stopSelf();
     }
 
     public static class FeedParser {
@@ -162,13 +176,7 @@ public class DownloadWallpaperService extends IntentService {
 
         private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm zzz", Locale.US);
 
-        private Context context;
-
         private static final String ns = null;
-
-        private FeedParser(Context context) {
-            this.context = context;
-        }
 
         /**
          * Parse an Atom feed, returning a collection of FeedItem objects.
@@ -179,7 +187,7 @@ public class DownloadWallpaperService extends IntentService {
          */
         private void parse(InputStream in)
                 throws XmlPullParserException, IOException, ParseException {
-            logEvent(context, "Parsing feed.", "parse(InputStream in)", LogEntry.LogLevel.Message);
+            logEvent("Parsing feed.", "parse(InputStream in)", LogEntry.LogLevel.Message);
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
             parser.setInput(in, null);
@@ -252,19 +260,18 @@ public class DownloadWallpaperService extends IntentService {
                 }
             }
 
-            if (FeedDBHelper.feedItemExists(context, imageLink)) {
-                logEvent(context,
-                        String.format("Image %s already exists.", title),
+            if (feedDBHelper.feedItemExists(imageLink)) {
+                logEvent(String.format("Image %s already exists.", title),
                         "readFeedItem(XmlPullParser parser)",
                         LogEntry.LogLevel.Trace);
 
             } else {
-                logEvent(context,
-                        String.format("Saving feed item title=%s, link=%s, imageLink=%s, published=%s",
-                                title, link, imageLink, publishedOn.toString()),
+                logEvent(String.format("Saving feed item title=%s, link=%s, imageLink=%s, published=%s",
+                        title, link, imageLink, publishedOn.toString()),
                         "readFeedItem(XmlPullParser parser)",
                         LogEntry.LogLevel.Message);
-                FeedDBHelper.saveFeedItem(context, title, link, imageLink, publishedOn);
+
+                feedDBHelper.saveFeedEntry(title, link, imageLink, publishedOn);
             }
         }
 
@@ -340,11 +347,11 @@ public class DownloadWallpaperService extends IntentService {
         }
     }
 
-    private static void logEvent(Context context, String message, String function, LogEntry.LogLevel level) {
-        LogDBHelper.saveLogEntry(context, message, null, TAG, function, level);
+    private static void logEvent(String message, String function, LogEntry.LogLevel level) {
+        logDBHelper.saveLogEntry(message, null, TAG, function, level);
     }
 
-    private static void logException(Context context, Exception e, String function) {
-        LogDBHelper.saveLogEntry(context, e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
+    private static void logException(Exception e, String function) {
+        logDBHelper.saveLogEntry(e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
     }
 }

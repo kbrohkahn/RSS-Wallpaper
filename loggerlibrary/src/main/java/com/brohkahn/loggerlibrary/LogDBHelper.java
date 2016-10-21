@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -15,7 +14,7 @@ import java.util.Locale;
 
 public class LogDBHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 2;
-    private static final String TAG = "LogDBHelper";
+//    private static final String TAG = "LogDBHelper";
 
     private static final String DB_NAME = "LOG_ENTRIES.DB";
 
@@ -33,7 +32,17 @@ public class LogDBHelper extends SQLiteOpenHelper {
 //            "ALTER TABLE " + LogDBEntry.TABLE_NAME +
 //                    " ADD COLUMN " + LogDBEntry.COLUMN_STACK_TRACE + " TEXT;";
 
-    public LogDBHelper(Context context) {
+    private static LogDBHelper instance;
+    private SQLiteDatabase db;
+
+    public static synchronized LogDBHelper getHelper(Context context, boolean writeAccess) {
+        if (instance == null) {
+            instance = new LogDBHelper(context.getApplicationContext());
+        }
+        return instance;
+    }
+
+    private LogDBHelper(Context context) {
         super(context, DB_NAME, null, DATABASE_VERSION);
     }
 
@@ -49,8 +58,13 @@ public class LogDBHelper extends SQLiteOpenHelper {
 //        }
     }
 
-    private long saveLogEntry(String message, String stackTrace, String logClass, String logFunction, LogEntry.LogLevel level) {
-        SQLiteDatabase db = getWritableDatabase();
+    public void deleteLogs() {
+        db.delete(LogDBEntry.TABLE_NAME, null, null);
+        onCreate(db);
+    }
+
+    public long saveLogEntry(String message, String stackTrace, String logClass, String logFunction, LogEntry.LogLevel level) {
+        openDatabaseIfNecessary(true);
 
         ContentValues values = new ContentValues();
         values.put(LogDBEntry.COLUMN_MESSAGE, message);
@@ -63,8 +77,8 @@ public class LogDBHelper extends SQLiteOpenHelper {
         return db.insert(LogDBEntry.TABLE_NAME, null, values);
     }
 
-    private LogEntry getLogEntry(int id) {
-        SQLiteDatabase db = getReadableDatabase();
+    public LogEntry getLogEntry(int id) {
+        openDatabaseIfNecessary(false);
 
         String query = String.format(Locale.US, "SELECT * FROM %s where %s=%d",
                 LogDBEntry.TABLE_NAME,
@@ -90,10 +104,10 @@ public class LogDBHelper extends SQLiteOpenHelper {
         return entry;
     }
 
-    private List<LogEntry> getAllEntries() {
-        SQLiteDatabase db = getReadableDatabase();
-
+    public List<LogEntry> getAllEntries() {
         String query = String.format(Locale.US, "SELECT * FROM %s", LogDBEntry.TABLE_NAME);
+
+        openDatabaseIfNecessary(false);
 
         Cursor cursor = db.rawQuery(query, null);
 
@@ -119,23 +133,22 @@ public class LogDBHelper extends SQLiteOpenHelper {
 
     }
 
-    public static void saveLogEntry(Context context, String message, String stackTrace, String tag, String function, LogEntry.LogLevel type) {
-        if (BuildConfig.DEBUG) {
-            Log.d(tag, String.format(Locale.US, "%s at %s: %s", type.toString(), function, message));
+    private void openDatabaseIfNecessary(boolean writeAccess) {
+        boolean unopenedDatabase = db == null || !db.isOpen();
+        if (!unopenedDatabase && db.isReadOnly() && writeAccess) {
+            db.close();
+            unopenedDatabase = true;
         }
 
-        LogDBHelper helper = new LogDBHelper(context);
-        helper.saveLogEntry(message, stackTrace, tag, function, type);
-        helper.close();
+        if (unopenedDatabase) {
+            if (writeAccess) {
+                db = getWritableDatabase();
+            } else {
+                db = getReadableDatabase();
+            }
+        }
     }
 
-    public static LogEntry getLogEntry(Context context, int id) {
-        LogDBHelper helper = new LogDBHelper(context);
-        LogEntry entry = helper.getLogEntry(id);
-        helper.close();
-        return entry;
-    }
-//
 //    public static Cursor getAllEntries(Context context, String DB_NAME) {
 //        LogDBHelper helper = new LogDBHelper(context, DB_NAME);
 //
@@ -156,5 +169,9 @@ public class LogDBHelper extends SQLiteOpenHelper {
         public static final String COLUMN_FUNCTION = "function";
         public static final String COLUMN_TIME = "creation_time";
         public static final String COLUMN_LEVEL = "level";
+
+        public static String[] getAllColumns() {
+            return new String[]{_ID, COLUMN_MESSAGE, COLUMN_STACK_TRACE, COLUMN_CLASS, COLUMN_FUNCTION, COLUMN_TIME, COLUMN_LEVEL};
+        }
     }
 }

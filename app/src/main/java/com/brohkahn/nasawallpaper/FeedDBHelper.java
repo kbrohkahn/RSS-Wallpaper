@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -34,7 +33,19 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 //            "ALTER TABLE " + FeedDBEntry.TABLE_NAME +
 //                    " ADD COLUMN " + FeedDBEntry.COLUMN_STACK_TRACE + " TEXT;";
 
-    public FeedDBHelper(Context context) {
+
+    private static FeedDBHelper instance;
+    private SQLiteDatabase db;
+
+    public static FeedDBHelper getHelper(Context context, boolean writeAccess) {
+        if (instance == null) {
+            instance = new FeedDBHelper(context);
+        }
+
+        return instance;
+    }
+
+    private FeedDBHelper(Context context) {
         super(context, DB_NAME, null, DATABASE_VERSION);
     }
 
@@ -50,37 +61,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 //        }
     }
 
-    private List<FeedItem> getItems(String query) {
-        SQLiteDatabase db = getReadableDatabase();
-
-        Cursor cursor = db.rawQuery(query, null);
-
-        List<FeedItem> items = new ArrayList<>();
-        for (int i = 0; i < cursor.getCount(); i++) {
-            cursor.moveToPosition(i);
-
-            int id = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry._ID));
-            String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_TITLE));
-            String link = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_LINK));
-            String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_NAME));
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(cursor.getLong(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_PUBLISHED)));
-
-            FeedItem item = new FeedItem(id, title, link, imageName, calendar.getTime());
-            item.downloaded = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_DOWNLOADED)) == 1;
-            item.enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_ENABLED)) == 1;
-            item.imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_LINK));
-
-            items.add(item);
-        }
-
-        cursor.close();
-        return items;
-    }
-
-    private long saveFeedEntry(String title, String link, String imageLink, Date published) {
-        SQLiteDatabase db = getWritableDatabase();
-
+    public long saveFeedEntry(String title, String link, String imageLink, Date published) {
         ContentValues values = new ContentValues();
         values.put(FeedDBEntry.COLUMN_TITLE, title);
         values.put(FeedDBEntry.COLUMN_LINK, link);
@@ -89,10 +70,11 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         values.put(FeedDBEntry.COLUMN_ENABLED, 1);
         values.put(FeedDBEntry.COLUMN_DOWNLOADED, 0);
 
+        openDatabaseIfNecessary(true);
         return db.insert(FeedDBEntry.TABLE_NAME, null, values);
     }
 
-    private boolean updateImageDownload(int id, String imageName) {
+    public boolean updateImageDownload(int id, String imageName) {
         String query = String.format(Locale.US, "UPDATE %s SET %s=1, %s='%s' WHERE %s=%d",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_DOWNLOADED,
@@ -104,7 +86,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         return runUpdateQuery(query);
     }
 
-    private boolean updateImageEnabled(int id, boolean enabled) {
+    public boolean updateImageEnabled(int id, boolean enabled) {
         String query = String.format(Locale.US, "UPDATE %s SET %s=%d WHERE %s=%d",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_ENABLED,
@@ -116,26 +98,19 @@ public class FeedDBHelper extends SQLiteOpenHelper {
     }
 
     private boolean runUpdateQuery(String query) {
-        SQLiteDatabase db = getReadableDatabase();
+        openDatabaseIfNecessary(true);
         Cursor cursor = db.rawQuery(query, null);
         boolean success = cursor.moveToFirst() && cursor.getInt(0) == 1;
         cursor.close();
         return success;
     }
 
-    public static long saveFeedItem(Context context, String title, String link, String imageLink, Date published) {
-        FeedDBHelper helper = new FeedDBHelper(context);
-        long resultId = helper.saveFeedEntry(title, link, imageLink, published);
-        helper.close();
-        return resultId;
-    }
-
-    public static FeedItem getFeedItem(Context context, int id) {
+    public FeedItem getFeedItem(int id) {
         String query = String.format(Locale.US, "SELECT * FROM %s where %s=%d",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry._ID,
                 id);
-        List<FeedItem> items = getItemsFromQuery(context, query);
+        List<FeedItem> items = getItems(query);
         if (items.size() > 0) {
             return items.get(0);
         } else {
@@ -143,56 +118,85 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static List<FeedItem> getItemsWithoutImages(Context context) {
+    public List<FeedItem> getItemsWithoutImages() {
         String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=0",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_DOWNLOADED);
-        return getItemsFromQuery(context, query);
+        return getItems(query);
     }
 
-    public static List<FeedItem> getRecentItems(Context context, int count) {
-        String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=1 ORDER BY %s DESC LIMIT %d",
+    public List<FeedItem> getRecentItems(int count) {
+        String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=1 AND %s=1 AND %s is not null ORDER BY %s DESC LIMIT %d",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_ENABLED,
+                FeedDBEntry.COLUMN_DOWNLOADED,
+                FeedDBEntry.COLUMN_IMAGE_NAME,
                 FeedDBEntry.COLUMN_PUBLISHED,
                 count);
-        return getItemsFromQuery(context, query);
+        return getItems(query);
     }
 
-    public static List<FeedItem> getAllItems(Context context) {
+    public List<FeedItem> getAllItems() {
         String query = String.format(Locale.US, "SELECT * FROM %s ORDER BY %s DESC",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_PUBLISHED);
-        return getItemsFromQuery(context, query);
+        return getItems(query);
     }
 
-    public static boolean feedItemExists(Context context, String imageName) {
+    public boolean feedItemExists(String imageName) {
         String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s='%s'",
                 FeedDBEntry.TABLE_NAME,
                 FeedDBEntry.COLUMN_IMAGE_LINK,
                 imageName);
-        return getItemsFromQuery(context, query).size() > 0;
+        return getItems(query).size() > 0;
     }
 
-    private static List<FeedItem> getItemsFromQuery(Context context, String query) {
-        FeedDBHelper helper = new FeedDBHelper(context);
-        List<FeedItem> items = helper.getItems(query);
-        helper.close();
-        return items;
+    public List<FeedItem> getItems(String query) {
+        try {
+            openDatabaseIfNecessary(false);
+            db = getWritableDatabase();
+            Cursor cursor = db.rawQuery(query, null);
+
+            List<FeedItem> items = new ArrayList<>();
+            for (int i = 0; i < cursor.getCount(); i++) {
+                cursor.moveToPosition(i);
+
+                int id = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry._ID));
+                String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_TITLE));
+                String link = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_LINK));
+                String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_NAME));
+                Date date = new Date();
+                date.setTime(cursor.getLong(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_PUBLISHED)));
+
+                FeedItem item = new FeedItem(id, title, link, imageName, date);
+                item.downloaded = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_DOWNLOADED)) == 1;
+                item.enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_ENABLED)) == 1;
+                item.imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_LINK));
+
+                items.add(item);
+            }
+
+            cursor.close();
+            return items;
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
-    public static boolean updateItemImageDownload(Context context, int id, String imageName) {
-        FeedDBHelper helper = new FeedDBHelper(context);
-        boolean success = helper.updateImageDownload(id, imageName);
-        helper.close();
-        return success;
-    }
+    private void openDatabaseIfNecessary(boolean writeAccess) {
+        boolean unopenedDatabase = db == null || !db.isOpen();
+        if (!unopenedDatabase && db.isReadOnly() && writeAccess) {
+            db.close();
+            unopenedDatabase = true;
+        }
 
-    public static boolean updateItemImageEnabled(Context context, int id, boolean enabled) {
-        FeedDBHelper helper = new FeedDBHelper(context);
-        boolean success = helper.updateImageEnabled(id, enabled);
-        helper.close();
-        return success;
+        if (unopenedDatabase) {
+            if (writeAccess) {
+                db = getWritableDatabase();
+            } else {
+                db = getReadableDatabase();
+            }
+        }
     }
 
     public static class FeedDBEntry implements BaseColumns {
@@ -204,6 +208,11 @@ public class FeedDBHelper extends SQLiteOpenHelper {
         public static final String COLUMN_DOWNLOADED = "downloaded";
         public static final String COLUMN_IMAGE_NAME = "image_name";
         public static final String COLUMN_ENABLED = "enabled";
+
+
+        public static String[] getAllColumns() {
+            return new String[]{_ID, COLUMN_TITLE, COLUMN_LINK, COLUMN_IMAGE_LINK, COLUMN_PUBLISHED, COLUMN_DOWNLOADED, COLUMN_IMAGE_NAME, COLUMN_ENABLED};
+        }
     }
 }
 

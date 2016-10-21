@@ -9,7 +9,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
@@ -27,9 +26,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.brohkahn.loggerlibrary.ErrorHandler;
 import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 import com.brohkahn.loggerlibrary.LogViewList;
@@ -41,11 +38,12 @@ public class MainActivity extends AppCompatActivity {
 
     private int currentItemId;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, true));
+//        Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, true));
 
         setContentView(R.layout.activity_main);
 
@@ -56,28 +54,47 @@ public class MainActivity extends AppCompatActivity {
 
             showPermissionDialog();
         } else {
-            updateCurrentItem();
+            updateCurrentItem(true);
         }
     }
 
-    public void updateCurrentItem() {
+    @Override
+    protected void onDestroy() {
+        if (ChangeWallpaperService.currentImage != null) {
+            ChangeWallpaperService.currentImage.recycle();
+            ChangeWallpaperService.currentImage = null;
+        }
+        super.onDestroy();
+    }
+
+    public void updateCurrentItem(boolean reloadImage) {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         Resources resources = getResources();
         currentItemId = settings.getInt(resources.getString(R.string.key_current_item), 0);
         String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
 
-        FeedItem currentItem = FeedDBHelper.getFeedItem(this, currentItemId);
+        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext(), false);
+        FeedItem currentItem = feedDBHelper.getFeedItem(currentItemId);
+        feedDBHelper.close();
+
         if (currentItem != null) {
             ((TextView) findViewById(R.id.current_item_title)).setText(currentItem.title);
             ((TextView) findViewById(R.id.current_item_published)).setText(currentItem.published.toString());
             ((TextView) findViewById(R.id.current_item_link)).setText(currentItem.link);
 
-            Bitmap image = BitmapFactory.decodeFile(imageDirectory + currentItem.imageName);
+            if (ChangeWallpaperService.currentImage == null) {
+                reloadImage = true;
+            } else if (ChangeWallpaperService.currentImage.isRecycled()) {
+                reloadImage = true;
+            }
 
-            ((ImageView) findViewById(R.id.current_item_image)).setImageBitmap(image);
+            if (reloadImage) {
+                ChangeWallpaperService.currentImage = BitmapFactory.decodeFile(imageDirectory + currentItem.imageName);
+            }
+
+            ((ImageView) findViewById(R.id.current_item_image)).setImageBitmap(ChangeWallpaperService.currentImage);
         } else {
             ((TextView) findViewById(R.id.current_item_title)).setText("");
-
         }
     }
 
@@ -101,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                     "onReceive(Context context, Intent intent)",
                     LogEntry.LogLevel.Trace);
 
-            updateCurrentItem();
+            updateCurrentItem(false);
         }
     };
 
@@ -193,12 +210,15 @@ public class MainActivity extends AppCompatActivity {
 
     public void blockCurrentWallpaper(View view) {
         logEvent("Disabling current item", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
-        FeedDBHelper.updateItemImageEnabled(this, currentItemId, false);
+
+        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext(), true);
+        feedDBHelper.updateImageEnabled(currentItemId, false);
+        feedDBHelper.close();
+
         getNewWallpaper();
     }
 
     private void getNewWallpaper() {
-        showToast("Setting new wallpaper, this may take a few seconds.");
         logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 
         new Handler().post(new Runnable() {
@@ -212,11 +232,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
+//    private void showToast(String message) {
+//        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+//    }
 
     private void logEvent(String message, String function, LogEntry.LogLevel level) {
-        LogDBHelper.saveLogEntry(this, message, null, TAG, function, level);
+        LogDBHelper logDBHelper = LogDBHelper.getHelper(this, true);
+        logDBHelper.saveLogEntry(message, null, TAG, function, level);
+        logDBHelper.close();
     }
 }
