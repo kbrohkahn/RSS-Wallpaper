@@ -260,12 +260,7 @@ public class DownloadWallpaperService extends IntentService {
                 }
             }
 
-            if (feedDBHelper.feedItemExists(imageLink)) {
-                logEvent(String.format("Image %s already exists.", title),
-                        "readFeedItem(XmlPullParser parser)",
-                        LogEntry.LogLevel.Trace);
-
-            } else {
+            if (!feedDBHelper.feedItemExists(imageLink)) {
                 logEvent(String.format("Saving feed item title=%s, link=%s, imageLink=%s, published=%s",
                         title, link, imageLink, publishedOn.toString()),
                         "readFeedItem(XmlPullParser parser)",

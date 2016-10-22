@@ -63,9 +63,7 @@ public class FeedItemListView extends AppCompatActivity {
 
         ListView listView = (ListView) findViewById(R.id.feed_item_list_view);
         listView.setAdapter(adapter);
-
     }
-
 
     @Override
     protected void onDestroy() {
@@ -79,7 +77,7 @@ public class FeedItemListView extends AppCompatActivity {
         private String imageDirectory;
         private int imageDimension;
 
-        public FeedItemListAdapter(Context context, Cursor cursor, int flags) {
+        private FeedItemListAdapter(Context context, Cursor cursor, int flags) {
             super(context, cursor, flags);
 
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -106,30 +104,17 @@ public class FeedItemListView extends AppCompatActivity {
             });
 
             if (cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry.COLUMN_DOWNLOADED)) == 1) {
-                // get bitmap
+                // get image name and path
                 String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry.COLUMN_IMAGE_NAME));
+                String imagePath = imageDirectory + imageName;
 
-                // First decode with inJustDecodeBounds=true to check dimensions
+                // get bitmap scale
                 BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-                bitmapOptions.inJustDecodeBounds = true;
-                BitmapFactory.decodeFile(imageDirectory + imageName, bitmapOptions);
-
-                // Calculate inSampleSize
-                int imageHeight = bitmapOptions.outHeight;
-                int imageWidth = bitmapOptions.outWidth;
-                int inSampleSize = 1;
-                while (imageHeight > imageDimension && imageWidth > imageDimension) {
-                    imageHeight /= 2;
-                    imageWidth /= 2;
-                    inSampleSize *= 2;
-                }
-
-                bitmapOptions.inSampleSize = inSampleSize;
-                bitmapOptions.inJustDecodeBounds = false;
+                bitmapOptions.inSampleSize = Constants.getImageScale(imagePath, imageDimension, imageDimension);
 
                 // load imageView, scale bitmap, and set image
                 ImageView imageView = (ImageView) view.findViewById(R.id.feed_item_icon);
-                imageView.setImageBitmap(BitmapFactory.decodeFile(imageDirectory + imageName, bitmapOptions));
+                imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath, bitmapOptions));
             } else {
                 logEvent(String.format(Locale.US, "Item %s is not downloaded.", title),
                         "bindView(View view, Context context, Cursor cursor)",

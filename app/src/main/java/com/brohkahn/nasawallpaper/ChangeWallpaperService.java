@@ -51,8 +51,7 @@ public class ChangeWallpaperService extends Service {
     private Random random = new Random();
     private Timer timer;
 
-    public static Bitmap currentImage;
-
+    public static boolean isRunning = false;
 
     public ChangeWallpaperService() {
     }
@@ -63,15 +62,32 @@ public class ChangeWallpaperService extends Service {
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-//        Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, false));
+    public void onCreate() {
+        //        Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, false));
 
+        // stop and start main activity if permissions not granted
         int internetPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
         int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
         if (internetPermission != PackageManager.PERMISSION_GRANTED || wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
+            logEvent("Perrmissions not granted, stopping service and requesting permissions in MainActivity",
+                    "onCreate()",
+                    LogEntry.LogLevel.Message);
             startActivity(new Intent(this, MainActivity.class));
-            return START_NOT_STICKY;
+            stopSelf(START_NOT_STICKY);
         }
+
+        // stop if already running an instance
+        if (isRunning) {
+            logEvent("Service already started, stopping this instance",
+                    "onCreate()",
+                    LogEntry.LogLevel.Message);
+            stopSelf(START_STICKY);
+        }
+
+        logEvent("Creating instance of service.",
+                "onCreate()",
+                LogEntry.LogLevel.Message);
+        isRunning = true;
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         Resources resources = getResources();
@@ -101,8 +117,42 @@ public class ChangeWallpaperService extends Service {
         timer.scheduleAtFixedRate(downloadRSSTask, downloadTime.getTime(), downloadWallpaperInterval);
         timer.scheduleAtFixedRate(changeWallpaperTask, 0, changeWallpaperInterval);
 
-        return super.onStartCommand(intent, flags, startId);
+        super.onCreate();
     }
+
+//    @Override
+//    public int onStartCommand(Intent intent, int flags, int startId) {
+//        return super.onStartCommand(intent, flags, startId);
+//    }
+
+
+    @Override
+    public void onDestroy() {
+        logEvent("Service has been destroyed, removing changeWallpaperNow broadcast receiver, " +
+                        "setting isRunning to false, and cancelling and purging timer.",
+                "onCreate()",
+                LogEntry.LogLevel.Message);
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(changeWallpaperNow);
+
+        isRunning = false;
+
+        timer.cancel();
+        timer.purge();
+        timer = null;
+        super.onDestroy();
+    }
+
+    private BroadcastReceiver changeWallpaperNow = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            logEvent("Received changeWallpaperNow broadcast.",
+                    "onReceive(Context context, Intent intent)",
+                    LogEntry.LogLevel.Trace);
+            setNewWallpaper();
+        }
+    };
+
 
     private TimerTask changeWallpaperTask = new TimerTask() {
         @Override
@@ -137,29 +187,16 @@ public class ChangeWallpaperService extends Service {
                 LogEntry.LogLevel.Message);
         try {
             // get screen height (output wallpaper height)
-            WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-            Display display = wm.getDefaultDisplay();
+            Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
             Point size = new Point();
             display.getSize(size);
             int screenHeight = size.y;
 
-            // First decode with inJustDecodeBounds=true to check dimensions
-            BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-            bitmapOptions.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(imageDirectory + newItem.imageName, bitmapOptions);
-
-            // Calculate inSampleSize
-            int imageHeight = bitmapOptions.outHeight;
-            int inSampleSize = 1;
-            while (imageHeight > screenHeight) {
-                imageHeight /= 2;
-                inSampleSize *= 2;
-            }
-
             // Decode bitmap with inSampleSize set
-            bitmapOptions.inSampleSize = inSampleSize;
-            bitmapOptions.inJustDecodeBounds = false;
-            currentImage = BitmapFactory.decodeFile(imageDirectory + newItem.imageName, bitmapOptions);
+            String imagePath = imageDirectory + newItem.imageName;
+            BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+            bitmapOptions.inSampleSize = Constants.getImageScale(imagePath, 0, screenHeight);
+            Bitmap currentImage = BitmapFactory.decodeFile(imagePath, bitmapOptions);
 
             WallpaperManager myWallpaperManager = WallpaperManager.getInstance(this);
             if (setHomeWallpaper) {
@@ -181,6 +218,7 @@ public class ChangeWallpaperService extends Service {
                 }
             }
 
+            currentImage.recycle();
         } catch (IOException e) {
             e.printStackTrace();
             logException(e, "setNewWallpaper()");
@@ -219,23 +257,4 @@ public class ChangeWallpaperService extends Service {
         DownloadWallpaperService.startDownloadRSSAction(this, NASA_RSS_LINK_A);
     }
 
-    @Override
-    public void onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(changeWallpaperNow);
-
-        timer.cancel();
-        timer.purge();
-        timer = null;
-        super.onDestroy();
-    }
-
-    private BroadcastReceiver changeWallpaperNow = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            logEvent("Received changeWallpaperNow broadcast.",
-                    "onReceive(Context context, Intent intent)",
-                    LogEntry.LogLevel.Trace);
-            setNewWallpaper();
-        }
-    };
 }

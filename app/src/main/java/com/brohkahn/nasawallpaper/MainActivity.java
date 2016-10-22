@@ -9,7 +9,11 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,16 +24,20 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 import com.brohkahn.loggerlibrary.LogViewList;
+
+import java.text.DateFormat;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -38,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int currentItemId;
 
+    private ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+        imageView = ((ImageView) findViewById(R.id.current_item_image));
+
         int internetPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
         int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
         if (internetPermission != PackageManager.PERMISSION_GRANTED || wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
@@ -54,61 +65,28 @@ public class MainActivity extends AppCompatActivity {
 
             showPermissionDialog();
         } else {
-            updateCurrentItem(true);
+            updateCurrentItem();
         }
-    }
 
-    @Override
-    protected void onDestroy() {
-        if (ChangeWallpaperService.currentImage != null) {
-            ChangeWallpaperService.currentImage.recycle();
-            ChangeWallpaperService.currentImage = null;
-        }
-        super.onDestroy();
-    }
-
-    public void updateCurrentItem(boolean reloadImage) {
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-        Resources resources = getResources();
-        currentItemId = settings.getInt(resources.getString(R.string.key_current_item), 0);
-        String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
-
-        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext(), false);
-        FeedItem currentItem = feedDBHelper.getFeedItem(currentItemId);
-        feedDBHelper.close();
-
-        if (currentItem != null) {
-            ((TextView) findViewById(R.id.current_item_title)).setText(currentItem.title);
-            ((TextView) findViewById(R.id.current_item_published)).setText(currentItem.published.toString());
-            ((TextView) findViewById(R.id.current_item_link)).setText(currentItem.link);
-
-            if (ChangeWallpaperService.currentImage == null) {
-                reloadImage = true;
-            } else if (ChangeWallpaperService.currentImage.isRecycled()) {
-                reloadImage = true;
-            }
-
-            if (reloadImage) {
-                ChangeWallpaperService.currentImage = BitmapFactory.decodeFile(imageDirectory + currentItem.imageName);
-            }
-
-            ((ImageView) findViewById(R.id.current_item_image)).setImageBitmap(ChangeWallpaperService.currentImage);
-        } else {
-            ((TextView) findViewById(R.id.current_item_title)).setText("");
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
         IntentFilter mStatusIntentFilter = new IntentFilter(Constants.WALLPAPER_UPDATED);
         LocalBroadcastManager.getInstance(this).registerReceiver(wallpaperUpdated, mStatusIntentFilter);
     }
 
     @Override
-    protected void onPause() {
+    protected void onDestroy() {
+        recycleCurrentBitmap();
+
         LocalBroadcastManager.getInstance(this).unregisterReceiver(wallpaperUpdated);
-        super.onPause();
+        super.onDestroy();
+    }
+
+    public void recycleCurrentBitmap() {
+        Drawable drawable = imageView.getDrawable();
+        if (drawable instanceof BitmapDrawable) {
+            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+            bitmap.recycle();
+        }
+        imageView.setImageBitmap(null);
     }
 
     private BroadcastReceiver wallpaperUpdated = new BroadcastReceiver() {
@@ -118,9 +96,51 @@ public class MainActivity extends AppCompatActivity {
                     "onReceive(Context context, Intent intent)",
                     LogEntry.LogLevel.Trace);
 
-            updateCurrentItem(false);
+            updateCurrentItem();
         }
     };
+
+    public void updateCurrentItem() {
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        Resources resources = getResources();
+        currentItemId = settings.getInt(resources.getString(R.string.key_current_item), 0);
+        String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
+
+        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext(), false);
+        FeedItem currentItem = feedDBHelper.getFeedItem(currentItemId);
+        feedDBHelper.close();
+
+        Bitmap currentImage;
+        String titleText, publishedText, linkText;
+        if (currentItem != null) {
+            // get screen width (output wallpaper width)
+            Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+            Point size = new Point();
+            display.getSize(size);
+            int screenWidth = size.x;
+
+            String imagePath = imageDirectory + currentItem.imageName;
+            BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+            bitmapOptions.inSampleSize = Constants.getImageScale(imagePath, screenWidth, 0);
+            currentImage = BitmapFactory.decodeFile(imagePath, bitmapOptions);
+
+            titleText = currentItem.title;
+            publishedText = DateFormat.getDateInstance(DateFormat.MEDIUM).format(currentItem.published);
+            linkText = currentItem.link;
+
+        } else {
+            currentImage = null;
+            titleText = "";
+            publishedText = "";
+            linkText = "";
+        }
+
+        recycleCurrentBitmap();
+        imageView.setImageBitmap(currentImage);
+        ((TextView) findViewById(R.id.current_item_title)).setText(titleText);
+        ((TextView) findViewById(R.id.current_item_published)).setText(publishedText);
+        ((TextView) findViewById(R.id.current_item_link)).setText(linkText);
+    }
 
     public void showPermissionDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
