@@ -30,6 +30,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -47,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private int currentItemId;
 
     private ImageView imageView;
+    private Button nextWallpaperButton;
+    private Button blockWallpaperButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         imageView = ((ImageView) findViewById(R.id.current_item_image));
+        nextWallpaperButton = ((Button) findViewById(R.id.next_wallpaper_button));
+        blockWallpaperButton = ((Button) findViewById(R.id.block_wallpaper_button));
 
         int internetPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
         int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
@@ -65,6 +70,12 @@ public class MainActivity extends AppCompatActivity {
 
             showPermissionDialog();
         } else {
+            if (!ChangeWallpaperService.isRunning) {
+                logEvent("Service not running, restarting.", "onCreate(Bundle savedInstanceState)", LogEntry.LogLevel.Message);
+
+                restartService();
+            }
+
             updateCurrentItem();
         }
 
@@ -140,6 +151,9 @@ public class MainActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.current_item_title)).setText(titleText);
         ((TextView) findViewById(R.id.current_item_published)).setText(publishedText);
         ((TextView) findViewById(R.id.current_item_link)).setText(linkText);
+
+        blockWallpaperButton.setEnabled(true);
+        nextWallpaperButton.setEnabled(true);
     }
 
     public void showPermissionDialog() {
@@ -239,6 +253,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getNewWallpaper() {
+        blockWallpaperButton.setEnabled(false);
+        nextWallpaperButton.setEnabled(false);
+
         logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 
         new Handler().post(new Runnable() {
@@ -246,10 +263,8 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
                 LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-
             }
         });
-
     }
 
 //    private void showToast(String message) {

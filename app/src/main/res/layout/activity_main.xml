@@ -55,6 +55,7 @@
             android:layout_height="wrap_content">
 
             <Button
+                android:id="@+id/block_wallpaper_button"
                 style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
@@ -63,6 +64,7 @@
                 android:text="@string/action_disable" />
 
             <Button
+                android:id="@+id/next_wallpaper_button"
                 style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"

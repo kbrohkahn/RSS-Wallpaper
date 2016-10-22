@@ -125,7 +125,6 @@ public class ChangeWallpaperService extends Service {
 //        return super.onStartCommand(intent, flags, startId);
 //    }
 
-
     @Override
     public void onDestroy() {
         logEvent("Service has been destroyed, removing changeWallpaperNow broadcast receiver, " +
