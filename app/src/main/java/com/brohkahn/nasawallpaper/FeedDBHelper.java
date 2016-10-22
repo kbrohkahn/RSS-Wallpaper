@@ -35,13 +35,11 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 
 
 	private static FeedDBHelper instance;
-	private SQLiteDatabase db;
 
-	public static FeedDBHelper getHelper(Context context, boolean writeAccess) {
+	public static FeedDBHelper getHelper(Context context) {
 		if (instance == null) {
 			instance = new FeedDBHelper(context);
 		}
-
 
 		return instance;
 	}
@@ -71,7 +69,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 		values.put(FeedDBEntry.COLUMN_ENABLED, 1);
 		values.put(FeedDBEntry.COLUMN_DOWNLOADED, 0);
 
-		openDatabaseIfNecessary(true);
+		SQLiteDatabase db = getWritableDatabase();
 		return db.insert(FeedDBEntry.TABLE_NAME, null, values);
 	}
 
@@ -101,7 +99,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 	}
 
 	private boolean runUpdateQuery(String query) {
-		openDatabaseIfNecessary(true);
+		SQLiteDatabase db = getWritableDatabase();
 		Cursor cursor = db.rawQuery(query, null);
 		boolean success = cursor.moveToFirst() && cursor.getInt(0) == 1;
 		cursor.close();
@@ -161,8 +159,7 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 
 	public List<FeedItem> getItems(String query) {
 		try {
-			openDatabaseIfNecessary(false);
-			db = getWritableDatabase();
+			SQLiteDatabase db = getWritableDatabase();
 			Cursor cursor = db.rawQuery(query, null);
 
 			List<FeedItem> items = new ArrayList<>();
@@ -188,22 +185,6 @@ public class FeedDBHelper extends SQLiteOpenHelper {
 			return items;
 		} catch (Exception e) {
 			throw e;
-		}
-	}
-
-	private void openDatabaseIfNecessary(boolean writeAccess) {
-		boolean unopenedDatabase = db == null || !db.isOpen();
-		if (!unopenedDatabase && db.isReadOnly() && writeAccess) {
-			db.close();
-			unopenedDatabase = true;
-		}
-
-		if (unopenedDatabase) {
-			if (writeAccess) {
-				db = getWritableDatabase();
-			} else {
-				db = getReadableDatabase();
-			}
 		}
 	}
 

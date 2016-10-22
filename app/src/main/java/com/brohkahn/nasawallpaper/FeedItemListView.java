@@ -44,7 +44,7 @@ public class FeedItemListView extends AppCompatActivity {
                 FeedDBHelper.FeedDBEntry.COLUMN_PUBLISHED + " DESC") {
             @Override
             public Cursor loadInBackground() {
-                FeedDBHelper dbHelper = FeedDBHelper.getHelper(getApplicationContext(), false);
+                FeedDBHelper dbHelper = FeedDBHelper.getHelper(getApplicationContext());
                 SQLiteDatabase db = dbHelper.getReadableDatabase();
                 return db.query(FeedDBHelper.FeedDBEntry.TABLE_NAME,
                         getProjection(),
@@ -133,7 +133,7 @@ public class FeedItemListView extends AppCompatActivity {
     }
 
     private void updateItemEnabled(int itemId, boolean enabled) {
-        FeedDBHelper helper = FeedDBHelper.getHelper(getApplicationContext(), true);
+        FeedDBHelper helper = FeedDBHelper.getHelper(getApplicationContext());
         helper.updateImageEnabled(itemId, enabled);
         helper.close();
     }

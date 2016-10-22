@@ -16,7 +16,7 @@ public class LogViewEntry extends AppCompatActivity {
 
         // get entry from ID
         int id = getIntent().getIntExtra(EXTRA_KEY_LOG_ENTRY_ID, -1);
-        LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext(), false);
+        LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext());
         LogEntry entry = helper.getLogEntry(id);
         helper.close();
 

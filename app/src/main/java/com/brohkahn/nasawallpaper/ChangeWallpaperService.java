@@ -20,7 +20,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.brohkahn.loggerlibrary.ErrorHandler;
 import com.brohkahn.loggerlibrary.LogDBHelper;
@@ -37,15 +36,20 @@ import java.util.TimerTask;
 public class ChangeWallpaperService extends Service {
 	private static final String TAG = "ChangeWallpaperService";
 
-	private static final String NASA_RSS_LINK_A = "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss";
-//    private static final String NASA_RSS_LINK_B = "http://apod.nasa.gov/apod.rss";
+	private static final int SCALE_HEIGHT = 0;
+	private static final int SCALE_HEIGHT_CROP_CENTER = 1;
+	private static final int CROP_CENTER = 2;
+	private static final int SCALE_WIDTH_AND_HEIGHT = 3;
 
+	private static final String NASA_RSS_LINK_A = "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss";
+	//    private static final String NASA_RSS_LINK_B = "http://apod.nasa.gov/apod.rss";
 	private static final String FEED_TITLE = "NASA Image of the Day";
 
 	private static final int MS_MINUTE = 1000 * 60;
 	private static final int MS_HOUR = MS_MINUTE * 60;
 
 	private int numberToRotate;
+	private int cropAndScaleType;
 	private boolean shuffle;
 	private boolean setHomeWallpaper;
 	private boolean setLockWallpaper;
@@ -108,7 +112,8 @@ public class ChangeWallpaperService extends Service {
 		shuffle = prefs.getBoolean(res.getString(R.string.key_shuffle), true);
 		int changeInterval = Integer.parseInt(prefs.getString(res.getString(R.string.key_change_interval), "30"));
 		setHomeWallpaper = prefs.getBoolean(res.getString(R.string.key_set_home_screen), true);
-		setLockWallpaper = prefs.getBoolean(res.getString(R.string.key_set_home_screen), false);
+		setLockWallpaper = prefs.getBoolean(res.getString(R.string.key_set_lock_screen), false);
+		cropAndScaleType = Integer.parseInt(prefs.getString(res.getString(R.string.key_crop_and_scale_type), "0"));
 		// rss feed
 		int updateInterval = Integer.parseInt(prefs.getString(res.getString(R.string.key_update_interval), "24"));
 		int updateTime = Integer.parseInt(prefs.getString(res.getString(R.string.key_update_time), "3"));
@@ -123,8 +128,13 @@ public class ChangeWallpaperService extends Service {
 		LocalBroadcastManager.getInstance(this)
 							 .registerReceiver(changeWallpaperNow, mStatusIntentFilter);
 
-		// start download immediately
-		startDownloadIntent();
+		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
+		int itemsWithoutImageCount = feedDBHelper.getItemsWithoutImages().size();
+		int mostRecentItemCount = feedDBHelper.getRecentItems(1).size();
+		if (mostRecentItemCount == 0 || itemsWithoutImageCount > 0) {
+			// start download immediately if items need image or no items at all
+			startDownloadIntent();
+		}
 
 		// set download time
 		Calendar downloadTime = Calendar.getInstance();
@@ -197,7 +207,7 @@ public class ChangeWallpaperService extends Service {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		long currentItemId = settings.getInt(keyCurrentItem, 0);
 
-		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this, false);
+		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
 		List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItems(numberToRotate);
 		feedDBHelper.close();
 
@@ -234,28 +244,74 @@ public class ChangeWallpaperService extends Service {
 				 LogEntry.LogLevel.Message
 		);
 		try {
+			String imagePath = imageDirectory + newItem.imageName;
+
 			// get screen height (output wallpaper height)
 			Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
 			Point size = new Point();
 			display.getSize(size);
 			int screenHeight = size.y;
+			int screenWidth = size.x;
+
+
+			// get image dimensions
+			BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+			bitmapOptions.inJustDecodeBounds = true;
+			BitmapFactory.decodeFile(imagePath, bitmapOptions);
+
+			// Calculate inSampleSize
+			int imageHeight = bitmapOptions.outHeight;
+			int imageWidth = bitmapOptions.outWidth;
+
+			int inSampleSize = 1;
+			while (cropAndScaleType != CROP_CENTER && imageHeight > screenHeight) {
+				imageHeight /= 2;
+				imageWidth /= 2;
+				inSampleSize *= 2;
+			}
 
 			// Decode bitmap with inSampleSize set
-			String imagePath = imageDirectory + newItem.imageName;
-			BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-			bitmapOptions.inSampleSize = Constants.getImageScale(imagePath, 0, screenHeight);
-			Bitmap currentImage = BitmapFactory.decodeFile(imagePath, bitmapOptions);
+			bitmapOptions.inJustDecodeBounds = false;
+			bitmapOptions.inSampleSize = inSampleSize;
+			Bitmap inputBitmap = BitmapFactory.decodeFile(imagePath, bitmapOptions);
+			Bitmap outputBitmap;
+			int x, y;
+
+			switch (cropAndScaleType) {
+				case SCALE_HEIGHT:
+					outputBitmap = inputBitmap;
+					break;
+				case SCALE_HEIGHT_CROP_CENTER:
+					x = imageWidth / 2 - screenWidth / 2;
+					if (x > 0) {
+						outputBitmap = Bitmap.createBitmap(inputBitmap, x, 0, screenWidth, imageHeight);
+					} else {
+						outputBitmap = inputBitmap;
+					}
+					break;
+				case SCALE_WIDTH_AND_HEIGHT:
+					outputBitmap = Bitmap.createScaledBitmap(inputBitmap, screenWidth, screenHeight, false);
+					break;
+				case CROP_CENTER:
+
+					x = imageWidth / 2 - screenWidth / 2;
+					y = imageHeight / 2 - screenHeight / 2;
+					if (x > 0 && y > 0) {
+						outputBitmap = Bitmap.createBitmap(inputBitmap, x, y, screenWidth, screenHeight);
+					} else {
+						outputBitmap = inputBitmap;
+					}
+					break;
+				default:
+					outputBitmap = inputBitmap;
+			}
 
 			WallpaperManager myWallpaperManager = WallpaperManager.getInstance(this);
 			if (setHomeWallpaper) {
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-					myWallpaperManager.setBitmap(currentImage,
-												 null,
-												 true,
-												 WallpaperManager.FLAG_SYSTEM
-					);
+					myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_SYSTEM);
 				} else {
-					myWallpaperManager.setBitmap(currentImage);
+					myWallpaperManager.setBitmap(outputBitmap);
 				}
 
 				logEvent("Successfully set wallpaper.",
@@ -264,26 +320,16 @@ public class ChangeWallpaperService extends Service {
 				);
 			}
 
-			if (setLockWallpaper) {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-					myWallpaperManager.setBitmap(currentImage,
-												 null,
-												 true,
-												 WallpaperManager.FLAG_LOCK
-					);
-					logEvent("Successfully set lock screen wallpaper.",
-							 "setNewWallpaper()",
-							 LogEntry.LogLevel.Message
-					);
-				} else {
-					Toast.makeText(this,
-								   "Not available before Android 7.0 Nougat.",
-								   Toast.LENGTH_SHORT
-					).show();
-				}
+			if (setLockWallpaper && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+				myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_LOCK);
+				logEvent("Successfully set lock screen wallpaper.",
+						 "setNewWallpaper()",
+						 LogEntry.LogLevel.Message
+				);
 			}
 
-			currentImage.recycle();
+			inputBitmap.recycle();
+			outputBitmap.recycle();
 		} catch (IOException e) {
 			e.printStackTrace();
 			logException(e, "setNewWallpaper()");
@@ -300,7 +346,7 @@ public class ChangeWallpaperService extends Service {
 
 	private void logException(Exception e, String function) {
 		Log.d(TAG, function + ": " + e.getLocalizedMessage());
-		LogDBHelper helper = LogDBHelper.getHelper(this, true);
+		LogDBHelper helper = LogDBHelper.getHelper(this);
 		helper.saveLogEntry(e.getLocalizedMessage(),
 							ErrorHandler.getStackTraceString(e),
 							TAG,

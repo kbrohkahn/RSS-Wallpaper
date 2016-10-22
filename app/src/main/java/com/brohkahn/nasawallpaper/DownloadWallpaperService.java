@@ -37,11 +37,12 @@ public class DownloadWallpaperService extends IntentService {
 
 	private String imageDirectory;
 
+	private boolean noInitialItems;
+
 	private static LogDBHelper logDBHelper;
 	private static FeedDBHelper feedDBHelper;
 
 	public DownloadWallpaperService() {
-
 		super("DownloadWallpaperService");
 	}
 
@@ -54,8 +55,10 @@ public class DownloadWallpaperService extends IntentService {
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
-		logDBHelper = LogDBHelper.getHelper(this, true);
-		feedDBHelper = FeedDBHelper.getHelper(this, true);
+		logDBHelper = LogDBHelper.getHelper(this);
+		feedDBHelper = FeedDBHelper.getHelper(this);
+
+		noInitialItems = feedDBHelper.getRecentItems(1).size() == 0;
 
 		if (intent != null) {
 			String action = intent.getAction();
@@ -100,7 +103,7 @@ public class DownloadWallpaperService extends IntentService {
 				downloadFeedItem(entry);
 			}
 
-			broadcastCompletion();
+			downloadComplete();
 		} catch (XmlPullParserException | ParseException | IOException e) {
 			Log.e("Error: ", e.getMessage());
 			logException(e, "downloadFeedItems(String urlString)");
@@ -152,14 +155,15 @@ public class DownloadWallpaperService extends IntentService {
 
 		} catch (Exception e) {
 			Log.e("Error: ", e.getMessage());
-			logException(e, "downloa(FeedItem entry)");
+			logException(e, "downloadFeedItem(FeedItem entry)");
 		}
 	}
 
-
-	private void broadcastCompletion() {
-		Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
-		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+	private void downloadComplete() {
+		if (noInitialItems) {
+			Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
+			LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+		}
 
 		feedDBHelper.close();
 		feedDBHelper = null;

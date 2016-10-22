@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
 		String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 				.getPath() + "/");
 
-		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext(), false);
+		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 		FeedItem currentItem = feedDBHelper.getFeedItem(currentItemId);
 		feedDBHelper.close();
 
@@ -251,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
 	public void blockCurrentWallpaper(View view) {
 		logEvent("Disabling current item", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 
-		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext(), true);
+		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 		feedDBHelper.updateImageEnabled(currentItemId, false);
 		feedDBHelper.close();
 

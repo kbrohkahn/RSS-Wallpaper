@@ -55,7 +55,7 @@ public class MyApplication extends Application {
 			toastHandler.sendMessage(messageObject);
 		}
 
-		LogDBHelper helper = LogDBHelper.getHelper(this, true);
+		LogDBHelper helper = LogDBHelper.getHelper(this);
 		helper.saveLogEntry(message, null, tag, function, level);
 		helper.close();
 	}

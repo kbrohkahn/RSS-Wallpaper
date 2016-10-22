@@ -38,7 +38,7 @@ public class LogViewList extends AppCompatActivity {
                 LogDBHelper.LogDBEntry.COLUMN_TIME + " DESC") {
             @Override
             public Cursor loadInBackground() {
-                LogDBHelper dbHelper = LogDBHelper.getHelper(getApplicationContext(), false);
+                LogDBHelper dbHelper = LogDBHelper.getHelper(getApplicationContext());
                 SQLiteDatabase db = dbHelper.getReadableDatabase();
                 return db.query(LogDBHelper.LogDBEntry.TABLE_NAME,
                         getProjection(),
@@ -121,7 +121,7 @@ public class LogViewList extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         if (item.getItemId() == R.id.delete_logs) {
-            LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext(), true);
+            LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext());
             helper.deleteLogs();
             helper.close();
             return true;

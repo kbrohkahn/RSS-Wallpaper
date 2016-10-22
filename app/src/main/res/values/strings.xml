@@ -53,6 +53,7 @@
 	<string name="key_change_interval">changeInterval</string>
 	<string name="key_set_home_screen">setHomeScreen</string>
 	<string name="key_set_lock_screen">setLockScreen</string>
+	<string name="key_crop_and_scale_type">cropAndScaleType</string>
 	<!-- Notifications -->
 	<string name="key_show_toasts">showToasts</string>
 
@@ -67,6 +68,7 @@
 	<string name="title_change_interval">Change interval</string>
 	<string name="title_set_home_screen">Set home wallpaper</string>
 	<string name="title_set_lock_screen">Set lock wallpaper</string>
+	<string name="title_crop_and_scale_type">Crop and scale</string>
 	<!-- Notifications -->
 	<string name="title_show_toasts">Show basic messages</string>
 
@@ -149,5 +151,18 @@
 		<item>720</item>
 		<item>1440</item>
 	</string-array>
+	<string-array name="titles_array_crop_and_scale_type">
+		<item>Scale height</item>
+		<item>Scale height and crop center</item>
+		<item>Crop center</item>
+		<item>Scale width and height</item>
+	</string-array>
+	<string-array name="values_array_crop_and_scale_type">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+		<item>3</item>
+	</string-array>
+
 
 </resources>

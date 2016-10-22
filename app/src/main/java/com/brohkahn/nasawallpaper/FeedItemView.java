@@ -23,12 +23,12 @@ public class FeedItemView extends AppCompatActivity {
 
         final int ID = getIntent().getIntExtra(EXTRA_KEY_FEED_ITEM_ID, -1);
 
-        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext(), false);
+        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
         FeedItem item = feedDBHelper.getFeedItem(ID);
         feedDBHelper.close();
 
         if (item == null) {
-            LogDBHelper logDBHelper = LogDBHelper.getHelper(getApplicationContext(), true);
+            LogDBHelper logDBHelper = LogDBHelper.getHelper(getApplicationContext());
             logDBHelper.saveLogEntry(String.format(Locale.US, "Unable to find feed item with id of %d", ID),
                     null,
                     TAG,
@@ -62,7 +62,7 @@ public class FeedItemView extends AppCompatActivity {
     }
 
     private void updateItemEnabled(int itemId, boolean enabled) {
-        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext(), true);
+        FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
         feedDBHelper.updateImageEnabled(itemId, enabled);
         feedDBHelper.close();
     }

@@ -14,7 +14,6 @@ import android.preference.SwitchPreference;
 import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
 
-import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
 import java.util.List;
@@ -155,9 +154,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 	}
 
 	private void logEvent(String message, String function, LogEntry.LogLevel level) {
-		LogDBHelper logDBHelper = LogDBHelper.getHelper(this, true);
-		logDBHelper.saveLogEntry(message, null, TAG, function, level);
-		logDBHelper.close();
+		((MyApplication) getApplication()).logEvent(message, function, TAG, level);
 	}
 
 	@Override
@@ -230,6 +227,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			Resources resources = getResources();
 			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_number_to_rotate)));
 			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_change_interval)));
+			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_crop_and_scale_type)));
 
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
 				SwitchPreference lockScreenPreference = (SwitchPreference) findPreference(resources.getString(R.string.key_set_lock_screen));

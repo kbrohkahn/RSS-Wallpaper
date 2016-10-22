@@ -25,7 +25,7 @@ public class ErrorHandler implements Thread.UncaughtExceptionHandler {
         final String errorString = getStackTraceString(e);
         e.printStackTrace();
 
-        LogDBHelper logDBHelper = LogDBHelper.getHelper(context.getApplicationContext(), true);
+        LogDBHelper logDBHelper = LogDBHelper.getHelper(context.getApplicationContext());
         logDBHelper.saveLogEntry(e.getLocalizedMessage(), errorString, className, "Unknown", LogEntry.LogLevel.Error);
         logDBHelper.close();
 
