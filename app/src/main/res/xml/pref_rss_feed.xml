@@ -1,0 +1,25 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<ListPreference
+		android:defaultValue="24"
+		android:entries="@array/titles_array_update_interval"
+		android:entryValues="@array/values_array_update_interval"
+		android:key="@string/key_update_interval"
+		android:negativeButtonText="@null"
+		android:positiveButtonText="@null"
+		android:title="@string/title_update_interval" />
+
+	<ListPreference
+		android:defaultValue="3"
+		android:entries="@array/titles_array_update_time"
+		android:entryValues="@array/values_array_update_time"
+		android:key="@string/key_update_time"
+		android:negativeButtonText="@null"
+		android:positiveButtonText="@null"
+		android:title="@string/title_update_time" />
+
+	<SwitchPreference
+		android:defaultValue="true"
+		android:key="@string/key_update_wifi_only"
+		android:title="@string/title_update_wifi_only" />
+</PreferenceScreen>

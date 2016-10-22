@@ -13,7 +13,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +22,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
 import java.util.Locale;
@@ -147,9 +145,6 @@ public class FeedItemListView extends AppCompatActivity {
     }
 
     private void logEvent(String message, String function, LogEntry.LogLevel level) {
-        Log.d(TAG, function + ": " + message);
-        LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext(), true);
-        helper.saveLogEntry(message, null, TAG, function, level);
-        helper.close();
+        ((MyApplication) getApplication()).logEvent(message, function, TAG, level);
     }
 }

@@ -1,33 +1,153 @@
 <resources>
-    <string name="app_name">NASA Wallpaper</string>
-    <string name="developer_email">kevin@broh-kahn.com</string>
-    <string name="permission_request_title">Internet Access Required</string>
-    <string name="permission_request_message">This app requires access to the internet to download RSS feeds and new wallpapers. It also sets your wallpaper automatically (which is why you downloaded it). Please allow both permissions.</string>
-    <string name="permission_request_positive_button">OK</string>
-    <string name="permission_request_negative_button">Uninstall</string>
+	<!-- Generic -->
+	<string name="app_name">NASA Wallpaper</string>
+	<string name="developer_email">kevin@broh-kahn.com</string>
 
-    <string name="current_background">Current wallpaper</string>
-    <string name="current_image">Current image</string>
-    <string name="restart_service">Restart service</string>
-    <string name="no_item_placeholder">No wallpaper set.</string>
+	<!-- Permissions -->
+	<string name="permission_request_title">Internet Access Required</string>
+	<string name="permission_request_message">This app requires access to the internet to download RSS feeds and new wallpapers. It also sets your wallpaper automatically (which is why you downloaded it). Please allow both permissions.</string>
+	<string name="permission_request_positive_button">OK</string>
+	<string name="permission_request_negative_button">Uninstall</string>
 
-    <string name="item_downloaded">Image downloaded</string>
-    <string name="item_enabled">Item enabled</string>
+	<!-- Image and Feed strings -->
+	<string name="current_background">Current wallpaper</string>
+	<string name="current_image">Current image</string>
+	<string name="restart_service">Restart service</string>
+	<string name="no_item_placeholder">No wallpaper set.</string>
+	<string name="item_downloaded">Image downloaded</string>
+	<string name="item_enabled">Item enabled</string>
 
-    <string name="action_next_item">Next wallpaper</string>
-    <string name="action_disable">Disable current image</string>
-    <string name="action_view_items_all">View all items</string>
-    <string name="action_view_items_disabled">View disabled items</string>
-    <string name="action_view_logs">View logs</string>
-    <string name="activity_logs">Logs</string>
-    <string name="activity_about">About</string>
-    <!--<string name="activity_help">Help</string>-->
-    <string name="activity_main">NASA Wallpaper</string>
+	<!-- Activity strings -->
+	<string name="activity_logs">Logs</string>
+	<string name="activity_about">About</string>
+	<string name="activity_settings">Settings</string>
+	<!--<string name="activity_help">Help</string>-->
+	<string name="activity_main">NASA Wallpaper</string>
 
-    <string name="key_number_to_shuffle">numberToShuffle</string>
-    <string name="key_set_home_screen">setHomeScreen</string>
-    <string name="key_set_lock_screen">setLockScreen</string>
-    <string name="key_current_item">currentItem</string>
-    <string name="key_image_directory">imageDirectory</string>
+	<!-- Actions -->
+	<string name="action_next_item">Next wallpaper</string>
+	<string name="action_disable">Disable current image</string>
+	<string name="action_view_items_all">View all items</string>
+	<string name="action_view_items_disabled">View disabled items</string>
+	<string name="action_view_logs">View logs</string>
+
+	<!-- App settings keys -->
+	<string name="key_current_item">currentItem</string>
+	<string name="key_image_directory">imageDirectory</string>
+
+	<!-- SETTINGS-->
+
+	<!-- Headers -->
+	<string name="pref_header_rss_feed">RSS Feed</string>
+	<string name="pref_header_wallpaper">Wallpaper</string>
+	<string name="pref_header_notifications">Notifications</string>
+
+	<!-- User keys-->
+	<!-- RSS Feed -->
+	<string name="key_update_interval">updateInterval</string>
+	<string name="key_update_wifi_only">updateWifiOnly</string>
+	<string name="key_update_time">updateTime</string>
+	<!-- Wallpaper -->
+	<string name="key_number_to_rotate">numberToRotate</string>
+	<string name="key_shuffle">shuffle</string>
+	<string name="key_change_interval">changeInterval</string>
+	<string name="key_set_home_screen">setHomeScreen</string>
+	<string name="key_set_lock_screen">setLockScreen</string>
+	<!-- Notifications -->
+	<string name="key_show_toasts">showToasts</string>
+
+	<!-- Titles -->
+	<!-- RSS Feed -->
+	<string name="title_update_interval">Update interval</string>
+	<string name="title_update_wifi_only">Update using Wifi Only</string>
+	<string name="title_update_time">Update time</string>
+	<!-- Wallpaper -->
+	<string name="title_number_to_rotate">Number of images to rotate</string>
+	<string name="title_shuffle">Shuffle rotated images</string>
+	<string name="title_change_interval">Change interval</string>
+	<string name="title_set_home_screen">Set home wallpaper</string>
+	<string name="title_set_lock_screen">Set lock wallpaper</string>
+	<!-- Notifications -->
+	<string name="title_show_toasts">Show basic messages</string>
+
+	<!-- Summaries -->
+	<!-- RSS Feed -->
+	<!-- Wallpaper -->
+	<string name="summary_set_lock_screen">Must have Android 7.0 or later</string>
+	<!-- Notifications -->
+	<string name="summary_show_toasts">Like when wallpaper is changing</string>
+
+	<!-- Values -->
+	<!-- RSS Feed -->
+	<string-array name="titles_array_update_interval">
+		<item>1 hour</item>
+		<item>3 hours</item>
+		<item>6 hours</item>
+		<item>12 hours</item>
+		<item>24 hours</item>
+		<item>2 days</item>
+		<item>3 days</item>
+		<item>5 days</item>
+		<item>1 week</item>
+	</string-array>
+	<string-array name="values_array_update_interval">
+		<item>1</item>
+		<item>3</item>
+		<item>6</item>
+		<item>12</item>
+		<item>24</item>
+		<item>48</item>
+		<item>72</item>
+		<item>120</item>
+		<item>168</item>
+	</string-array>
+	<string-array name="titles_array_update_time">
+		<item>03:00</item>
+		<item>06:00</item>
+		<item>09:00</item>
+		<item>12:00 (Noon)</item>
+		<item>15:00</item>
+		<item>18:00</item>
+		<item>21:00</item>
+		<item>24:00 (Midnight)</item>
+	</string-array>
+	<string-array name="values_array_update_time">
+		<item>3</item>
+		<item>6</item>
+		<item>9</item>
+		<item>12</item>
+		<item>15</item>
+		<item>18</item>
+		<item>21</item>
+		<item>0</item>
+	</string-array>
+
+	<!-- Wallpaper -->
+	<string-array name="titles_array_change_interval">
+		<item>5 minutes</item>
+		<item>10 minutes</item>
+		<item>15 minutes</item>
+		<item>20 minutes</item>
+		<item>30 minutes</item>
+		<item>45 minutes</item>
+		<item>1 hour</item>
+		<item>3 hours</item>
+		<item>6 hours</item>
+		<item>12 hours</item>
+		<item>24 hours</item>
+	</string-array>
+	<string-array name="values_array_change_interval">
+		<item>5</item>
+		<item>10</item>
+		<item>15</item>
+		<item>20</item>
+		<item>30</item>
+		<item>45</item>
+		<item>60</item>
+		<item>180</item>
+		<item>360</item>
+		<item>720</item>
+		<item>1440</item>
+	</string-array>
 
 </resources>
