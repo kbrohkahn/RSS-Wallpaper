@@ -45,7 +45,7 @@ public class FeedItemView extends AppCompatActivity {
         linkTextView.setText(item.link);
 
         TextView publishedTextView = (TextView) findViewById(R.id.feed_item_published);
-        publishedTextView.setText(item.published.toString());
+        publishedTextView.setText(item.creationDate.toString());
 
         CheckBox enabledCheckBox = (CheckBox) findViewById(R.id.feed_item_enabled);
         enabledCheckBox.setChecked(item.enabled);

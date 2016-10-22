@@ -23,8 +23,6 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -175,16 +173,16 @@ public class DownloadWallpaperService extends IntentService {
 	}
 
 	public static class FeedParser {
-		private String feedStartTag = "rss";
-		private String channelStartTag = "channel";
-		private String entryTag = "item";
-		private String entryTitleTag = "title";
-		private String entryLinkTag = "link";
-		private String entryPublishedTag = "pubDate";
+		private static final String rssTag = "rss";
+		private static final String channelTag = "channel";
+		private static final String titleTag = "title";
+		private static final String descriptionTag = "description";
+		private static final String linkTag = "link";
+
+		private static final String entryTag = "item";
+
 		private String entryImageLinkTag = "enclosure";
 		private String entryImageLinkAttribute = "url";
-
-		private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm zzz", Locale.US);
 
 		private static final String ns = null;
 
@@ -215,15 +213,15 @@ public class DownloadWallpaperService extends IntentService {
 		 */
 		private void readFeed(XmlPullParser parser) throws XmlPullParserException, IOException,
 				ParseException {
-			parser.require(XmlPullParser.START_TAG, ns, feedStartTag);
+			parser.require(XmlPullParser.START_TAG, ns, rssTag);
 			while (parser.next() != XmlPullParser.END_TAG) {
 				if (parser.getEventType() != XmlPullParser.START_TAG) {
 					continue;
 				}
 
 				String name = parser.getName();
-				if (name.equals(channelStartTag)) {
-					parser.require(XmlPullParser.START_TAG, ns, channelStartTag);
+				if (name.equals(channelTag)) {
+					parser.require(XmlPullParser.START_TAG, ns, channelTag);
 
 					while (parser.next() != XmlPullParser.END_TAG) {
 						if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -251,35 +249,32 @@ public class DownloadWallpaperService extends IntentService {
 			String title = null;
 			String link = null;
 			String imageLink = null;
-			Date publishedOn = new Date();
 
 			while (parser.next() != XmlPullParser.END_TAG) {
 				if (parser.getEventType() != XmlPullParser.START_TAG) {
 					continue;
 				}
 				String name = parser.getName();
-				if (name.equals(entryTitleTag)) {
-					title = readBasicTag(parser, entryTitleTag);
-				} else if (name.equals(entryLinkTag)) {
-					link = readBasicTag(parser, entryLinkTag);
+				if (name.equals(titleTag)) {
+					title = readBasicTag(parser, titleTag);
+				} else if (name.equals(linkTag)) {
+					link = readBasicTag(parser, linkTag);
 				} else if (name.equals(entryImageLinkTag)) {
 					imageLink = readAlternateLink(parser, entryImageLinkTag);
-				} else if (name.equals(entryPublishedTag)) {
-					publishedOn = dateFormat.parse(readBasicTag(parser, entryPublishedTag));
 				} else {
 					skip(parser);
 				}
 			}
 
 			if (!feedDBHelper.feedItemExists(imageLink)) {
-				logEvent(String.format("Saving feed item title=%s, link=%s, imageLink=%s, published=%s",
-									   title, link, imageLink, publishedOn.toString()
+				logEvent(String.format("Saving feed item title=%s, link=%s, imageLink=%s",
+									   title, link, imageLink
 						 ),
 						 "readFeedItem(XmlPullParser parser)",
 						 LogEntry.LogLevel.Message
 				);
 
-				feedDBHelper.saveFeedEntry(title, link, imageLink, publishedOn);
+				feedDBHelper.saveFeedEntry(title, link, imageLink);
 			}
 		}
 

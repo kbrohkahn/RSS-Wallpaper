@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 public final class Constants {
 	public static final String SET_WALLPAPER_ACTION = "set_wallpaper";
 	public static final String WALLPAPER_UPDATED = "wallpaper_updated";
+	public static final String JSON_FILE_NAME = "availableFeeds.txt";
 
 	public static int getImageScale(String imagePath, int outputWidth, int outputHeight) {
 		BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
@@ -23,6 +24,17 @@ public final class Constants {
 		}
 
 		return inSampleSize;
+	}
+
+	public static Feed getBuiltInFeed() {
+		Feed feed = new Feed(0,
+							 "NASA Image of the Day",
+							 "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss"
+		);
+		feed.entryImageLinkTag = "enclosure";
+		feed.entryImageLinkAttribute = "url";
+
+		return feed;
 	}
 
 }

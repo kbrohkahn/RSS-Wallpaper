@@ -29,8 +29,6 @@ import android.widget.TextView;
 import com.brohkahn.loggerlibrary.LogEntry;
 import com.brohkahn.loggerlibrary.LogViewList;
 
-import java.text.DateFormat;
-
 public class MainActivity extends AppCompatActivity {
 	private static final String TAG = "MainActivity";
 
@@ -95,7 +93,9 @@ public class MainActivity extends AppCompatActivity {
 		Drawable drawable = imageView.getDrawable();
 		if (drawable instanceof BitmapDrawable) {
 			Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
-			bitmap.recycle();
+			if (bitmap != null) {
+				bitmap.recycle();
+			}
 		}
 		imageView.setImageBitmap(null);
 	}
@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
 		feedDBHelper.close();
 
 		Bitmap currentImage;
-		String titleText, publishedText, linkText;
+		String titleText, linkText;
 		if (currentItem != null) {
 			// get screen width (output wallpaper width)
 			Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
@@ -138,21 +138,17 @@ public class MainActivity extends AppCompatActivity {
 			currentImage = BitmapFactory.decodeFile(imagePath, bitmapOptions);
 
 			titleText = currentItem.title;
-			publishedText = DateFormat.getDateInstance(DateFormat.MEDIUM)
-									  .format(currentItem.published);
 			linkText = currentItem.link;
 
 		} else {
 			currentImage = null;
 			titleText = "";
-			publishedText = "";
 			linkText = "";
 		}
 
 		recycleCurrentBitmap();
 		imageView.setImageBitmap(currentImage);
 		((TextView) findViewById(R.id.current_item_title)).setText(titleText);
-		((TextView) findViewById(R.id.current_item_published)).setText(publishedText);
 		((TextView) findViewById(R.id.current_item_link)).setText(linkText);
 
 		blockWallpaperButton.setEnabled(true);

@@ -37,23 +37,25 @@ public class FeedItemListView extends AppCompatActivity {
         setContentView(R.layout.feed_item_list_view);
 
         CursorLoader cursorLoader = new CursorLoader(getApplicationContext(),
-                Uri.EMPTY,
-                FeedDBHelper.FeedDBEntry.getAllColumns(),
-                null,
-                null,
-                FeedDBHelper.FeedDBEntry.COLUMN_PUBLISHED + " DESC") {
+                                                     Uri.EMPTY,
+                                                     FeedDBHelper.FeedItemDBEntry.getAllColumns(),
+                                                     null,
+                                                     null,
+                                                     FeedDBHelper.FeedItemDBEntry.COLUMN_CREATION_DATE + " DESC"
+        ) {
             @Override
             public Cursor loadInBackground() {
                 FeedDBHelper dbHelper = FeedDBHelper.getHelper(getApplicationContext());
                 SQLiteDatabase db = dbHelper.getReadableDatabase();
-                return db.query(FeedDBHelper.FeedDBEntry.TABLE_NAME,
-                        getProjection(),
-                        getSelection(),
-                        getSelectionArgs(),
-                        null,
-                        null,
-                        this.getSortOrder(),
-                        "100");
+                return db.query(FeedDBHelper.FeedItemDBEntry.TABLE_NAME,
+                                getProjection(),
+                                getSelection(),
+                                getSelectionArgs(),
+                                null,
+                                null,
+                                this.getSortOrder(),
+                                "100"
+                );
             }
         };
 
@@ -85,14 +87,14 @@ public class FeedItemListView extends AppCompatActivity {
         }
 
         public void bindView(View view, Context context, Cursor cursor) {
-            final int itemID = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry._ID));
+            final int itemID = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry._ID));
 
             TextView titleTextView = (TextView) view.findViewById(R.id.feed_item_title);
-            String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry.COLUMN_TITLE));
+            String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_TITLE));
             titleTextView.setText(title);
 
             CheckBox checkBox = (CheckBox) view.findViewById(R.id.feed_item_enabled);
-            boolean enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry.COLUMN_ENABLED)) == 1;
+            boolean enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_ENABLED)) == 1;
             checkBox.setChecked(enabled);
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -101,9 +103,9 @@ public class FeedItemListView extends AppCompatActivity {
                 }
             });
 
-            if (cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry.COLUMN_DOWNLOADED)) == 1) {
+            if (cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_DOWNLOADED)) == 1) {
                 // get image name and path
-                String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry.COLUMN_IMAGE_NAME));
+                String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_IMAGE_NAME));
                 String imagePath = imageDirectory + imageName;
 
                 // get bitmap scale

@@ -2,12 +2,18 @@
 	<!-- Generic -->
 	<string name="app_name">NASA Wallpaper</string>
 	<string name="developer_email">kevin@broh-kahn.com</string>
+	<string name="ok">OK</string>
+	<string name="cancel">Cancel</string>
 
 	<!-- Permissions -->
-	<string name="permission_request_title">Internet Access Required</string>
-	<string name="permission_request_message">This app requires access to the internet to download RSS feeds and new wallpapers. It also sets your wallpaper automatically (which is why you downloaded it). Please allow both permissions.</string>
-	<string name="permission_request_positive_button">OK</string>
-	<string name="permission_request_negative_button">Uninstall</string>
+	<!--<string name="permission_request_title">Internet Access Required</string>-->
+	<!--<string name="permission_request_message">This app requires access to the internet to download RSS feeds and new wallpapers. It also sets your wallpaper automatically (which is why you downloaded it). Please allow both permissions.</string>-->
+	<!--<string name="permission_request_positive_button">OK</string>-->
+	<!--<string name="permission_request_negative_button">Uninstall</string>-->
+
+	<!-- Set feed dialog -->
+	<string name="set_feed_dialog_title">Set new RSS feed</string>
+	<string name="set_feed_dialog_message">Do you want to change your wallpaper according to the %1$s feed?</string>
 
 	<!-- Image and Feed strings -->
 	<string name="current_background">Current wallpaper</string>
@@ -44,6 +50,7 @@
 
 	<!-- User keys-->
 	<!-- RSS Feed -->
+	<string name="key_current_feed">currentFeed</string>
 	<string name="key_update_interval">updateInterval</string>
 	<string name="key_update_wifi_only">updateWifiOnly</string>
 	<string name="key_update_time">updateTime</string>
@@ -59,6 +66,7 @@
 
 	<!-- Titles -->
 	<!-- RSS Feed -->
+	<string name="title_current_feed">Current Feed</string>
 	<string name="title_update_interval">Update interval</string>
 	<string name="title_update_wifi_only">Update using Wifi Only</string>
 	<string name="title_update_time">Update time</string>

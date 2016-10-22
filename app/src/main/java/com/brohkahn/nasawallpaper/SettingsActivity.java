@@ -174,7 +174,29 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			addPreferencesFromResource(R.xml.pref_rss_feed);
 			setHasOptionsMenu(true);
 
+			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getActivity());
+			List<Feed> availableFeeds = feedDBHelper.getAvailableFeeds();
+			int availableFeedsCount = availableFeeds.size();
+
+			if (availableFeedsCount == 0) {
+				availableFeeds.add(Constants.getBuiltInFeed());
+			}
+
+			String[] currentFeedValues = new String[availableFeedsCount];
+			String[] currentFeedTitles = new String[availableFeedsCount];
+			for (int i = 0; i < availableFeedsCount; i++) {
+				Feed feed = availableFeeds.get(i);
+				currentFeedTitles[i] = feed.title;
+				currentFeedValues[i] = String.valueOf(feed.id);
+			}
+
 			Resources resources = getResources();
+
+			ListPreference feedListPreference = (ListPreference) findPreference(resources.getString(R.string.key_current_feed));
+			feedListPreference.setEntries(currentFeedTitles);
+			feedListPreference.setEntryValues(currentFeedValues);
+
+			bindPreferenceSummaryToValue(feedListPreference);
 			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_update_interval)));
 			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_update_time)));
 		}
