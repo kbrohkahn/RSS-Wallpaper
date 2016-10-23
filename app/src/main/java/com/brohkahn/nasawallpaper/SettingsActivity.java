@@ -80,13 +80,10 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 		// Trigger the listener immediately with the preference's
 		// current value.
-		sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-																 PreferenceManager
-																		 .getDefaultSharedPreferences(
-																				 preference.getContext())
-																		 .getString(preference.getKey(),
-																					""
-																		 )
+		sBindPreferenceSummaryToValueListener.onPreferenceChange(preference, PreferenceManager.getDefaultSharedPreferences(preference
+																																   .getContext())
+																							  .getString(preference
+																												 .getKey(), "")
 		);
 	}
 

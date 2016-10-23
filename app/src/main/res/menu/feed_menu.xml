@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+
+	<item
+		android:id="@+id/action_update_feeds"
+		android:icon="@drawable/ic_cached_white_24dp"
+		android:title="@string/action_update_feeds"
+		app:showAsAction="ifRoom" />
+	<item
+		android:id="@+id/action_request_feed"
+		android:icon="@drawable/ic_question_answer_white_24dp"
+		android:title="@string/action_request_feeds"
+		app:showAsAction="ifRoom" />
+</menu>

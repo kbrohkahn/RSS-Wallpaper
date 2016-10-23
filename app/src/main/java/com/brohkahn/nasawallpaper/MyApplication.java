@@ -10,6 +10,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.brohkahn.loggerlibrary.ErrorHandler;
 import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
@@ -59,5 +60,19 @@ public class MyApplication extends Application {
 		helper.saveLogEntry(message, null, tag, function, level);
 		helper.close();
 	}
+
+
+	public void logException(Exception e, String function, String tag) {
+		Log.d(tag, function + ": " + e.getLocalizedMessage());
+		LogDBHelper helper = LogDBHelper.getHelper(this);
+		helper.saveLogEntry(e.getLocalizedMessage(),
+							ErrorHandler.getStackTraceString(e),
+							tag,
+							function,
+							LogEntry.LogLevel.Error
+		);
+		helper.close();
+	}
+
 }
 

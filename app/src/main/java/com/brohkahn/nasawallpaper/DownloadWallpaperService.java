@@ -3,6 +3,8 @@ package com.brohkahn.nasawallpaper;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -16,9 +18,11 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
@@ -31,9 +35,13 @@ public class DownloadWallpaperService extends IntentService {
 
 	private static final String ACTION_DOWNLOAD_RSS = "com.brohkahn.nasawallpaper.action.DOWNLOAD_RSS";
 
-	public static final String EXTRA_FEED_URL = "com.brohkahn.nasawallpaper.extra.FEED_URL";
+	private static final int MAX_URL_CHARS = 2083;
+	private static final String[] imageSuffices = {".png", ".jpg", ".jpeg"};
+	private static final String[] absoluteURLPrefixes = {"http://", "https://"};
+	private static final String[] relativeURLImagePrefixes = {"href=\"", "src=\""};
 
 	private String imageDirectory;
+	private static Feed currentFeed;
 
 	private boolean noInitialItems;
 
@@ -44,29 +52,33 @@ public class DownloadWallpaperService extends IntentService {
 		super("DownloadWallpaperService");
 	}
 
-	public static void startDownloadRSSAction(Context context, String feedUrl) {
+	public static void startDownloadRSSAction(Context context) {
 		Intent intent = new Intent(context, DownloadWallpaperService.class);
 		intent.setAction(ACTION_DOWNLOAD_RSS);
-		intent.putExtra(EXTRA_FEED_URL, feedUrl);
 		context.startService(intent);
 	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		Resources resources = getResources();
+		imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
+				.getPath() + "/");
+		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "0"));
+
 		logDBHelper = LogDBHelper.getHelper(this);
 		feedDBHelper = FeedDBHelper.getHelper(this);
 
-		noInitialItems = feedDBHelper.getRecentItems(1).size() == 0;
+		currentFeed = feedDBHelper.getFeed(currentFeedId);
+		if (currentFeed == null) {
+			currentFeed = Constants.getBuiltInFeed();
+		}
+		noInitialItems = feedDBHelper.getRecentItems(1, currentFeedId).size() == 0;
 
 		if (intent != null) {
 			String action = intent.getAction();
 			if (ACTION_DOWNLOAD_RSS.equals(action)) {
-				imageDirectory = PreferenceManager.getDefaultSharedPreferences(this)
-												  .getString(getResources().getString(R.string.key_image_directory), getFilesDir()
-														  .getPath() + "/");
-
-				String feedUrl = intent.getStringExtra(EXTRA_FEED_URL);
-				downloadFeedItems(feedUrl);
+				downloadFeedItems(currentFeed.source);
 			}
 		}
 	}
@@ -110,6 +122,14 @@ public class DownloadWallpaperService extends IntentService {
 
 	private void downloadFeedItem(FeedItem entry) {
 		try {
+			if (entry.imageLink == null) {
+				logEvent(String.format(Locale.US, "No image link for %s found.", entry.title),
+						 "downloadFeedItem(FeedItem entry)",
+						 LogEntry.LogLevel.Warning
+				);
+				return;
+			}
+
 			logEvent(String.format(Locale.US, "Downloading feed image for %s.", entry.title),
 					 "downloadFeedItem(FeedItem entry)",
 					 LogEntry.LogLevel.Message
@@ -157,6 +177,54 @@ public class DownloadWallpaperService extends IntentService {
 		}
 	}
 
+	private static String parseLinkFromText(String text, String url) {
+		String link = null;
+		for (String imageExtension : imageSuffices) {
+			int endIndex = text.indexOf(imageExtension);
+			if (endIndex > -1) {
+				int endIndexWithExtension = endIndex + imageExtension.length();
+				int startIndex = -1;
+
+				// check for absolute URLs
+				for (String prefix : absoluteURLPrefixes) {
+					int index = text.lastIndexOf(prefix, endIndex);
+					if (index > startIndex) {
+						startIndex = index;
+					}
+				}
+
+				if (startIndex > -1 && startIndex + MAX_URL_CHARS > endIndexWithExtension) {
+					link = text.substring(startIndex, endIndexWithExtension);
+					break;
+				}
+
+				// check for relative URLs
+				for (String prefix : relativeURLImagePrefixes) {
+					int index = text.lastIndexOf(prefix, endIndex);
+					if (index > startIndex) {
+						startIndex = index + prefix.length();
+					}
+				}
+				if (startIndex > -1 && startIndex + MAX_URL_CHARS > endIndexWithExtension) {
+					// get absolute url
+					int absolutePathStart = url.indexOf("/", 10);
+					if (absolutePathStart > -1) {
+						url = url.substring(0, absolutePathStart);
+					}
+
+					// append backslash
+					if (!url.endsWith("/")) {
+						url += "/";
+					}
+
+					link = url + text.substring(startIndex, endIndexWithExtension);
+					break;
+				}
+			}
+		}
+		return link;
+	}
+
 	private void downloadComplete() {
 		if (noInitialItems) {
 			Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
@@ -173,16 +241,14 @@ public class DownloadWallpaperService extends IntentService {
 	}
 
 	public static class FeedParser {
+
 		private static final String rssTag = "rss";
 		private static final String channelTag = "channel";
 		private static final String titleTag = "title";
-		private static final String descriptionTag = "description";
 		private static final String linkTag = "link";
+		private static final String descriptionTag = "description";
 
 		private static final String entryTag = "item";
-
-		private String entryImageLinkTag = "enclosure";
-		private String entryImageLinkAttribute = "url";
 
 		private static final String ns = null;
 
@@ -219,6 +285,7 @@ public class DownloadWallpaperService extends IntentService {
 					continue;
 				}
 
+				String title = null, link = null, description = null;
 				String name = parser.getName();
 				if (name.equals(channelTag)) {
 					parser.require(XmlPullParser.START_TAG, ns, channelTag);
@@ -228,14 +295,38 @@ public class DownloadWallpaperService extends IntentService {
 							continue;
 						}
 
+						String[] results;
 						name = parser.getName();
-						if (name.equals(entryTag)) {
-							readFeedItem(parser);
-						} else {
-							skip(parser);
+						switch (name) {
+							case titleTag:
+							case linkTag:
+							case descriptionTag:
+								results = readBasicTag(parser, name);
+								if (results != null) {
+									switch (name) {
+										case titleTag:
+											title = results[0];
+											break;
+										case linkTag:
+											link = results[0];
+											break;
+										case descriptionTag:
+											description = results[0];
+											break;
+									}
+								}
+								break;
+							case entryTag:
+								readFeedItem(parser);
+								break;
+							default:
+								skip(parser);
+								break;
 						}
 					}
 				}
+
+				feedDBHelper.updateFeedInfo(currentFeed.id, title, link, description);
 			}
 		}
 
@@ -246,35 +337,78 @@ public class DownloadWallpaperService extends IntentService {
 		private void readFeedItem(XmlPullParser parser)
 				throws XmlPullParserException, IOException, ParseException {
 			parser.require(XmlPullParser.START_TAG, ns, entryTag);
-			String title = null;
-			String link = null;
-			String imageLink = null;
 
+			String title = null, link = null, description = null, imageLink = null;
 			while (parser.next() != XmlPullParser.END_TAG) {
 				if (parser.getEventType() != XmlPullParser.START_TAG) {
 					continue;
 				}
+
 				String name = parser.getName();
-				if (name.equals(titleTag)) {
-					title = readBasicTag(parser, titleTag);
-				} else if (name.equals(linkTag)) {
-					link = readBasicTag(parser, linkTag);
-				} else if (name.equals(entryImageLinkTag)) {
-					imageLink = readAlternateLink(parser, entryImageLinkTag);
+				if (name.equals(titleTag)
+						|| name.equals(linkTag)
+						|| name.equals(descriptionTag)
+						|| name.equals(currentFeed.entryImageLinkTag)) {
+					String[] results = readBasicTag(parser, name);
+					if (results != null) {
+						if (results[0] != null) {
+							// match first result with correct variable
+							switch (name) {
+								case titleTag:
+									title = results[0];
+									break;
+								case linkTag:
+									link = results[0];
+									break;
+								case descriptionTag:
+									description = results[0];
+									break;
+							}
+						}
+
+						if (!currentFeed.imageOnWebPage && imageLink == null && results[1] != null) {
+							imageLink = results[1];
+						}
+					}
 				} else {
 					skip(parser);
 				}
 			}
 
-			if (!feedDBHelper.feedItemExists(imageLink)) {
-				logEvent(String.format("Saving feed item title=%s, link=%s, imageLink=%s",
-									   title, link, imageLink
-						 ),
+			if (currentFeed.imageOnWebPage && link != null) {
+				try {
+					URL url = new URL(link);
+					URLConnection connection = url.openConnection();
+					connection.connect();
+
+					// download the file
+					InputStream inputStream = new BufferedInputStream(url.openStream());
+
+					BufferedReader bReader = new BufferedReader(new InputStreamReader(inputStream, "utf-8"), 8);
+					StringBuilder sBuilder = new StringBuilder();
+
+					String line;
+					while ((line = bReader.readLine()) != null) {
+						sBuilder.append(line + "\n");
+					}
+
+					inputStream.close();
+					String fullHTML = sBuilder.toString();
+
+					imageLink = parseLinkFromText(fullHTML, link);
+				} catch (IOException e) {
+					logException(e, "doInBackground(String... params)");
+					Log.e("JSONException", "Error: " + e.toString());
+				}
+			}
+
+			if (!feedDBHelper.feedItemExists(imageLink, currentFeed.id)) {
+				logEvent(String.format("Saving feed item title=%s.", title),
 						 "readFeedItem(XmlPullParser parser)",
 						 LogEntry.LogLevel.Message
 				);
 
-				feedDBHelper.saveFeedEntry(title, link, imageLink);
+				feedDBHelper.saveFeedEntry(currentFeed.id, title, link, description, imageLink);
 			}
 		}
 
@@ -288,46 +422,73 @@ public class DownloadWallpaperService extends IntentService {
 		 * @throws java.io.IOException
 		 * @throws org.xmlpull.v1.XmlPullParserException
 		 */
-		private String readBasicTag(XmlPullParser parser, String tag)
+		private String[] readBasicTag(XmlPullParser parser, String tag)
 				throws IOException, XmlPullParserException {
 			parser.require(XmlPullParser.START_TAG, ns, tag);
-			String result = readText(parser);
+			String result[] = new String[2];
+
+			// get tag text
+			if (parser.next() == XmlPullParser.TEXT) {
+				result[0] = parser.getText();
+			}
+
+			// see if we need to get image link from this tag as well
+			if (tag.equals(currentFeed.entryImageLinkTag)) {
+				result[1] = getImageLink(parser, result[0]);
+			}
+
+			// goto next tag if we read something
+			if (result[0] != null) {
+				parser.nextTag();
+			}
+
 			parser.require(XmlPullParser.END_TAG, ns, tag);
 			return result;
 		}
 
-		/**
-		 * Processes link tags in the feed.
-		 */
-		private String readAlternateLink(XmlPullParser parser, String tag)
+		private String getImageLink(XmlPullParser parser, String text)
 				throws IOException, XmlPullParserException {
-			parser.require(XmlPullParser.START_TAG, ns, tag);
-			String link = parser.getAttributeValue(null, entryImageLinkAttribute);
-
-//            if (relType.equals("alternate")) {
-//                link = parser.getAttributeValue(null, "href");
-//            }
-
-			while (true) {
-				if (parser.nextTag() == XmlPullParser.END_TAG) {
-					break;
-				}
-				// Intentionally break; consumes any remaining sub-tags.
+			String imageLink;
+			if (!currentFeed.entryImageLinkAttribute.equals("")) {
+				// link is in an attribute
+				imageLink = parser.getAttributeValue(null, currentFeed.entryImageLinkAttribute);
+			} else {
+				// link is hidden somewhere in text
+				imageLink = parseLinkFromText(text, "");
 			}
-			return link;
+
+			if (imageLink == null) {
+				logEvent(String.format("Link not found in text %s.", text),
+						 "getLink(XmlPullParser parser, String text)",
+						 LogEntry.LogLevel.Warning
+				);
+			}
+
+			return imageLink;
 		}
 
-		/**
-		 * For the tags title and summary, extracts their text values.
-		 */
-		private String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
-			String result = null;
-			if (parser.next() == XmlPullParser.TEXT) {
-				result = parser.getText();
-				parser.nextTag();
-			}
-			return result;
-		}
+
+//		/**
+//		 * Processes link tags in the feed.
+//		 */
+//		private String readAlternateLink(XmlPullParser parser, String tag)
+//				throws IOException, XmlPullParserException {
+//			parser.require(XmlPullParser.START_TAG, ns, tag);
+//			String link = parser.getAttributeValue(null, entryImageLinkAttribute);
+//
+////            if (relType.equals("alternate")) {
+////                link = parser.getAttributeValue(null, "href");
+////            }
+//
+//			while (true) {
+//				if (parser.nextTag() == XmlPullParser.END_TAG) {
+//					break;
+//				}
+//				// Intentionally break; consumes any remaining sub-tags.
+//			}
+//			return link;
+//		}
+
 
 		/**
 		 * Skips tags the parser isn't interested in. Uses depth to handle nested tags. i.e.,

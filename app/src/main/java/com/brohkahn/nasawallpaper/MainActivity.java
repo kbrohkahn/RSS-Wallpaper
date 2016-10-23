@@ -118,13 +118,15 @@ public class MainActivity extends AppCompatActivity {
 		currentItemId = settings.getInt(resources.getString(R.string.key_current_item), 0);
 		String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 				.getPath() + "/");
+		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 		FeedItem currentItem = feedDBHelper.getFeedItem(currentItemId);
+		Feed currentFeed = feedDBHelper.getFeed(currentFeedId);
 		feedDBHelper.close();
 
 		Bitmap currentImage;
-		String titleText, linkText;
+		String titleText, linkText, descriptionText;
 		if (currentItem != null) {
 			// get screen width (output wallpaper width)
 			Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
@@ -139,17 +141,26 @@ public class MainActivity extends AppCompatActivity {
 
 			titleText = currentItem.title;
 			linkText = currentItem.link;
-
+			descriptionText = currentItem.description;
 		} else {
 			currentImage = null;
 			titleText = "";
 			linkText = "";
+			descriptionText = "";
 		}
 
 		recycleCurrentBitmap();
 		imageView.setImageBitmap(currentImage);
 		((TextView) findViewById(R.id.current_item_title)).setText(titleText);
 		((TextView) findViewById(R.id.current_item_link)).setText(linkText);
+		((TextView) findViewById(R.id.current_item_description)).setText(descriptionText);
+
+		if (currentFeed == null) {
+			currentFeed = Constants.getBuiltInFeed();
+		}
+
+		((TextView) findViewById(R.id.current_feed)).setText(
+				resources.getString(R.string.current_feed_text, currentFeed.title));
 
 		blockWallpaperButton.setEnabled(true);
 		nextWallpaperButton.setEnabled(true);
@@ -224,6 +235,9 @@ public class MainActivity extends AppCompatActivity {
 				return true;
 			case R.id.action_settings:
 				startActivity(new Intent(this, SettingsActivity.class));
+				return true;
+			case R.id.action_view_feeds:
+				startActivity(new Intent(this, FeedListView.class));
 				return true;
 			case R.id.action_about:
 				startActivity(new Intent(this, About.class));

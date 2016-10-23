@@ -57,7 +57,7 @@ public class ErrorDialogActivity extends AppCompatActivity {
 
 
     private void sendCrashEmail(String errorString) {
-        final Resources resources = getResources();
+        Resources resources = getResources();
         String subject = String.format(resources.getString(R.string.crash_email_subject), appName);
         String body = resources.getString(R.string.crash_email_body);
 

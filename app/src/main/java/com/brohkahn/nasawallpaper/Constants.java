@@ -28,8 +28,11 @@ public final class Constants {
 
 	public static Feed getBuiltInFeed() {
 		Feed feed = new Feed(0,
+							 "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
 							 "NASA Image of the Day",
-							 "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss"
+							 "http://www.nasa.gov",
+							 "The latest NASA \"Image of the Day\" image.",
+							 false
 		);
 		feed.entryImageLinkTag = "enclosure";
 		feed.entryImageLinkAttribute = "url";

@@ -20,6 +20,10 @@
         android:title="@string/action_view_items_all"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/action_view_feeds"
+        android:title="@string/activity_feeds"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_settings"
         android:title="@string/activity_settings"
         app:showAsAction="never" />

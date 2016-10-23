@@ -17,12 +17,9 @@ import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.brohkahn.loggerlibrary.ErrorHandler;
-import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
 import java.io.IOException;
@@ -41,10 +38,6 @@ public class ChangeWallpaperService extends Service {
 	private static final int CROP_CENTER = 2;
 	private static final int SCALE_WIDTH_AND_HEIGHT = 3;
 
-	private static final String NASA_RSS_LINK_A = "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss";
-	//    private static final String NASA_RSS_LINK_B = "http://apod.nasa.gov/apod.rss";
-	private static final String FEED_TITLE = "NASA Image of the Day";
-
 	private static final int MS_MINUTE = 1000 * 60;
 	private static final int MS_HOUR = MS_MINUTE * 60;
 
@@ -55,7 +48,7 @@ public class ChangeWallpaperService extends Service {
 	private boolean setLockWallpaper;
 
 	private boolean wifiOnly;
-
+	private int currentFeed;
 	private String imageDirectory;
 
 	private Random random = new Random();
@@ -117,6 +110,7 @@ public class ChangeWallpaperService extends Service {
 		// rss feed
 		int updateInterval = Integer.parseInt(prefs.getString(res.getString(R.string.key_update_interval), "24"));
 		int updateTime = Integer.parseInt(prefs.getString(res.getString(R.string.key_update_time), "3"));
+		currentFeed = Integer.parseInt(prefs.getString(res.getString(R.string.key_current_feed), "0"));
 		wifiOnly = prefs.getBoolean(res.getString(R.string.key_update_wifi_only), true);
 
 		// app setting
@@ -130,7 +124,7 @@ public class ChangeWallpaperService extends Service {
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
 		int itemsWithoutImageCount = feedDBHelper.getItemsWithoutImages().size();
-		int mostRecentItemCount = feedDBHelper.getRecentItems(1).size();
+		int mostRecentItemCount = feedDBHelper.getRecentItems(1, currentFeed).size();
 		if (mostRecentItemCount == 0 || itemsWithoutImageCount > 0) {
 			// start download immediately if items need image or no items at all
 			startDownloadIntent();
@@ -205,10 +199,10 @@ public class ChangeWallpaperService extends Service {
 
 		String keyCurrentItem = getResources().getString(R.string.key_current_item);
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-		long currentItemId = settings.getInt(keyCurrentItem, 0);
+		int currentItemId = settings.getInt(keyCurrentItem, 0);
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
-		List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItems(numberToRotate);
+		List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItems(numberToRotate, currentFeed);
 		feedDBHelper.close();
 
 		int availableItems = itemsToShuffle.size();
@@ -343,19 +337,6 @@ public class ChangeWallpaperService extends Service {
 		}
 	}
 
-
-	private void logException(Exception e, String function) {
-		Log.d(TAG, function + ": " + e.getLocalizedMessage());
-		LogDBHelper helper = LogDBHelper.getHelper(this);
-		helper.saveLogEntry(e.getLocalizedMessage(),
-							ErrorHandler.getStackTraceString(e),
-							TAG,
-							function,
-							LogEntry.LogLevel.Error
-		);
-		helper.close();
-	}
-
 	private TimerTask downloadRSSTask = new TimerTask() {
 		@Override
 		public void run() {
@@ -364,33 +345,47 @@ public class ChangeWallpaperService extends Service {
 	};
 
 	private void startDownloadIntent() {
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+		Resources resources = getResources();
+		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
+
+		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
+		Feed currentFeed = feedDBHelper.getFeed(currentFeedId);
+		feedDBHelper.close();
+
+		if (currentFeed == null) {
+			currentFeed = Constants.getBuiltInFeed();
+		}
+
+
+
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 		if (activeNetwork == null) {
-			logEvent(String.format(Locale.US, "Not connected to internet, unable to download '%s' feed.", FEED_TITLE),
+			logEvent(String.format(Locale.US, "Not connected to internet, unable to download '%s' feed.", currentFeed.title),
 					 "startDownloadIntent()",
 					 LogEntry.LogLevel.Message
 			);
 		} else {
 			boolean wifiConnection = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
 			if (wifiOnly && !wifiConnection) {
-				logEvent(String.format(Locale.US, "Not connected to Wifi, unable to download '%s' feed.", FEED_TITLE),
+				logEvent(String.format(Locale.US, "Not connected to Wifi, unable to download '%s' feed.", currentFeed.title),
 						 "startDownloadIntent()",
 						 LogEntry.LogLevel.Message
 				);
 			} else {
 				if (wifiOnly) {
-					logEvent(String.format(Locale.US, "Connected to Wifi, starting download of '%s' feed.", FEED_TITLE),
+					logEvent(String.format(Locale.US, "Connected to Wifi, starting download of '%s' feed.", currentFeed.title),
 							 "startDownloadIntent()",
 							 LogEntry.LogLevel.Message
 					);
 				} else {
-					logEvent(String.format(Locale.US, "Connected to internet, starting download of '%s' feed.", FEED_TITLE),
+					logEvent(String.format(Locale.US, "Connected to internet, starting download of '%s' feed.", currentFeed.title),
 							 "startDownloadIntent()",
 							 LogEntry.LogLevel.Message
 					);
 				}
-				DownloadWallpaperService.startDownloadRSSAction(this, NASA_RSS_LINK_A);
+				DownloadWallpaperService.startDownloadRSSAction(this);
 
 			}
 		}
@@ -398,5 +393,9 @@ public class ChangeWallpaperService extends Service {
 
 	private void logEvent(String message, String function, LogEntry.LogLevel level) {
 		((MyApplication) getApplication()).logEvent(message, function, TAG, level);
+	}
+
+	private void logException(Exception e, String function) {
+		((MyApplication) getApplication()).logException(e, function, TAG);
 	}
 }

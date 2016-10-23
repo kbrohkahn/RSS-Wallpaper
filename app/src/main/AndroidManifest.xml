@@ -43,9 +43,14 @@
 			android:exported="false" />
 
 		<activity
+			android:name=".About"
+			android:label="@string/activity_about" />
+		<activity
 			android:name=".SettingsActivity"
 			android:label="@string/activity_settings" />
-		<activity android:name=".FeedListView"></activity>
+		<activity
+			android:name=".FeedListView"
+			android:label="@string/activity_feeds" />
 	</application>
 
 </manifest>
