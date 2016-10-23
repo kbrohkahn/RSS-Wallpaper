@@ -77,6 +77,13 @@ public class FeedItemListView extends AppCompatActivity {
 	}
 
 	@Override
+	protected void onPause() {
+		DownloadImageService.startDownloadImageAction(this);
+
+		super.onPause();
+	}
+
+	@Override
 	protected void onDestroy() {
 		adapter.getCursor().close();
 		adapter.changeCursor(null);

@@ -69,6 +69,13 @@ public class FeedItemView extends AppCompatActivity {
 		downloadedCheckBox.setChecked(item.downloaded);
 	}
 
+	@Override
+	protected void onPause() {
+		DownloadImageService.startDownloadImageAction(this);
+
+		super.onPause();
+	}
+
 	private void updateItemEnabled(int itemId, boolean enabled) {
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 		feedDBHelper.updateImageEnabled(itemId, enabled);

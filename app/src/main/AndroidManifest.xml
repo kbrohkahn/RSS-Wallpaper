@@ -39,7 +39,10 @@
 			android:name=".ChangeWallpaperService"
 			android:enabled="true" />
 		<service
-			android:name=".DownloadWallpaperService"
+			android:name=".DownloadRSSService"
+			android:exported="false" />
+		<service
+			android:name=".DownloadImageService"
 			android:exported="false" />
 
 		<activity

@@ -26,7 +26,6 @@
 
 	<!-- Image and Feed strings -->
 	<string name="current_background">Current wallpaper</string>
-	<string name="current_feed_text">From: %1$s</string>
 	<string name="current_image">Current image</string>
 	<string name="restart_service">Restart service</string>
 	<string name="no_item_placeholder">No wallpaper set.</string>

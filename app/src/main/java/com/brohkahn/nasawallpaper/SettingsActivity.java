@@ -48,6 +48,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		Intent serviceIntent = new Intent(this, ChangeWallpaperService.class);
 		stopService(serviceIntent);
 		startService(serviceIntent);
+
+		DownloadImageService.startDownloadImageAction(this);
+
 		super.onPause();
 	}
 

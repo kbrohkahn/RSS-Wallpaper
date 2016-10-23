@@ -11,8 +11,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -47,8 +45,7 @@ public class ChangeWallpaperService extends Service {
 	private boolean setHomeWallpaper;
 	private boolean setLockWallpaper;
 
-	private boolean wifiOnly;
-	private int currentFeed;
+	private int currentFeedId;
 	private String imageDirectory;
 
 	private Random random = new Random();
@@ -110,8 +107,7 @@ public class ChangeWallpaperService extends Service {
 		// rss feed
 		int updateInterval = Integer.parseInt(prefs.getString(res.getString(R.string.key_update_interval), "24"));
 		int updateTime = Integer.parseInt(prefs.getString(res.getString(R.string.key_update_time), "3"));
-		currentFeed = Integer.parseInt(prefs.getString(res.getString(R.string.key_current_feed), "0"));
-		wifiOnly = prefs.getBoolean(res.getString(R.string.key_update_wifi_only), true);
+		currentFeedId = Integer.parseInt(prefs.getString(res.getString(R.string.key_current_feed), "0"));
 
 		// app setting
 		imageDirectory = prefs.getString(res.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
@@ -122,13 +118,19 @@ public class ChangeWallpaperService extends Service {
 		LocalBroadcastManager.getInstance(this)
 							 .registerReceiver(changeWallpaperNow, mStatusIntentFilter);
 
-		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
-		int itemsWithoutImageCount = feedDBHelper.getItemsWithoutImages().size();
-		int mostRecentItemCount = feedDBHelper.getRecentItems(1, currentFeed).size();
-		if (mostRecentItemCount == 0 || itemsWithoutImageCount > 0) {
-			// start download immediately if items need image or no items at all
-			startDownloadIntent();
-		}
+		startRSSDownloadIntent();
+
+//		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
+//		int itemsWithoutImageCount = feedDBHelper.getRecentItemsWithImages(numberToRotate, currentFeedId)
+//												 .size();
+//		int mostRecentItemCount = feedDBHelper.getRecentItems(1, currentFeedId).size();
+//		if (mostRecentItemCount == 0) {
+//			// download RSS immediately if no items found
+//			startRSSDownloadIntent();
+//		} else if (itemsWithoutImageCount > 0){
+//			// download image immediately if images needed
+//			startImageDownloadIntent();
+//		}
 
 		// set download time
 		Calendar downloadTime = Calendar.getInstance();
@@ -202,8 +204,19 @@ public class ChangeWallpaperService extends Service {
 		int currentItemId = settings.getInt(keyCurrentItem, 0);
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
-		List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItems(numberToRotate, currentFeed);
+		List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItems(numberToRotate, currentFeedId);
 		feedDBHelper.close();
+
+		// remove items without downloaded image
+		int index = 0;
+		while (index < itemsToShuffle.size()) {
+			FeedItem item = itemsToShuffle.get(index);
+			if (!item.downloaded || item.imageName == null || item.imageName.equals("")) {
+				itemsToShuffle.remove(index);
+			} else {
+				index++;
+			}
+		}
 
 		int availableItems = itemsToShuffle.size();
 		if (availableItems == 0) {
@@ -340,55 +353,12 @@ public class ChangeWallpaperService extends Service {
 	private TimerTask downloadRSSTask = new TimerTask() {
 		@Override
 		public void run() {
-			startDownloadIntent();
+			startRSSDownloadIntent();
 		}
 	};
 
-	private void startDownloadIntent() {
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-		Resources resources = getResources();
-		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
-
-		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
-		Feed currentFeed = feedDBHelper.getFeed(currentFeedId);
-		feedDBHelper.close();
-
-		if (currentFeed == null) {
-			currentFeed = Constants.getBuiltInFeed();
-		}
-
-
-
-		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-		if (activeNetwork == null) {
-			logEvent(String.format(Locale.US, "Not connected to internet, unable to download '%s' feed.", currentFeed.title),
-					 "startDownloadIntent()",
-					 LogEntry.LogLevel.Message
-			);
-		} else {
-			boolean wifiConnection = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
-			if (wifiOnly && !wifiConnection) {
-				logEvent(String.format(Locale.US, "Not connected to Wifi, unable to download '%s' feed.", currentFeed.title),
-						 "startDownloadIntent()",
-						 LogEntry.LogLevel.Message
-				);
-			} else {
-				if (wifiOnly) {
-					logEvent(String.format(Locale.US, "Connected to Wifi, starting download of '%s' feed.", currentFeed.title),
-							 "startDownloadIntent()",
-							 LogEntry.LogLevel.Message
-					);
-				} else {
-					logEvent(String.format(Locale.US, "Connected to internet, starting download of '%s' feed.", currentFeed.title),
-							 "startDownloadIntent()",
-							 LogEntry.LogLevel.Message
-					);
-				}
-				DownloadWallpaperService.startDownloadRSSAction(this);
-
-			}
-		}
+	private void startRSSDownloadIntent() {
+		DownloadRSSService.startDownloadRSSAction(this);
 	}
 
 	private void logEvent(String message, String function, LogEntry.LogLevel level) {

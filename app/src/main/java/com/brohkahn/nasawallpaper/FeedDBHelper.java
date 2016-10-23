@@ -27,7 +27,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 					FeedItemDBEntry.COLUMN_CREATION_DATE + " LONG, " +
 					FeedItemDBEntry.COLUMN_IMAGE_LINK + " TEXT, " +
 					FeedItemDBEntry.COLUMN_DOWNLOADED + " INTEGER, " +
-					FeedItemDBEntry.COLUMN_IMAGE_NAME + " TEXT UNIQUE, " +
+					FeedItemDBEntry.COLUMN_IMAGE_NAME + " TEXT, " +
 					FeedItemDBEntry.COLUMN_ENABLED + " INTEGER, " +
 					FeedItemDBEntry.COLUMN_RELATED_FEED + " INTEGER, " +
 					" FOREIGN KEY (" + FeedItemDBEntry.COLUMN_RELATED_FEED + ") REFERENCES " + FeedDBEntry.TABLE_NAME + "(" + FeedDBEntry._ID + "));";
@@ -89,19 +89,19 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		values.put(FeedItemDBEntry.COLUMN_IMAGE_LINK, imageLink);
 		values.put(FeedItemDBEntry.COLUMN_ENABLED, 1);
 		values.put(FeedItemDBEntry.COLUMN_DOWNLOADED, 0);
+		values.put(FeedItemDBEntry.COLUMN_CREATION_DATE, new Date().getTime());
 
 		SQLiteDatabase db = getWritableDatabase();
 		return db.insert(FeedItemDBEntry.TABLE_NAME, null, values);
 	}
 
 	boolean updateImageDownload(int id, String imageName) {
-		String query = String.format(Locale.US, "UPDATE %s SET %s=1, %s='%s', %s=%d WHERE %s=%d",
+		String query = String.format(Locale.US, "UPDATE %s SET %s=%d, %s='%s' WHERE %s=%d",
 									 FeedItemDBEntry.TABLE_NAME,
 									 FeedItemDBEntry.COLUMN_DOWNLOADED,
+									 imageName.equals("") ? 0 : 1,
 									 FeedItemDBEntry.COLUMN_IMAGE_NAME,
 									 imageName.replace("'", "''"),
-									 FeedItemDBEntry.COLUMN_CREATION_DATE,
-									 new Date().getTime(),
 									 FeedItemDBEntry._ID,
 									 id
 		);
@@ -143,20 +143,10 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		}
 	}
 
-	List<FeedItem> getItemsWithoutImages() {
-		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=0",
-									 FeedItemDBEntry.TABLE_NAME,
-									 FeedItemDBEntry.COLUMN_DOWNLOADED
-		);
-		return getItems(query);
-	}
-
 	List<FeedItem> getRecentItems(int count, int feedId) {
-		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=1 AND %s=1 AND %s is not null AND %s=%d ORDER BY %s DESC LIMIT %d",
+		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=1 AND %s=%d ORDER BY %s DESC LIMIT %d",
 									 FeedItemDBEntry.TABLE_NAME,
 									 FeedItemDBEntry.COLUMN_ENABLED,
-									 FeedItemDBEntry.COLUMN_DOWNLOADED,
-									 FeedItemDBEntry.COLUMN_IMAGE_NAME,
 									 FeedItemDBEntry.COLUMN_RELATED_FEED,
 									 feedId,
 									 FeedItemDBEntry.COLUMN_CREATION_DATE,
@@ -165,13 +155,8 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		return getItems(query);
 	}
 
-	public List<FeedItem> getAllItems(int feedId) {
-		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=%d ORDER BY %s DESC",
-									 FeedItemDBEntry.TABLE_NAME,
-									 FeedItemDBEntry.COLUMN_RELATED_FEED,
-									 feedId,
-									 FeedItemDBEntry.COLUMN_CREATION_DATE
-		);
+	List<FeedItem> getAllItems() {
+		String query = String.format(Locale.US, "SELECT * FROM %s", FeedItemDBEntry.TABLE_NAME);
 		return getItems(query);
 	}
 

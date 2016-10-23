@@ -104,7 +104,15 @@ public class FeedListView extends AppCompatActivity {
 		adapter.getCursor().close();
 		adapter.changeCursor(null);
 		adapter = null;
+
 		super.onDestroy();
+	}
+
+	@Override
+	protected void onPause() {
+		DownloadImageService.startDownloadImageAction(this);
+
+		super.onPause();
 	}
 
 	public class FeedListAdapter extends CursorAdapter {
@@ -185,6 +193,9 @@ public class FeedListView extends AppCompatActivity {
 
 		currentFeedId = id;
 		adapter.notifyDataSetChanged();
+
+		DownloadImageService.startDownloadImageAction(this);
+
 	}
 
 	@Override
@@ -334,6 +345,7 @@ public class FeedListView extends AppCompatActivity {
 				messageString = "No new feeds found, select \"Request new Feed\" in the menu to send the developer a request for a new feed.";
 			} else {
 				messageString = String.format(Locale.US, "Found %d new feeds, saving info.", result);
+				DownloadRSSService.startDownloadRSSAction(containingActivity);
 			}
 
 			containingActivity.logEvent(String.format(Locale.US, messageString, result),

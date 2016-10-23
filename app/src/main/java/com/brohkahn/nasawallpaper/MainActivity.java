@@ -11,11 +11,15 @@ import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
+import android.text.SpannableString;
+import android.text.style.UnderlineSpan;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -139,6 +143,7 @@ public class MainActivity extends AppCompatActivity {
 			bitmapOptions.inSampleSize = Constants.getImageScale(imagePath, screenWidth, 0);
 			currentImage = BitmapFactory.decodeFile(imagePath, bitmapOptions);
 
+
 			titleText = currentItem.title;
 			linkText = currentItem.link;
 			descriptionText = currentItem.description;
@@ -153,14 +158,28 @@ public class MainActivity extends AppCompatActivity {
 		imageView.setImageBitmap(currentImage);
 		((TextView) findViewById(R.id.current_item_title)).setText(titleText);
 		((TextView) findViewById(R.id.current_item_link)).setText(linkText);
-		((TextView) findViewById(R.id.current_item_description)).setText(descriptionText);
+		((TextView) findViewById(R.id.current_item_description)).setText(Html.fromHtml(descriptionText));
 
 		if (currentFeed == null) {
 			currentFeed = Constants.getBuiltInFeed();
 		}
 
-		((TextView) findViewById(R.id.current_feed)).setText(
-				resources.getString(R.string.current_feed_text, currentFeed.title));
+		SpannableString content = new SpannableString(currentFeed.title);
+		content.setSpan(new UnderlineSpan(), 0, content.length(), 0);
+
+		final String feedUrl = currentFeed.link;
+		TextView feedTextView = (TextView) findViewById(R.id.current_feed);
+		feedTextView.setTextColor(resources.getColor(R.color.colorAccent));
+		feedTextView.setText(content);
+		feedTextView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(Intent.ACTION_VIEW);
+				intent.setData(Uri.parse(feedUrl));
+				startActivity(intent);
+
+			}
+		});
 
 		blockWallpaperButton.setEnabled(true);
 		nextWallpaperButton.setEnabled(true);
