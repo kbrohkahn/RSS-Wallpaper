@@ -285,6 +285,8 @@ public class MainActivity extends AppCompatActivity {
 		feedDBHelper.close();
 
 		getNewWallpaper();
+
+		DownloadImageService.startDownloadImageAction(this);
 	}
 
 	private void getNewWallpaper() {

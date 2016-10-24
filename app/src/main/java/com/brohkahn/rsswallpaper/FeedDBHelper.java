@@ -80,13 +80,15 @@ class FeedDBHelper extends SQLiteOpenHelper {
 					   String title,
 					   String link,
 					   String description,
-					   String imageLink) {
+					   String imageLink,
+					   String imageName) {
 		ContentValues values = new ContentValues();
 		values.put(FeedItemDBEntry.COLUMN_RELATED_FEED, feedId);
 		values.put(FeedItemDBEntry.COLUMN_TITLE, title);
 		values.put(FeedItemDBEntry.COLUMN_LINK, link);
 		values.put(FeedItemDBEntry.COLUMN_DESCRIPTION, description);
 		values.put(FeedItemDBEntry.COLUMN_IMAGE_LINK, imageLink);
+		values.put(FeedItemDBEntry.COLUMN_IMAGE_NAME, imageName);
 		values.put(FeedItemDBEntry.COLUMN_ENABLED, 1);
 		values.put(FeedItemDBEntry.COLUMN_DOWNLOADED, 0);
 		values.put(FeedItemDBEntry.COLUMN_CREATION_DATE, new Date().getTime());
@@ -95,13 +97,11 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		return db.insert(FeedItemDBEntry.TABLE_NAME, null, values);
 	}
 
-	boolean updateImageDownload(int id, String imageName) {
-		String query = String.format(Locale.US, "UPDATE %s SET %s=%d, %s='%s' WHERE %s=%d",
+	boolean updateImageDownload(int id, boolean downloaded) {
+		String query = String.format(Locale.US, "UPDATE %s SET %s=%d WHERE %s=%d",
 									 FeedItemDBEntry.TABLE_NAME,
 									 FeedItemDBEntry.COLUMN_DOWNLOADED,
-									 imageName.equals("") ? 0 : 1,
-									 FeedItemDBEntry.COLUMN_IMAGE_NAME,
-									 imageName.replace("'", "''"),
+									 downloaded ? 0 : 1,
 									 FeedItemDBEntry._ID,
 									 id
 		);

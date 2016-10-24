@@ -31,10 +31,11 @@ public class DownloadImageService extends IntentService {
 
 	private static final String ACTION_DOWNLOAD_IMAGES = "com.brohkahn.nasawallpaper.action.download_images";
 
-	private String imageDirectory;
 
 	private static LogDBHelper logDBHelper;
 	private static FeedDBHelper feedDBHelper;
+
+	private String imageDirectory;
 
 	public DownloadImageService() {
 		super("DownloadImageService");
@@ -121,7 +122,7 @@ public class DownloadImageService extends IntentService {
 				if (item.downloaded && !feedItemIdsInUse.contains(item.id)) {
 					File file = new File(imageDirectory + item.imageName);
 					if (file.delete()) {
-						feedDBHelper.updateImageDownload(item.id, "");
+						feedDBHelper.updateImageDownload(item.id, false);
 					} else {
 						logEvent(String.format(Locale.US, "Unable to delete image %s.", item.imageName),
 								 "saveFeedItems(String urlString)",
@@ -165,13 +166,8 @@ public class DownloadImageService extends IntentService {
 					 LogEntry.LogLevel.Message
 			);
 
-			// set image name to item title
-			String imageName = entry.title.replace(' ', '_');
 
-			// append extension to image name
-			imageName += entry.imageLink.substring(entry.imageLink.lastIndexOf('.'));
-
-			String outputFilePath = imageDirectory + imageName;
+			String outputFilePath = imageDirectory + entry.imageName;
 
 			URL url = new URL(entry.imageLink);
 			URLConnection connection = url.openConnection();
@@ -194,7 +190,7 @@ public class DownloadImageService extends IntentService {
 			output.close();
 			input.close();
 
-			feedDBHelper.updateImageDownload(entry.id, imageName);
+			feedDBHelper.updateImageDownload(entry.id, true);
 
 			logEvent(String.format(Locale.US, "Successfully downloaded and saved feed image for %s.", entry.title),
 					 "downloadFeedItem(FeedItem entry)",

@@ -134,6 +134,7 @@ public class FeedItemListView extends AppCompatActivity {
 				}
 			});
 
+			ImageView imageView = (ImageView) view.findViewById(R.id.feed_item_icon);
 			if (cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_DOWNLOADED)) == 1) {
 				// get image name and path
 				String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_IMAGE_NAME));
@@ -144,13 +145,9 @@ public class FeedItemListView extends AppCompatActivity {
 				bitmapOptions.inSampleSize = Constants.getImageScale(imagePath, imageDimension, imageDimension);
 
 				// load imageView, scale bitmap, and set image
-				ImageView imageView = (ImageView) view.findViewById(R.id.feed_item_icon);
 				imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath, bitmapOptions));
 			} else {
-				logEvent(String.format(Locale.US, "Item %s is not downloaded.", title),
-						 "bindView(View view, Context context, Cursor cursor)",
-						 LogEntry.LogLevel.Trace
-				);
+				imageView.setImageBitmap(null);
 			}
 
 			view.setOnClickListener(new View.OnClickListener() {
@@ -171,6 +168,8 @@ public class FeedItemListView extends AppCompatActivity {
 		FeedDBHelper helper = FeedDBHelper.getHelper(getApplicationContext());
 		helper.updateImageEnabled(itemId, enabled);
 		helper.close();
+
+		DownloadImageService.startDownloadImageAction(this);
 	}
 
 	public void displayFeedItem(int ID) {

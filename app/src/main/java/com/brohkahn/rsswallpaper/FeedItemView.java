@@ -21,7 +21,7 @@ public class FeedItemView extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(com.brohkahn.loggerlibrary.R.layout.activity_log_view_entry);
+		setContentView(R.layout.feed_item_view);
 
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
@@ -80,6 +80,8 @@ public class FeedItemView extends AppCompatActivity {
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 		feedDBHelper.updateImageEnabled(itemId, enabled);
 		feedDBHelper.close();
+
+		DownloadImageService.startDownloadImageAction(this);
 	}
 
 	@Override

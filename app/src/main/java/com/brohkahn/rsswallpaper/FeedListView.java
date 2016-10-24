@@ -195,7 +195,6 @@ public class FeedListView extends AppCompatActivity {
 		adapter.notifyDataSetChanged();
 
 		DownloadImageService.startDownloadImageAction(this);
-
 	}
 
 	@Override

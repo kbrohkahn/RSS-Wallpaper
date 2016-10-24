@@ -2,12 +2,12 @@ package com.brohkahn.rsswallpaper;
 
 import android.graphics.BitmapFactory;
 
-public final class Constants {
-	public static final String SET_WALLPAPER_ACTION = "set_wallpaper";
-	public static final String WALLPAPER_UPDATED = "wallpaper_updated";
-	public static final String JSON_FILE_NAME = "availableFeeds.txt";
+final class Constants {
+	static final String SET_WALLPAPER_ACTION = "set_wallpaper";
+	static final String WALLPAPER_UPDATED = "wallpaper_updated";
+	static final String ICON_BITMAP_PREFIX = "rss_icon_";
 
-	public static int getImageScale(String imagePath, int outputWidth, int outputHeight) {
+	static int getImageScale(String imagePath, int outputWidth, int outputHeight) {
 		BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
 		bitmapOptions.inJustDecodeBounds = true;
 		BitmapFactory.decodeFile(imagePath, bitmapOptions);
@@ -26,7 +26,7 @@ public final class Constants {
 		return inSampleSize;
 	}
 
-	public static Feed getBuiltInFeed() {
+	static Feed getBuiltInFeed() {
 		Feed feed = new Feed(0,
 							 "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
 							 "NASA Image of the Day",
