@@ -26,7 +26,7 @@
 		android:title="@string/title_update_time" />
 
 	<SwitchPreference
-		android:defaultValue="true"
+		android:defaultValue="false"
 		android:key="@string/key_update_wifi_only"
 		android:title="@string/title_update_wifi_only" />
 </PreferenceScreen>

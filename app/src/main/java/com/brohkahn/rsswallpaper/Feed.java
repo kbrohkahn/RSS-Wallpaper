@@ -1,4 +1,4 @@
-package com.brohkahn.nasawallpaper;
+package com.brohkahn.rsswallpaper;
 
 public class Feed {
 	public int id;

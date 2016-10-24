@@ -1,4 +1,4 @@
-package com.brohkahn.nasawallpaper;
+package com.brohkahn.rsswallpaper;
 
 import android.app.Application;
 import android.content.Context;
@@ -23,7 +23,7 @@ public class MyApplication extends Application {
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources res = getResources();
-		showToasts = prefs.getBoolean(res.getString(R.string.key_update_wifi_only), true);
+		showToasts = prefs.getBoolean(res.getString(R.string.key_show_toasts), true);
 
 	}
 

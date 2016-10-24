@@ -3,17 +3,17 @@
 	<!-- These settings headers are only used on tablets. -->
 
 	<header
-		android:fragment="com.brohkahn.nasawallpaper.SettingsActivity$RSSFeedPreferenceFragment"
+		android:fragment="com.brohkahn.rsswallpaper.SettingsActivity$RSSFeedPreferenceFragment"
 		android:icon="@drawable/ic_sync_black_24dp"
 		android:title="@string/pref_header_rss_feed" />
 
 	<header
-		android:fragment="com.brohkahn.nasawallpaper.SettingsActivity$WallpaperPreferenceFragment"
+		android:fragment="com.brohkahn.rsswallpaper.SettingsActivity$WallpaperPreferenceFragment"
 		android:icon="@drawable/ic_panorama_black_24dp"
 		android:title="@string/pref_header_wallpaper" />
 
 	<header
-		android:fragment="com.brohkahn.nasawallpaper.SettingsActivity$NotificationPreferenceFragment"
+		android:fragment="com.brohkahn.rsswallpaper.SettingsActivity$NotificationPreferenceFragment"
 		android:icon="@drawable/ic_notifications_black_24dp"
 		android:title="@string/pref_header_notifications" />
 

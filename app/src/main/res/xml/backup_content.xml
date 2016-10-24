@@ -5,5 +5,5 @@
 		path="." />
 	<include
 		domain="database"
-		path="NASA_WALLPAPER.DB" />
+		path="RSS_WALLPAPER.DB" />
 </full-backup-content>

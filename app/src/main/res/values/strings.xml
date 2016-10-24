@@ -1,6 +1,6 @@
 <resources>
 	<!-- Generic -->
-	<string name="app_name">NASA Wallpaper</string>
+	<string name="app_name">RSS Wallpaper</string>
 	<string name="developer_email">kevin@broh-kahn.com</string>
 	<string name="ok">OK</string>
 	<string name="request">Request</string>

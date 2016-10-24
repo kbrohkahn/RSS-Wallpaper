@@ -1,4 +1,4 @@
-package com.brohkahn.nasawallpaper;
+package com.brohkahn.rsswallpaper;
 
 import android.app.IntentService;
 import android.content.Context;
@@ -59,7 +59,7 @@ public class DownloadImageService extends IntentService {
 	protected void startImageDownload() {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
-		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), true);
+		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
 		imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 				.getPath() + "/");
 		int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
@@ -95,17 +95,19 @@ public class DownloadImageService extends IntentService {
 		logEvent(message, "startDownloadIntent()", LogEntry.LogLevel.Message);
 
 		if (canDownload) {
-
 			List<FeedItem> recentEntries = feedDBHelper.getRecentItems(numberToDownload, currentFeedId);
-			for (FeedItem entry : recentEntries) {
+			for (int i = 0; i < recentEntries.size(); i++) {
+				FeedItem entry = recentEntries.get(i);
 				if (!entry.downloaded) {
 					downloadFeedImage(entry);
 				}
-			}
 
-			// immediately change image
-			Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
-			LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+				if (i == 0) {
+					// immediately set wallpaper to first image
+					Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
+					LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+				}
+			}
 
 			// get IDs of items in use
 			List<Integer> feedItemIdsInUse = new ArrayList<>();

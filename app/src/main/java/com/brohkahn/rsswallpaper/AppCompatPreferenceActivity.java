@@ -1,4 +1,4 @@
-package com.brohkahn.nasawallpaper;
+package com.brohkahn.rsswallpaper;
 
 import android.content.res.Configuration;
 import android.os.Bundle;

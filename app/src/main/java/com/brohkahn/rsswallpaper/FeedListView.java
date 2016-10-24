@@ -1,4 +1,4 @@
-package com.brohkahn.nasawallpaper;
+package com.brohkahn.rsswallpaper;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -122,7 +122,7 @@ public class FeedListView extends AppCompatActivity {
 		private FeedListAdapter(Context context, Cursor cursor, int flags) {
 			super(context, cursor, flags);
 
-			CURRENT_FEED_COLOR = getResources().getColor(R.color.colorAccent);
+			CURRENT_FEED_COLOR = getResources().getColor(R.color.color_current_feed);
 			DEFAULT_FEED_COLOR = getResources().getColor(R.color.color_transparent);
 
 			logEvent(String.format(Locale.US, "Displaying %d available feeds.", cursor.getCount()),

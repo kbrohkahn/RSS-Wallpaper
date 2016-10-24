@@ -4,5 +4,6 @@
 	<color name="colorPrimaryDark">#072960</color>
 	<color name="colorAccent">#FC3D21</color>
 
+	<color name="color_current_feed">#18ba49</color>
 	<color name="color_transparent">#00ffffff</color>
 </resources>

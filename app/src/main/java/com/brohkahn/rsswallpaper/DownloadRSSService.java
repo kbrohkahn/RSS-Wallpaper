@@ -1,4 +1,4 @@
-package com.brohkahn.nasawallpaper;
+package com.brohkahn.rsswallpaper;
 
 import android.app.IntentService;
 import android.content.Context;
@@ -65,7 +65,7 @@ public class DownloadRSSService extends IntentService {
 	public void startDownload() {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
-		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), true);
+		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
 		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "0"));
 		int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
 
