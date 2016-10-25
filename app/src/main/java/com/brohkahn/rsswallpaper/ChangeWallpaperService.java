@@ -204,19 +204,8 @@ public class ChangeWallpaperService extends Service {
 		int currentItemId = settings.getInt(keyCurrentItem, 0);
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
-		List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItems(numberToRotate, currentFeedId);
+		List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItemsWithImages(numberToRotate, currentFeedId);
 		feedDBHelper.close();
-
-		// remove items without downloaded image
-		int index = 0;
-		while (index < itemsToShuffle.size()) {
-			FeedItem item = itemsToShuffle.get(index);
-			if (!item.downloaded || item.imageName == null || item.imageName.equals("")) {
-				itemsToShuffle.remove(index);
-			} else {
-				index++;
-			}
-		}
 
 		int availableItems = itemsToShuffle.size();
 		if (availableItems == 0) {

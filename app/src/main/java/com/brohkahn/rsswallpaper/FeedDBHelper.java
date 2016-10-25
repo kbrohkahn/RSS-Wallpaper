@@ -49,14 +49,15 @@ class FeedDBHelper extends SQLiteOpenHelper {
 //                    " ADD COLUMN " + FeedItemDBEntry.COLUMN_STACK_TRACE + " TEXT;";
 
 
-	private static FeedDBHelper instance;
+//	private static FeedDBHelper instance;
 
 	static FeedDBHelper getHelper(Context context) {
-		if (instance == null) {
-			instance = new FeedDBHelper(context);
-		}
-
-		return instance;
+		return new FeedDBHelper(context);
+//		if (instance == null) {
+//			instance = new FeedDBHelper(context);
+//		}
+//
+//		return instance;
 	}
 
 	private FeedDBHelper(Context context) {
@@ -76,32 +77,56 @@ class FeedDBHelper extends SQLiteOpenHelper {
 //        }
 	}
 
-	long saveFeedEntry(int feedId,
-					   String title,
-					   String link,
-					   String description,
-					   String imageLink,
-					   String imageName) {
-		ContentValues values = new ContentValues();
-		values.put(FeedItemDBEntry.COLUMN_RELATED_FEED, feedId);
-		values.put(FeedItemDBEntry.COLUMN_TITLE, title);
-		values.put(FeedItemDBEntry.COLUMN_LINK, link);
-		values.put(FeedItemDBEntry.COLUMN_DESCRIPTION, description);
-		values.put(FeedItemDBEntry.COLUMN_IMAGE_LINK, imageLink);
-		values.put(FeedItemDBEntry.COLUMN_IMAGE_NAME, imageName);
-		values.put(FeedItemDBEntry.COLUMN_ENABLED, 1);
-		values.put(FeedItemDBEntry.COLUMN_DOWNLOADED, 0);
-		values.put(FeedItemDBEntry.COLUMN_CREATION_DATE, new Date().getTime());
+//	long saveFeedEntry(int feedId,
+//					   String title,
+//					   String link,
+//					   String description,
+//					   String imageLink,
+//					   String imageName) {
+//		ContentValues values = new ContentValues();
+//		values.put(FeedItemDBEntry.COLUMN_RELATED_FEED, feedId);
+//		values.put(FeedItemDBEntry.COLUMN_TITLE, title);
+//		values.put(FeedItemDBEntry.COLUMN_LINK, link);
+//		values.put(FeedItemDBEntry.COLUMN_DESCRIPTION, description);
+//		values.put(FeedItemDBEntry.COLUMN_IMAGE_LINK, imageLink);
+//		values.put(FeedItemDBEntry.COLUMN_IMAGE_NAME, imageName);
+//		values.put(FeedItemDBEntry.COLUMN_ENABLED, 1);
+//		values.put(FeedItemDBEntry.COLUMN_DOWNLOADED, 0);
+//		values.put(FeedItemDBEntry.COLUMN_CREATION_DATE, new Date().getTime());
+//
+//		SQLiteDatabase db = getWritableDatabase();
+//		return db.insert(FeedItemDBEntry.TABLE_NAME, null, values);
+//	}
 
+	long saveFeedItemList(List<FeedItem> feedItemList) {
 		SQLiteDatabase db = getWritableDatabase();
-		return db.insert(FeedItemDBEntry.TABLE_NAME, null, values);
+		long inserted = 0;
+		for (FeedItem item : feedItemList) {
+			ContentValues values = new ContentValues();
+			values.put(FeedItemDBEntry.COLUMN_RELATED_FEED, item.feedId);
+			values.put(FeedItemDBEntry.COLUMN_TITLE, item.title);
+			values.put(FeedItemDBEntry.COLUMN_LINK, item.link);
+			values.put(FeedItemDBEntry.COLUMN_DESCRIPTION, item.description);
+			values.put(FeedItemDBEntry.COLUMN_IMAGE_LINK, item.imageLink);
+			values.put(FeedItemDBEntry.COLUMN_IMAGE_NAME, item.imageName);
+			values.put(FeedItemDBEntry.COLUMN_ENABLED, 1);
+			values.put(FeedItemDBEntry.COLUMN_DOWNLOADED, 0);
+			values.put(FeedItemDBEntry.COLUMN_CREATION_DATE, new Date().getTime());
+
+			db.insert(FeedItemDBEntry.TABLE_NAME, null, values);
+			inserted++;
+		}
+
+		return inserted;
 	}
 
+
 	boolean updateImageDownload(int id, boolean downloaded) {
-		String query = String.format(Locale.US, "UPDATE %s SET %s=%d WHERE %s=%d",
+		String query = String.format(Locale.US, "UPDATE %s SET %s" +
+											 "=%d WHERE %s=%d",
 									 FeedItemDBEntry.TABLE_NAME,
 									 FeedItemDBEntry.COLUMN_DOWNLOADED,
-									 downloaded ? 0 : 1,
+									 downloaded ? 1 : 0,
 									 FeedItemDBEntry._ID,
 									 id
 		);
@@ -143,12 +168,27 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		}
 	}
 
-	List<FeedItem> getRecentItems(int count, int feedId) {
-		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=1 AND %s=%d ORDER BY %s DESC LIMIT %d",
+	List<FeedItem> getRecentItemsWithImages(int count, int feedId) {
+		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=1 AND %s=%d AND %s=1 AND %s is not null ORDER BY %s DESC LIMIT %d",
 									 FeedItemDBEntry.TABLE_NAME,
 									 FeedItemDBEntry.COLUMN_ENABLED,
 									 FeedItemDBEntry.COLUMN_RELATED_FEED,
 									 feedId,
+									 FeedItemDBEntry.COLUMN_DOWNLOADED,
+									 FeedItemDBEntry.COLUMN_IMAGE_LINK,
+									 FeedItemDBEntry.COLUMN_CREATION_DATE,
+									 count
+		);
+		return getItems(query);
+	}
+
+	List<FeedItem> getRecentItems(int count, int feedId) {
+		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=1 AND %s=%d AND %s is not null ORDER BY %s DESC LIMIT %d",
+									 FeedItemDBEntry.TABLE_NAME,
+									 FeedItemDBEntry.COLUMN_ENABLED,
+									 FeedItemDBEntry.COLUMN_RELATED_FEED,
+									 feedId,
+									 FeedItemDBEntry.COLUMN_IMAGE_LINK,
 									 FeedItemDBEntry.COLUMN_CREATION_DATE,
 									 count
 		);
@@ -156,10 +196,11 @@ class FeedDBHelper extends SQLiteOpenHelper {
 	}
 
 	List<FeedItem> getAllItemsInFeed(int feedId) {
-		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=%d ",
+		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=%d AND %s is not null",
 									 FeedItemDBEntry.TABLE_NAME,
 									 FeedItemDBEntry.COLUMN_RELATED_FEED,
-									 feedId
+									 feedId,
+									 FeedItemDBEntry.COLUMN_IMAGE_LINK
 		);
 		return getItems(query);
 	}
@@ -169,16 +210,16 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		return getItems(query);
 	}
 
-	boolean feedItemExists(String imageLink, int feedId) {
-		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s='%s' AND %s=%d",
-									 FeedItemDBEntry.TABLE_NAME,
-									 FeedItemDBEntry.COLUMN_IMAGE_LINK,
-									 imageLink,
-									 FeedItemDBEntry.COLUMN_RELATED_FEED,
-									 feedId
-		);
-		return getItems(query).size() > 0;
-	}
+//	boolean feedItemExists(String imageLink, int feedId) {
+//		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s='%s' AND %s=%d",
+//									 FeedItemDBEntry.TABLE_NAME,
+//									 FeedItemDBEntry.COLUMN_IMAGE_LINK,
+//									 imageLink,
+//									 FeedItemDBEntry.COLUMN_RELATED_FEED,
+//									 feedId
+//		);
+//		return getItems(query).size() > 0;
+//	}
 
 	private List<FeedItem> getItems(String query) {
 		SQLiteDatabase db = getWritableDatabase();
@@ -301,37 +342,54 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		return feeds;
 	}
 
-	long saveFeed(String source,
-				  String title,
-				  boolean imageOnWebPage,
-				  String entryImageLinkTag,
-				  String entryImageLinkAttribute) {
-		ContentValues values = new ContentValues();
-		values.put(FeedDBEntry.COLUMN_SOURCE, source);
-		values.put(FeedDBEntry.COLUMN_TITLE, title);
-		values.put(FeedDBEntry.COLUMN_IMAGE_ON_WEB_PAGE, imageOnWebPage);
-		values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_TAG, entryImageLinkTag);
-		values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_ATTRIBUTE, entryImageLinkAttribute);
-		values.put(FeedDBEntry.COLUMN_ENABLED, 1);
-
+	long updateFeedList(List<Feed> feedList, boolean updatingInfo) {
 		SQLiteDatabase db = getWritableDatabase();
-		return db.insert(FeedDBEntry.TABLE_NAME, null, values);
+
+		long totalUpdatesAndInserts = 0;
+		for (Feed feed : feedList) {
+			ContentValues values = new ContentValues();
+
+			if (updatingInfo) {
+				values.put(FeedDBEntry.COLUMN_TITLE, feed.title);
+				values.put(FeedDBEntry.COLUMN_LINK, feed.link);
+				values.put(FeedDBEntry.COLUMN_DESCRIPTION, feed.description);
+			} else {
+				values.put(FeedDBEntry.COLUMN_IMAGE_ON_WEB_PAGE, feed.imageOnWebPage);
+				values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_TAG, feed.entryImageLinkTag);
+				values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_ATTRIBUTE, feed.entryImageLinkAttribute);
+			}
+
+			values.put(FeedDBEntry.COLUMN_SOURCE, feed.source);
+			values.put(FeedDBEntry.COLUMN_ENABLED, feed.enabled);
+
+			long updatedRows = db.update(FeedDBEntry.TABLE_NAME,
+										 values,
+										 String.format(Locale.US, "%s='%s'", FeedDBEntry.COLUMN_SOURCE, feed.source),
+										 null
+			);
+
+			if (updatingInfo && updatedRows == 0) {
+				updatedRows = db.insert(FeedDBEntry.TABLE_NAME, null, values);
+				totalUpdatesAndInserts += updatedRows;
+			}
+		}
+		return totalUpdatesAndInserts;
 	}
 
-	boolean updateFeedInfo(int id, String title, String link, String description) {
-		String query = String.format(Locale.US, "UPDATE %s SET %s='%s', %s='%s', %s='%s' WHERE %s='%d'",
-									 FeedDBEntry.TABLE_NAME,
-									 FeedDBEntry.COLUMN_TITLE,
-									 title,
-									 FeedDBEntry.COLUMN_LINK,
-									 link,
-									 FeedDBEntry.COLUMN_DESCRIPTION,
-									 description,
-									 FeedDBEntry._ID,
-									 id
-		);
-		return runFeedUpdateQuery(query);
-	}
+//	boolean updateFeedInfo(int id, String title, String link, String description) {
+//		String query = String.format(Locale.US, "UPDATE %s SET %s='%s', %s='%s', %s='%s' WHERE %s='%d'",
+//									 FeedDBEntry.TABLE_NAME,
+//									 FeedDBEntry.COLUMN_TITLE,
+//									 title,
+//									 FeedDBEntry.COLUMN_LINK,
+//									 link,
+//									 FeedDBEntry.COLUMN_DESCRIPTION,
+//									 description,
+//									 FeedDBEntry._ID,
+//									 id
+//		);
+//		return runFeedUpdateQuery(query);
+//	}
 
 	boolean updateFeedEnabled(int id, boolean enabled) {
 		String query = String.format(Locale.US, "UPDATE %s SET %s=%d WHERE %s='%s'",

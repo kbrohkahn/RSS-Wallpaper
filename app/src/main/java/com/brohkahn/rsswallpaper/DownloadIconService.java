@@ -12,8 +12,6 @@ import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.brohkahn.loggerlibrary.ErrorHandler;
-import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
 import java.io.File;
@@ -29,10 +27,7 @@ import java.util.Locale;
 public class DownloadIconService extends IntentService {
 	private static final String TAG = "DownloadIconService";
 
-	private static final String ACTION_DOWNLOAD_ICONS = "com.brohkahn.nasawallpaper.action.download_icons";
-
-	private static LogDBHelper logDBHelper;
-	private static FeedDBHelper feedDBHelper;
+	private static final String ACTION_DOWNLOAD_ICONS = "com.brohkahn.rsswallpaper.action.download_icons";
 
 	private String imageDirectory;
 	private float iconSize;
@@ -74,62 +69,60 @@ public class DownloadIconService extends IntentService {
 		String message;
 		boolean canDownload;
 		if (activeNetwork == null) {
-			message = "Not connected to internet, unable to download images.";
+			message = "Not connected to internet, unable to download icons.";
 			canDownload = false;
 		} else {
 			boolean wifiConnection = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
 			if (wifiOnly && !wifiConnection) {
-				message = "Not connected to Wifi, unable to download images.";
+				message = "Not connected to Wifi, unable to download icons.";
 				canDownload = false;
 			} else {
 				canDownload = true;
 				if (wifiOnly) {
-					message = "Connected to Wifi, starting download of images.";
+					message = "Connected to Wifi, starting download of icons.";
 				} else {
-					message = "Connected to internet, starting download of images.";
+					message = "Connected to internet, starting download of icons.";
 				}
 			}
 		}
-
-		logDBHelper = LogDBHelper.getHelper(this);
-		feedDBHelper = FeedDBHelper.getHelper(this);
 
 		logEvent(message, "startIconDownload()", LogEntry.LogLevel.Message);
 
 		if (canDownload) {
-			List<FeedItem> recentEntries = feedDBHelper.getAllItemsInFeed(currentFeedId);
-			for (int i = 0; i < recentEntries.size(); i++) {
-				FeedItem entry = recentEntries.get(i);
+			List<Integer> feedItemIdsInUse = new ArrayList<>();
 
-				File iconFile = new File(imageDirectory + Constants.ICON_BITMAP_PREFIX + entry.imageName);
+			// get items in current feed and all items
+			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
+			List<FeedItem> recentItems = feedDBHelper.getAllItemsInFeed(currentFeedId);
+			List<FeedItem> allItems = feedDBHelper.getAllItems();
+			feedDBHelper.close();
+
+			for (int i = 0; i < recentItems.size(); i++) {
+				FeedItem item = recentItems.get(i);
+
+				// add id to list of recent items
+				feedItemIdsInUse.add(item.id);
+
+				File iconFile = new File(imageDirectory + Constants.ICON_BITMAP_PREFIX + item.imageName);
 				if (!iconFile.exists()) {
-					if (entry.imageLink == null) {
-						logEvent(String.format(Locale.US, "No image link for %s found.", entry.title),
-								 "downloadFeedIcon(FeedItem entry)",
+					if (item.imageLink == null) {
+						logEvent(String.format(Locale.US, "No image link for %s found.", item.title),
+								 "startIconDownload()",
 								 LogEntry.LogLevel.Warning
 						);
 					} else {
-						downloadFeedIcon(entry);
+						downloadFeedIcon(item);
 					}
 				}
-			}
-
-			// get IDs of items in use
-			List<Integer> feedItemIdsInUse = new ArrayList<>();
-			for (FeedItem item : recentEntries) {
-				feedItemIdsInUse.add(item.id);
 			}
 
 			// purge any other images not in list
-			List<FeedItem> allItems = feedDBHelper.getAllItems();
 			for (FeedItem item : allItems) {
 				if (item.downloaded && !feedItemIdsInUse.contains(item.id)) {
 					File file = new File(imageDirectory + Constants.ICON_BITMAP_PREFIX + item.imageName);
-					if (file.delete()) {
-						feedDBHelper.updateImageDownload(item.id, false);
-					} else {
-						logEvent(String.format(Locale.US, "Unable to delete image %s.", item.imageName),
-								 "saveFeedItems(String urlString)",
+					if (!file.delete()) {
+						logEvent(String.format(Locale.US, "Unable to delete icon %s.", item.imageName),
+								 "startIconDownload()",
 								 LogEntry.LogLevel.Warning
 						);
 					}
@@ -137,18 +130,7 @@ public class DownloadIconService extends IntentService {
 			}
 		}
 
-//		downloadComplete();
-
-		if (feedDBHelper != null) {
-			feedDBHelper.close();
-			feedDBHelper = null;
-		}
-
-		if (logDBHelper != null) {
-			logDBHelper.close();
-			logDBHelper = null;
-		}
-
+		// download complete, stop service
 		stopSelf();
 	}
 
@@ -182,7 +164,6 @@ public class DownloadIconService extends IntentService {
 				inSampleSize *= 2;
 			}
 
-
 			// download the file
 			bitmapOptions.inJustDecodeBounds = false;
 			bitmapOptions.inSampleSize = inSampleSize;
@@ -212,11 +193,11 @@ public class DownloadIconService extends IntentService {
 		}
 	}
 
-	private static void logEvent(String message, String function, LogEntry.LogLevel level) {
-		logDBHelper.saveLogEntry(message, null, TAG, function, level);
+	private void logEvent(String message, String function, LogEntry.LogLevel level) {
+		((MyApplication) getApplication()).logEvent(message, function, TAG, level);
 	}
 
-	private static void logException(Exception e, String function) {
-		logDBHelper.saveLogEntry(e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
+	private void logException(Exception e, String function) {
+		((MyApplication) getApplication()).logException(e, function, TAG);
 	}
 }

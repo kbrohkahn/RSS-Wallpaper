@@ -41,6 +41,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class FeedListView extends AppCompatActivity {
@@ -266,7 +268,7 @@ public class FeedListView extends AppCompatActivity {
 		new UpdateJSONTask(this).execute(JSONLocation);
 	}
 
-	private static class UpdateJSONTask extends AsyncTask<String, Void, Integer> {
+	private static class UpdateJSONTask extends AsyncTask<String, Void, Long> {
 		private FeedListView containingActivity;
 
 		private UpdateJSONTask(FeedListView containingActivity) {
@@ -274,8 +276,8 @@ public class FeedListView extends AppCompatActivity {
 		}
 
 		@Override
-		protected Integer doInBackground(String... params) {
-			int result = 0;
+		protected Long doInBackground(String... params) {
+			long result = 0;
 			String JSONString = "";
 			try {
 				URL url = new URL(params[0]);
@@ -301,9 +303,10 @@ public class FeedListView extends AppCompatActivity {
 			}
 
 			try {
-				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(containingActivity);
 				JSONObject fullObject = new JSONObject(JSONString);
 				JSONArray feedItemArray = fullObject.getJSONArray("availableFeeds");
+
+				List<Feed> feedsToUpdate = new ArrayList<>(Constants.SUPPORTED_FEED_COUNT);
 
 				for (int i = 0; i < feedItemArray.length(); i++) {
 					JSONObject feedJSONObject = feedItemArray.getJSONObject(i);
@@ -315,19 +318,20 @@ public class FeedListView extends AppCompatActivity {
 					String entryImageLinkTag = feedJSONObject.getString("entryImageLinkTag");
 					String entryImageLinkAttribute = feedJSONObject.getString("entryImageLinkAttribute");
 
-					Feed existingFeed = feedDBHelper.getFeedFromSource(source);
-					if (existingFeed == null) {
-						containingActivity.logEvent(String.format(Locale.US, "Found new feed: %s, saving info.", title),
-													"doInBackground(String... params)",
-													LogEntry.LogLevel.Trace
-						);
-						feedDBHelper.saveFeed(source, title, imageOnWebPage, entryImageLinkTag, entryImageLinkAttribute);
-						result++;
-					} else {
-						feedDBHelper.updateFeedEnabled(existingFeed.id, enabled);
-					}
-				} // End Loop
+					Feed feed = new Feed(-1,
+										 source,
+										 title,
+										 entryImageLinkTag,
+										 entryImageLinkAttribute,
+										 imageOnWebPage,
+										 enabled
+					);
 
+					feedsToUpdate.add(feed);
+				}
+
+				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(containingActivity);
+				result = feedDBHelper.updateFeedList(feedsToUpdate, false);
 				feedDBHelper.close();
 			} catch (JSONException e) {
 				containingActivity.logException(e, "doInBackground(String... params)");
@@ -338,7 +342,7 @@ public class FeedListView extends AppCompatActivity {
 		}
 
 		@Override
-		protected void onPostExecute(Integer result) {
+		protected void onPostExecute(Long result) {
 			String messageString;
 			if (result == 0) {
 				messageString = "No new feeds found, select \"Request new Feed\" in the menu to send the developer a request for a new feed.";

@@ -11,8 +11,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.brohkahn.loggerlibrary.ErrorHandler;
-import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
 import java.io.BufferedInputStream;
@@ -29,11 +27,7 @@ import java.util.Locale;
 public class DownloadImageService extends IntentService {
 	private static final String TAG = "DownloadImageService";
 
-	private static final String ACTION_DOWNLOAD_IMAGES = "com.brohkahn.nasawallpaper.action.download_images";
-
-
-	private static LogDBHelper logDBHelper;
-	private static FeedDBHelper feedDBHelper;
+	private static final String ACTION_DOWNLOAD_IMAGES = "com.brohkahn.rsswallpaper.action.download_images";
 
 	private String imageDirectory;
 
@@ -90,22 +84,32 @@ public class DownloadImageService extends IntentService {
 			}
 		}
 
-		logDBHelper = LogDBHelper.getHelper(this);
-		feedDBHelper = FeedDBHelper.getHelper(this);
-
 		logEvent(message, "startImageDownload()", LogEntry.LogLevel.Message);
 
 		boolean newImage = true;
 		if (canDownload) {
-			List<FeedItem> recentEntries = feedDBHelper.getRecentItems(numberToDownload, currentFeedId);
-			for (int i = 0; i < recentEntries.size(); i++) {
-				FeedItem entry = recentEntries.get(i);
-				if (!entry.downloaded) {
-					if (entry.imageLink != null) {
-						downloadFeedImage(entry);
+			List<Integer> feedItemIdsInUse = new ArrayList<>();
+
+			// get list of recent entries and all entries
+			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
+			List<FeedItem> recentItems = feedDBHelper.getRecentItems(numberToDownload, currentFeedId);
+			List<FeedItem> allItems = feedDBHelper.getAllItems();
+			feedDBHelper.close();
+
+			for (int i = 0; i < recentItems.size(); i++) {
+				FeedItem item = recentItems.get(i);
+
+				// add id to list of recent items
+				feedItemIdsInUse.add(item.id);
+
+				// see if we need to download
+				if (!item.downloaded) {
+					if (item.imageLink != null) {
+						// imagelink is valid
+						downloadFeedImage(item);
 					} else {
-						logEvent(String.format(Locale.US, "No image link for %s found.", entry.title),
-								 "downloadFeedImage(FeedItem entry)",
+						logEvent(String.format(Locale.US, "No image link for %s found.", item.title),
+								 "startImageDownload()",
 								 LogEntry.LogLevel.Warning
 						);
 					}
@@ -113,7 +117,7 @@ public class DownloadImageService extends IntentService {
 					if (newImage) {
 						// immediately set wallpaper to new image
 						logEvent("New image downloaded, setting as wallpaper.",
-								 "downloadFeedImage(FeedItem entry)",
+								 "startImageDownload()",
 								 LogEntry.LogLevel.Warning
 						);
 
@@ -124,22 +128,18 @@ public class DownloadImageService extends IntentService {
 				}
 			}
 
-			// get IDs of items in use
-			List<Integer> feedItemIdsInUse = new ArrayList<>();
-			for (FeedItem item : recentEntries) {
-				feedItemIdsInUse.add(item.id);
-			}
-
 			// purge any other images not in list
-			List<FeedItem> allItems = feedDBHelper.getAllItems();
 			for (FeedItem item : allItems) {
 				if (item.downloaded && !feedItemIdsInUse.contains(item.id)) {
 					File file = new File(imageDirectory + item.imageName);
 					if (file.delete()) {
+						// deletion success, mark as deleted in DB
+						feedDBHelper = FeedDBHelper.getHelper(this);
 						feedDBHelper.updateImageDownload(item.id, false);
+						feedDBHelper.close();
 					} else {
 						logEvent(String.format(Locale.US, "Unable to delete image %s.", item.imageName),
-								 "saveFeedItems(String urlString)",
+								 "startImageDownload()",
 								 LogEntry.LogLevel.Warning
 						);
 					}
@@ -147,17 +147,7 @@ public class DownloadImageService extends IntentService {
 			}
 		}
 
-		// download complete, kill DB helpers and stop
-		if (feedDBHelper != null) {
-			feedDBHelper.close();
-			feedDBHelper = null;
-		}
-
-		if (logDBHelper != null) {
-			logDBHelper.close();
-			logDBHelper = null;
-		}
-
+		// download complete, stop service
 		stopSelf();
 	}
 
@@ -188,7 +178,10 @@ public class DownloadImageService extends IntentService {
 			output.close();
 			input.close();
 
+			// set downloaded bit in DB
+			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
 			feedDBHelper.updateImageDownload(entry.id, true);
+			feedDBHelper.close();
 
 			logEvent(String.format(Locale.US, "Successfully downloaded and saved feed image for %s.", entry.title),
 					 "downloadFeedImage(FeedItem entry)",
@@ -201,11 +194,11 @@ public class DownloadImageService extends IntentService {
 		}
 	}
 
-	private static void logEvent(String message, String function, LogEntry.LogLevel level) {
-		logDBHelper.saveLogEntry(message, null, TAG, function, level);
+	private void logEvent(String message, String function, LogEntry.LogLevel level) {
+		((MyApplication) getApplication()).logEvent(message, function, TAG, level);
 	}
 
-	private static void logException(Exception e, String function) {
-		logDBHelper.saveLogEntry(e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
+	private void logException(Exception e, String function) {
+		((MyApplication) getApplication()).logException(e, function, TAG);
 	}
 }

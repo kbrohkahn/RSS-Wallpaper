@@ -51,7 +51,7 @@ public class MyApplication extends Application {
 	public void logEvent(String message, String function, String tag, LogEntry.LogLevel level) {
 		Log.d(tag, function + ": " + message);
 
-		if (showToasts && level == LogEntry.LogLevel.Message) {
+		if (showToasts && (level == LogEntry.LogLevel.Message || level == LogEntry.LogLevel.Warning)) {
 			Message messageObject = new Message();
 			messageObject.obj = message;
 			toastHandler.sendMessage(messageObject);

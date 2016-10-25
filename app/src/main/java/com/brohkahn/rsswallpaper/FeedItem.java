@@ -4,6 +4,7 @@ import java.util.Date;
 
 public class FeedItem {
 	public int id;
+	public int feedId;
 	public String title;
 	public String link;
 	public String description;

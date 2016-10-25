@@ -11,8 +11,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.Xml;
 
-import com.brohkahn.loggerlibrary.ErrorHandler;
-import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -28,19 +26,20 @@ import java.net.URLConnection;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class DownloadRSSService extends IntentService {
 	private static final String TAG = "DownloadRSSService";
 
-	private static final String ACTION_DOWNLOAD_RSS = "com.brohkahn.nasawallpaper.action.download_rss";
+	private static final String ACTION_DOWNLOAD_RSS = "com.brohkahn.rsswallpaper.action.download_rss";
 
-	private static final int MAX_URL_CHARS = 2083;
 	private static final String[] imageSuffices = {".png", ".jpg", ".jpeg"};
 	private static final String[] absoluteURLPrefixes = {"http://", "https://"};
 	private static final String[] relativeURLImagePrefixes = {"href=\"", "src=\""};
 
-	private static LogDBHelper logDBHelper;
-	private static FeedDBHelper feedDBHelper;
+	private static List<FeedItem> existingFeedItems;
+	private static List<FeedItem> newFeedItems;
+	private static List<Feed> allFeeds;
 
 	public DownloadRSSService() {
 		super("DownloadRSSService");
@@ -93,67 +92,89 @@ public class DownloadRSSService extends IntentService {
 			}
 		}
 
-		logDBHelper = LogDBHelper.getHelper(this);
-		feedDBHelper = FeedDBHelper.getHelper(this);
 		logEvent(message, "startDownloadIntent()", LogEntry.LogLevel.Message);
 
 		if (canDownload) {
-			List<Feed> allFeeds = feedDBHelper.getAllFeeds();
+			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
+			allFeeds = feedDBHelper.getAllFeeds();
+			existingFeedItems = feedDBHelper.getAllItems();
+			feedDBHelper.close();
 			if (allFeeds.size() == 0) {
 				allFeeds.add(Constants.getBuiltInFeed());
 			}
 
-			for (Feed feed : allFeeds) {
-				saveFeedItems(feed);
-			}
+			newFeedItems = new ArrayList<>(Constants.APPROXIMATE_FEED_ITEM_COUNT);
 
-			List<FeedItem> recentItems = feedDBHelper.getRecentItems(numberToDownload, currentFeedId);
-			for (FeedItem item : recentItems) {
-				if (!item.downloaded) {
-					DownloadImageService.startDownloadImageAction(this);
-					break;
+			// download all feeds and feed items
+			for (int i = 0; i < allFeeds.size(); i++) {
+				try {
+					URL url = new URL(allFeeds.get(i).source);
+					URLConnection connection = url.openConnection();
+					connection.connect();
+
+					// download the file
+					logEvent("Downloading RSS file.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Message);
+					InputStream input = new BufferedInputStream(url.openStream(), 8192);
+
+					// parse xml
+					logEvent("Parsing XML.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Message);
+					FeedParser feedParser = new FeedParser(i, this);
+					feedParser.parse(input);
+					input.close();
+
+					logEvent("XML parse complete.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Message);
+
+				} catch (XmlPullParserException | ParseException | IOException e) {
+					Log.e("Error: ", e.getMessage());
+					logException(e, "saveFeedItems(String urlString)");
 				}
 			}
+
+
+			// finished parsing, do all writes
+			feedDBHelper = FeedDBHelper.getHelper(this);
+
+			// save all new feed items
+			long updatedFeedItemCount = feedDBHelper.saveFeedItemList(newFeedItems);
+			if (updatedFeedItemCount == newFeedItems.size()) {
+				logEvent(String.format(Locale.US,
+									   "Successfully saved %d new feed items.", updatedFeedItemCount
+				), "startDownloadIntent()", LogEntry.LogLevel.Message);
+			} else {
+				logEvent(String.format(Locale.US,
+									   "Failed to save all feed items, wanted to save %d but only saved %d.",
+									   newFeedItems.size(),
+									   updatedFeedItemCount
+				), "startDownloadIntent()", LogEntry.LogLevel.Warning);
+			}
+
+			// update feeds
+			long updatedFeedCount = feedDBHelper.updateFeedList(allFeeds, true);
+			if (updatedFeedCount == allFeeds.size()) {
+				logEvent(String.format(Locale.US,
+									   "Successfully saved %d new feed items.", updatedFeedCount
+				), "startDownloadIntent()", LogEntry.LogLevel.Message);
+			} else {
+				logEvent(String.format(Locale.US,
+									   "Failed to save all feeds, wanted to save %d but only saved %d.",
+									   allFeeds.size(),
+									   updatedFeedCount
+				), "startDownloadIntent()", LogEntry.LogLevel.Warning);
+			}
+
+			// all done, close DB
+			feedDBHelper.close();
+
+			// download icons when finished all feeds
+			DownloadIconService.startDownloadIconAction(this);
+
+			// start image download service as soon as we find an item we haven't downloaded
+			DownloadImageService.startDownloadImageAction(this);
+
 		}
-
-		DownloadIconService.startDownloadIconAction(this);
-
-		feedDBHelper.close();
-		feedDBHelper = null;
-
-		logDBHelper.close();
-		logDBHelper = null;
 
 		stopSelf();
 
-	}
-
-	/**
-	 * Handle action Foo in the provided background thread with the provided
-	 * parameters.
-	 */
-	private void saveFeedItems(Feed feed) {
-		try {
-			URL url = new URL(feed.source);
-			URLConnection connection = url.openConnection();
-			connection.connect();
-
-			// download the file
-			logEvent("Downloading RSS file.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Message);
-			InputStream input = new BufferedInputStream(url.openStream(), 8192);
-
-			// parse xml
-			logEvent("Parsing XML.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Message);
-			FeedParser feedParser = new FeedParser(feed);
-			feedParser.parse(input);
-			input.close();
-
-			logEvent("XML parse complete.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Message);
-
-		} catch (XmlPullParserException | ParseException | IOException e) {
-			Log.e("Error: ", e.getMessage());
-			logException(e, "saveFeedItems(String urlString)");
-		}
 	}
 
 	private static String parseLinkFromText(String text, String url) {
@@ -172,7 +193,7 @@ public class DownloadRSSService extends IntentService {
 					}
 				}
 
-				if (startIndex > -1 && startIndex + MAX_URL_CHARS > endIndexWithExtension) {
+				if (startIndex > -1 && startIndex + Constants.MAX_URL_CHARS > endIndexWithExtension) {
 					link = text.substring(startIndex, endIndexWithExtension);
 					break;
 				}
@@ -184,7 +205,7 @@ public class DownloadRSSService extends IntentService {
 						startIndex = index + prefix.length();
 					}
 				}
-				if (startIndex > -1 && startIndex + MAX_URL_CHARS > endIndexWithExtension) {
+				if (startIndex > -1 && startIndex + Constants.MAX_URL_CHARS > endIndexWithExtension) {
 					// get absolute url
 					int absolutePathStart = url.indexOf("/", 10);
 					if (absolutePathStart > -1) {
@@ -204,7 +225,18 @@ public class DownloadRSSService extends IntentService {
 		return link;
 	}
 
+	private static boolean feedItemExists(String imageLink, int feedId) {
+		for (FeedItem item : existingFeedItems) {
+			if (item.imageLink.equals(imageLink) && item.feedId == feedId) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static class FeedParser {
+		private IntentService callingService;
+
 		private static final String rssTag = "rss";
 		private static final String channelTag = "channel";
 		private static final String titleTag = "title";
@@ -215,12 +247,18 @@ public class DownloadRSSService extends IntentService {
 
 		private static final String ns = null;
 
-		private List<FeedItem> unsavedFeedItems;
+		private int feedIndex;
+		private final boolean imageOnWebPage;
+		private final String entryImageTag;
+		private final String entryImageAttribute;
 
-		private Feed feed;
+		FeedParser(int feedIndex, IntentService callingService) {
+			this.callingService = callingService;
+			this.feedIndex = feedIndex;
 
-		FeedParser(Feed feed) {
-			this.feed = feed;
+			this.entryImageTag = allFeeds.get(feedIndex).entryImageLinkTag;
+			this.entryImageAttribute = allFeeds.get(feedIndex).entryImageLinkAttribute;
+			this.imageOnWebPage = allFeeds.get(feedIndex).imageOnWebPage;
 		}
 
 		/**
@@ -234,27 +272,12 @@ public class DownloadRSSService extends IntentService {
 				throws XmlPullParserException, IOException, ParseException {
 			logEvent("Parsing feed.", "parse(InputStream in)", LogEntry.LogLevel.Message);
 
-			unsavedFeedItems = new ArrayList<>();
-
 			XmlPullParser parser = Xml.newPullParser();
 			parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
 			parser.setInput(in, null);
 			parser.nextTag();
 			readFeed(parser);
 			in.close();
-
-			for (FeedItem item : unsavedFeedItems) {
-				logEvent(String.format("Saving feed item title=%s.", item.title),
-						 "readFeedItem(XmlPullParser parser)",
-						 LogEntry.LogLevel.Message
-				);
-
-				// set image name to item title
-				String imageName = item.title.replace(' ', '_');
-				imageName += item.imageLink.substring(item.imageLink.lastIndexOf('.'));
-
-				feedDBHelper.saveFeedEntry(feed.id, item.title, item.link, item.description, item.imageLink, imageName);
-			}
 		}
 
 		/**
@@ -313,7 +336,9 @@ public class DownloadRSSService extends IntentService {
 					}
 				}
 
-				feedDBHelper.updateFeedInfo(feed.id, title, link, description);
+				allFeeds.get(feedIndex).title = title;
+				allFeeds.get(feedIndex).link = link;
+				allFeeds.get(feedIndex).description = description;
 			}
 		}
 
@@ -335,7 +360,7 @@ public class DownloadRSSService extends IntentService {
 				if (name.equals(titleTag)
 						|| name.equals(linkTag)
 						|| name.equals(descriptionTag)
-						|| name.equals(feed.entryImageLinkTag)) {
+						|| name.equals(entryImageTag)) {
 					String[] results = readBasicTag(parser, name);
 					if (results != null) {
 						if (results[0] != null) {
@@ -353,7 +378,7 @@ public class DownloadRSSService extends IntentService {
 							}
 						}
 
-						if (!feed.imageOnWebPage && imageLink == null && results[1] != null) {
+						if (!imageOnWebPage && imageLink == null && results[1] != null) {
 							imageLink = results[1];
 						}
 					}
@@ -362,7 +387,7 @@ public class DownloadRSSService extends IntentService {
 				}
 			}
 
-			if (feed.imageOnWebPage && link != null) {
+			if (imageOnWebPage && link != null) {
 				try {
 					URL url = new URL(link);
 					URLConnection connection = url.openConnection();
@@ -389,11 +414,28 @@ public class DownloadRSSService extends IntentService {
 				}
 			}
 
-			if (!feedDBHelper.feedItemExists(imageLink, feed.id)) {
+			if (imageLink != null && !feedItemExists(imageLink, allFeeds.get(feedIndex).id)) {
+				logEvent(String.format("New feed item title=%s.", title),
+						 "readFeedItem(XmlPullParser parser)",
+						 LogEntry.LogLevel.Message
+				);
+
 				// create item and add to beginning of unsaved items list
 				FeedItem item = new FeedItem(-1, title, link, description, "", null);
+
 				item.imageLink = imageLink;
-				unsavedFeedItems.add(0, item);
+
+				String imageName = item.title.replace(' ', '_');
+				imageName += imageLink.substring(imageLink.lastIndexOf('.'));
+				item.imageName = imageName;
+
+				newFeedItems.add(0, item);
+			} else {
+				logEvent(String.format("No image link found for item %s.", title),
+						 "readFeedItem(XmlPullParser parser)",
+						 LogEntry.LogLevel.Warning
+				);
+
 			}
 		}
 
@@ -418,7 +460,7 @@ public class DownloadRSSService extends IntentService {
 			}
 
 			// see if we need to get image link from this tag as well
-			if (tag.equals(feed.entryImageLinkTag)) {
+			if (tag.equals(entryImageTag)) {
 				result[1] = getImageLink(parser, result[0]);
 			}
 
@@ -434,9 +476,9 @@ public class DownloadRSSService extends IntentService {
 		private String getImageLink(XmlPullParser parser, String text)
 				throws IOException, XmlPullParserException {
 			String imageLink;
-			if (!feed.entryImageLinkAttribute.equals("")) {
+			if (!entryImageAttribute.equals("")) {
 				// link is in an attribute
-				imageLink = parser.getAttributeValue(null, feed.entryImageLinkAttribute);
+				imageLink = parser.getAttributeValue(null, entryImageAttribute);
 			} else {
 				// link is hidden somewhere in text
 				imageLink = parseLinkFromText(text, "");
@@ -496,13 +538,23 @@ public class DownloadRSSService extends IntentService {
 				}
 			}
 		}
+
+
+		private void logEvent(String message, String function, LogEntry.LogLevel level) {
+			((MyApplication) callingService.getApplication()).logEvent(message, function, TAG, level);
+		}
+
+		private void logException(Exception e, String function) {
+			((MyApplication) callingService.getApplication()).logException(e, function, TAG);
+		}
 	}
 
-	private static void logEvent(String message, String function, LogEntry.LogLevel level) {
-		logDBHelper.saveLogEntry(message, null, TAG, function, level);
+
+	private void logEvent(String message, String function, LogEntry.LogLevel level) {
+		((MyApplication) getApplication()).logEvent(message, function, TAG, level);
 	}
 
-	private static void logException(Exception e, String function) {
-		logDBHelper.saveLogEntry(e.getLocalizedMessage(), ErrorHandler.getStackTraceString(e), TAG, function, LogEntry.LogLevel.Error);
+	private void logException(Exception e, String function) {
+		((MyApplication) getApplication()).logException(e, function, TAG);
 	}
 }

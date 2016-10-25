@@ -32,13 +32,14 @@ public class LogDBHelper extends SQLiteOpenHelper {
 //            "ALTER TABLE " + LogDBEntry.TABLE_NAME +
 //                    " ADD COLUMN " + LogDBEntry.COLUMN_STACK_TRACE + " TEXT;";
 
-	private static LogDBHelper instance;
+//	private static LogDBHelper instance;
 
 	public static synchronized LogDBHelper getHelper(Context context) {
-		if (instance == null) {
-			instance = new LogDBHelper(context.getApplicationContext());
-		}
-		return instance;
+		return new LogDBHelper(context);
+//		if (instance == null) {
+//			instance = new LogDBHelper(context.getApplicationContext());
+//		}
+//		return instance;
 	}
 
 	private LogDBHelper(Context context) {

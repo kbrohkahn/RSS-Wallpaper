@@ -5,18 +5,19 @@ final class Constants {
 	static final String WALLPAPER_UPDATED = "wallpaper_updated";
 	static final String ICON_BITMAP_PREFIX = "icon_";
 
-	static Feed getBuiltInFeed() {
-		Feed feed = new Feed(0,
-							 "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
-							 "NASA Image of the Day",
-							 "http://www.nasa.gov",
-							 "The latest NASA \"Image of the Day\" image.",
-							 false
-		);
-		feed.entryImageLinkTag = "enclosure";
-		feed.entryImageLinkAttribute = "url";
+	static final int MAX_URL_CHARS = 2083;
+	static final int APPROXIMATE_FEED_ITEM_COUNT = 100;
+	static final int SUPPORTED_FEED_COUNT = 2;
 
-		return feed;
+	static Feed getBuiltInFeed() {
+		return new Feed(0,
+						"http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
+						"NASA Image of the Day",
+						"enclosure",
+						"url",
+						false,
+						true
+		);
 	}
 
 
