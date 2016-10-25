@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
@@ -73,6 +74,27 @@ public class MyApplication extends Application {
 		);
 		helper.close();
 	}
+
+
+	static int getImageScale(String imagePath, int outputWidth, int outputHeight) {
+		BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+		bitmapOptions.inJustDecodeBounds = true;
+		BitmapFactory.decodeFile(imagePath, bitmapOptions);
+
+		// Calculate inSampleSize
+		int imageHeight = bitmapOptions.outHeight;
+		int imageWidth = bitmapOptions.outWidth;
+		int inSampleSize = 1;
+
+		while (imageWidth > outputWidth && imageHeight > outputHeight) {
+			imageHeight /= 2;
+			imageWidth /= 2;
+			inSampleSize *= 2;
+		}
+
+		return inSampleSize;
+	}
+
 
 }
 

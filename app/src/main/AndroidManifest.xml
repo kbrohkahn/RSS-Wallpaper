@@ -44,6 +44,9 @@
 		<service
 			android:name="com.brohkahn.rsswallpaper.DownloadImageService"
 			android:exported="false" />
+		<service
+			android:name="com.brohkahn.rsswallpaper.DownloadIconService"
+			android:exported="false" />
 
 		<activity
 			android:name="com.brohkahn.rsswallpaper.About"

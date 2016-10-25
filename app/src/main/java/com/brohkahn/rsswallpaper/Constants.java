@@ -1,30 +1,9 @@
 package com.brohkahn.rsswallpaper;
 
-import android.graphics.BitmapFactory;
-
 final class Constants {
 	static final String SET_WALLPAPER_ACTION = "set_wallpaper";
 	static final String WALLPAPER_UPDATED = "wallpaper_updated";
-	static final String ICON_BITMAP_PREFIX = "rss_icon_";
-
-	static int getImageScale(String imagePath, int outputWidth, int outputHeight) {
-		BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-		bitmapOptions.inJustDecodeBounds = true;
-		BitmapFactory.decodeFile(imagePath, bitmapOptions);
-
-		// Calculate inSampleSize
-		int imageHeight = bitmapOptions.outHeight;
-		int imageWidth = bitmapOptions.outWidth;
-		int inSampleSize = 1;
-
-		while (imageWidth > outputWidth && imageHeight > outputHeight) {
-			imageHeight /= 2;
-			imageWidth /= 2;
-			inSampleSize *= 2;
-		}
-
-		return inSampleSize;
-	}
+	static final String ICON_BITMAP_PREFIX = "icon_";
 
 	static Feed getBuiltInFeed() {
 		Feed feed = new Feed(0,
@@ -39,5 +18,6 @@ final class Constants {
 
 		return feed;
 	}
+
 
 }

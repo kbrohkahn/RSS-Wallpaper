@@ -155,6 +155,15 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		return getItems(query);
 	}
 
+	List<FeedItem> getAllItemsInFeed(int feedId) {
+		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=%d ",
+									 FeedItemDBEntry.TABLE_NAME,
+									 FeedItemDBEntry.COLUMN_RELATED_FEED,
+									 feedId
+		);
+		return getItems(query);
+	}
+
 	List<FeedItem> getAllItems() {
 		String query = String.format(Locale.US, "SELECT * FROM %s", FeedItemDBEntry.TABLE_NAME);
 		return getItems(query);

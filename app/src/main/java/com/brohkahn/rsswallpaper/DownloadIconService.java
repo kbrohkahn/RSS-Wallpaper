@@ -5,17 +5,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.brohkahn.loggerlibrary.ErrorHandler;
 import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -26,24 +26,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class DownloadImageService extends IntentService {
-	private static final String TAG = "DownloadImageService";
+public class DownloadIconService extends IntentService {
+	private static final String TAG = "DownloadIconService";
 
-	private static final String ACTION_DOWNLOAD_IMAGES = "com.brohkahn.nasawallpaper.action.download_images";
-
+	private static final String ACTION_DOWNLOAD_ICONS = "com.brohkahn.nasawallpaper.action.download_icons";
 
 	private static LogDBHelper logDBHelper;
 	private static FeedDBHelper feedDBHelper;
 
 	private String imageDirectory;
+	private float iconSize;
 
-	public DownloadImageService() {
-		super("DownloadImageService");
+	public DownloadIconService() {
+		super("DownloadIconService");
 	}
 
-	public static void startDownloadImageAction(Context context) {
-		Intent intent = new Intent(context, DownloadImageService.class);
-		intent.setAction(ACTION_DOWNLOAD_IMAGES);
+	public static void startDownloadIconAction(Context context) {
+		Intent intent = new Intent(context, DownloadIconService.class);
+		intent.setAction(ACTION_DOWNLOAD_ICONS);
 		context.startService(intent);
 	}
 
@@ -51,20 +51,21 @@ public class DownloadImageService extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 		if (intent != null) {
 			String action = intent.getAction();
-			if (ACTION_DOWNLOAD_IMAGES.equals(action)) {
-				startImageDownload();
+			if (ACTION_DOWNLOAD_ICONS.equals(action)) {
+				startIconDownload();
 			}
 		}
 	}
 
-	protected void startImageDownload() {
+
+	protected void startIconDownload() {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
 		imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 				.getPath() + "/");
-		int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
 		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "0"));
+		iconSize = resources.getDimension(R.dimen.icon_size);
 
 		// check if we can download anything based on internet connection
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -93,33 +94,22 @@ public class DownloadImageService extends IntentService {
 		logDBHelper = LogDBHelper.getHelper(this);
 		feedDBHelper = FeedDBHelper.getHelper(this);
 
-		logEvent(message, "startImageDownload()", LogEntry.LogLevel.Message);
+		logEvent(message, "startIconDownload()", LogEntry.LogLevel.Message);
 
-		boolean newImage = true;
 		if (canDownload) {
-			List<FeedItem> recentEntries = feedDBHelper.getRecentItems(numberToDownload, currentFeedId);
+			List<FeedItem> recentEntries = feedDBHelper.getAllItemsInFeed(currentFeedId);
 			for (int i = 0; i < recentEntries.size(); i++) {
 				FeedItem entry = recentEntries.get(i);
-				if (!entry.downloaded) {
-					if (entry.imageLink != null) {
-						downloadFeedImage(entry);
-					} else {
+
+				File iconFile = new File(imageDirectory + Constants.ICON_BITMAP_PREFIX + entry.imageName);
+				if (!iconFile.exists()) {
+					if (entry.imageLink == null) {
 						logEvent(String.format(Locale.US, "No image link for %s found.", entry.title),
-								 "downloadFeedImage(FeedItem entry)",
+								 "downloadFeedIcon(FeedItem entry)",
 								 LogEntry.LogLevel.Warning
 						);
-					}
-
-					if (newImage) {
-						// immediately set wallpaper to new image
-						logEvent("New image downloaded, setting as wallpaper.",
-								 "downloadFeedImage(FeedItem entry)",
-								 LogEntry.LogLevel.Warning
-						);
-
-						newImage = false;
-						Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
-						LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+					} else {
+						downloadFeedIcon(entry);
 					}
 				}
 			}
@@ -134,7 +124,7 @@ public class DownloadImageService extends IntentService {
 			List<FeedItem> allItems = feedDBHelper.getAllItems();
 			for (FeedItem item : allItems) {
 				if (item.downloaded && !feedItemIdsInUse.contains(item.id)) {
-					File file = new File(imageDirectory + item.imageName);
+					File file = new File(imageDirectory + Constants.ICON_BITMAP_PREFIX + item.imageName);
 					if (file.delete()) {
 						feedDBHelper.updateImageDownload(item.id, false);
 					} else {
@@ -147,7 +137,8 @@ public class DownloadImageService extends IntentService {
 			}
 		}
 
-		// download complete, kill DB helpers and stop
+//		downloadComplete();
+
 		if (feedDBHelper != null) {
 			feedDBHelper.close();
 			feedDBHelper = null;
@@ -161,43 +152,63 @@ public class DownloadImageService extends IntentService {
 		stopSelf();
 	}
 
-	private void downloadFeedImage(FeedItem entry) {
+
+	private void downloadFeedIcon(FeedItem entry) {
 		logEvent(String.format(Locale.US, "Downloading feed image for %s.", entry.title),
-				 "downloadFeedImage(FeedItem entry)",
+				 "downloadFeedIcon(FeedItem entry)",
 				 LogEntry.LogLevel.Trace
 		);
-
 		try {
 			URL url = new URL(entry.imageLink);
 			URLConnection connection = url.openConnection();
 			connection.connect();
 
-			InputStream input = new BufferedInputStream(url.openStream(), 8192);
+			// get file dimensions first
+			BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+			bitmapOptions.inJustDecodeBounds = true;
 
-			String outputFilePath = imageDirectory + entry.imageName;
-			OutputStream output = new FileOutputStream(outputFilePath);
+			InputStream inputStreamToGetSize = url.openStream();
+			BitmapFactory.decodeStream(inputStreamToGetSize, null, bitmapOptions);
+			inputStreamToGetSize.close();
 
-			byte data[] = new byte[1024];
+			int imageHeight = bitmapOptions.outHeight;
+			int imageWidth = bitmapOptions.outWidth;
 
-			int count;
-			while ((count = input.read(data)) != -1) {
-				output.write(data, 0, count);
+			// calculate inSampleSize
+			int inSampleSize = 1;
+			while (imageWidth > iconSize && imageHeight > iconSize) {
+				imageHeight /= 2;
+				imageWidth /= 2;
+				inSampleSize *= 2;
 			}
 
+
+			// download the file
+			bitmapOptions.inJustDecodeBounds = false;
+			bitmapOptions.inSampleSize = inSampleSize;
+
+			InputStream inputStreamToDownload = url.openStream();
+			Bitmap bitmap = BitmapFactory.decodeStream(inputStreamToDownload, null, bitmapOptions);
+			inputStreamToDownload.close();
+
+			// write bitmap to file
+			String outputFilePath = imageDirectory + Constants.ICON_BITMAP_PREFIX + entry.imageName;
+			OutputStream output = new FileOutputStream(outputFilePath);
+			bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
+
+			// clean up
 			output.flush();
 			output.close();
-			input.close();
+			bitmap.recycle();
 
-			feedDBHelper.updateImageDownload(entry.id, true);
-
-			logEvent(String.format(Locale.US, "Successfully downloaded and saved feed image for %s.", entry.title),
-					 "downloadFeedImage(FeedItem entry)",
+			logEvent(String.format(Locale.US, "Successfully downloaded and saved icon for %s.", entry.title),
+					 "downloadFeedIcon(FeedItem entry)",
 					 LogEntry.LogLevel.Trace
 			);
 
 		} catch (Exception e) {
 			Log.e("Error: ", e.getMessage());
-			logException(e, "downloadFeedImage(FeedItem entry)");
+			logException(e, "downloadFeedIcon(FeedItem entry)");
 		}
 	}
 

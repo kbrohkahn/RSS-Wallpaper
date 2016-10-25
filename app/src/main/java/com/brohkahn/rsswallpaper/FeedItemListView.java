@@ -24,8 +24,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.brohkahn.loggerlibrary.LogEntry;
-
 import java.util.Locale;
 
 public class FeedItemListView extends AppCompatActivity {
@@ -105,7 +103,6 @@ public class FeedItemListView extends AppCompatActivity {
 
 	public class FeedItemListAdapter extends CursorAdapter {
 		private String imageDirectory;
-		private int imageDimension;
 
 		private FeedItemListAdapter(Context context, Cursor cursor, int flags) {
 			super(context, cursor, flags);
@@ -114,7 +111,6 @@ public class FeedItemListView extends AppCompatActivity {
 			Resources resources = getResources();
 			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 					.getPath() + "/");
-			imageDimension = (int) resources.getDimension(R.dimen.icon_size);
 		}
 
 		public void bindView(View view, Context context, Cursor cursor) {
@@ -135,20 +131,12 @@ public class FeedItemListView extends AppCompatActivity {
 			});
 
 			ImageView imageView = (ImageView) view.findViewById(R.id.feed_item_icon);
-			if (cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_DOWNLOADED)) == 1) {
-				// get image name and path
-				String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_IMAGE_NAME));
-				String imagePath = imageDirectory + imageName;
+			// get image name and path
+			String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_IMAGE_NAME));
+			String imagePath = imageDirectory + Constants.ICON_BITMAP_PREFIX + imageName;
 
-				// get bitmap scale
-				BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-				bitmapOptions.inSampleSize = Constants.getImageScale(imagePath, imageDimension, imageDimension);
-
-				// load imageView, scale bitmap, and set image
-				imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath, bitmapOptions));
-			} else {
-				imageView.setImageBitmap(null);
-			}
+			// load imageView, scale bitmap, and set image
+			imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath));
 
 			view.setOnClickListener(new View.OnClickListener() {
 				@Override
@@ -178,7 +166,7 @@ public class FeedItemListView extends AppCompatActivity {
 		startActivity(intent);
 	}
 
-	private void logEvent(String message, String function, LogEntry.LogLevel level) {
-		((MyApplication) getApplication()).logEvent(message, function, TAG, level);
-	}
+//	private void logEvent(String message, String function, LogEntry.LogLevel level) {
+//		((MyApplication) getApplication()).logEvent(message, function, TAG, level);
+//	}
 }

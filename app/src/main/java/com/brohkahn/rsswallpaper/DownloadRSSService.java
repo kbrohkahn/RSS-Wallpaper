@@ -42,8 +42,6 @@ public class DownloadRSSService extends IntentService {
 	private static LogDBHelper logDBHelper;
 	private static FeedDBHelper feedDBHelper;
 
-	private String imageDirectory;
-
 	public DownloadRSSService() {
 		super("DownloadRSSService");
 	}
@@ -70,8 +68,6 @@ public class DownloadRSSService extends IntentService {
 		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
 		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "0"));
 		int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
-		imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
-				.getPath() + "/");
 
 		// check if we can download anything based on internet connection
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -119,6 +115,8 @@ public class DownloadRSSService extends IntentService {
 				}
 			}
 		}
+
+		DownloadIconService.startDownloadIconAction(this);
 
 		feedDBHelper.close();
 		feedDBHelper = null;

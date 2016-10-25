@@ -140,9 +140,8 @@ public class MainActivity extends AppCompatActivity {
 
 			String imagePath = imageDirectory + currentItem.imageName;
 			BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-			bitmapOptions.inSampleSize = Constants.getImageScale(imagePath, screenWidth, 0);
+			bitmapOptions.inSampleSize = MyApplication.getImageScale(imagePath, screenWidth, 0);
 			currentImage = BitmapFactory.decodeFile(imagePath, bitmapOptions);
-
 
 			titleText = currentItem.title;
 			linkText = currentItem.link;
