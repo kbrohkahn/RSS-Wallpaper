@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
 			display.getSize(size);
 			int screenWidth = size.x;
 
-			String imagePath = imageDirectory + currentItem.imageName;
+			String imagePath = imageDirectory + currentItem.getImageName();
 			BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
 			bitmapOptions.inSampleSize = MyApplication.getImageScale(imagePath, screenWidth, 0);
 			currentImage = BitmapFactory.decodeFile(imagePath, bitmapOptions);

@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.CursorLoader;
@@ -124,8 +125,13 @@ public class FeedListView extends AppCompatActivity {
 		private FeedListAdapter(Context context, Cursor cursor, int flags) {
 			super(context, cursor, flags);
 
-			CURRENT_FEED_COLOR = getResources().getColor(R.color.color_current_feed);
-			DEFAULT_FEED_COLOR = getResources().getColor(R.color.color_transparent);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+				CURRENT_FEED_COLOR = getResources().getColor(R.color.color_current_feed, null);
+				DEFAULT_FEED_COLOR = getResources().getColor(R.color.color_transparent, null);
+			} else {
+				CURRENT_FEED_COLOR = getResources().getColor(R.color.color_current_feed);
+				DEFAULT_FEED_COLOR = getResources().getColor(R.color.color_transparent);
+			}
 
 			logEvent(String.format(Locale.US, "Displaying %d available feeds.", cursor.getCount()),
 					 "FeedListAdapter(Context context, Cursor cursor, int flags)",
@@ -292,7 +298,8 @@ public class FeedListView extends AppCompatActivity {
 
 				String line;
 				while ((line = bReader.readLine()) != null) {
-					sBuilder.append(line + "\n");
+					sBuilder.append(line);
+					sBuilder.append('\n');
 				}
 
 				inputStream.close();

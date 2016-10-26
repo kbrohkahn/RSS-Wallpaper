@@ -1,17 +1,16 @@
 package com.brohkahn.rsswallpaper;
 
-public class Feed {
-	public int id;
-	public String source;
-	public String title;
-	public String link;
-	public String description;
-	public boolean imageOnWebPage;
-	public boolean enabled;
+class Feed {
+	int id;
+	String source;
+	String title;
+	String link;
+	String description;
+	boolean imageOnWebPage;
+	boolean enabled;
 
-	public String entryImageLinkTag;
-	public String entryImageLinkAttribute;
-
+	String entryImageLinkTag;
+	String entryImageLinkAttribute;
 
 	public Feed(int id,
 				String source,

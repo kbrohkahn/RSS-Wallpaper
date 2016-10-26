@@ -27,7 +27,7 @@ import android.widget.TextView;
 import java.util.Locale;
 
 public class FeedItemListView extends AppCompatActivity {
-	public static final String TAG = "FeedItemListView";
+//	public static final String TAG = "FeedItemListView";
 
 	public FeedItemListAdapter adapter;
 
@@ -114,26 +114,27 @@ public class FeedItemListView extends AppCompatActivity {
 		}
 
 		public void bindView(View view, Context context, Cursor cursor) {
-			final int itemID = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry._ID));
+			final int id = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry._ID));
+			String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_TITLE));
+			String imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_IMAGE_LINK));
+			boolean enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_ENABLED)) == 1;
+
+			final FeedItem item = new FeedItem(id, title, imageLink, enabled);
 
 			TextView titleTextView = (TextView) view.findViewById(R.id.feed_item_title);
-			String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_TITLE));
 			titleTextView.setText(title);
 
 			CheckBox checkBox = (CheckBox) view.findViewById(R.id.feed_item_enabled);
-			boolean enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_ENABLED)) == 1;
 			checkBox.setChecked(enabled);
 			checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 				@Override
 				public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-					updateItemEnabled(itemID, b);
+					updateItemEnabled(id, b);
 				}
 			});
 
 			ImageView imageView = (ImageView) view.findViewById(R.id.feed_item_icon);
-			// get image name and path
-			String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_IMAGE_NAME));
-			String imagePath = imageDirectory + Constants.ICON_BITMAP_PREFIX + imageName;
+			String imagePath = imageDirectory + item.getIconName();
 
 			// load imageView, scale bitmap, and set image
 			imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath));
@@ -141,7 +142,7 @@ public class FeedItemListView extends AppCompatActivity {
 			view.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View view) {
-					displayFeedItem(itemID);
+					displayFeedItem(id);
 				}
 			});
 		}

@@ -27,7 +27,6 @@ class FeedDBHelper extends SQLiteOpenHelper {
 					FeedItemDBEntry.COLUMN_CREATION_DATE + " LONG, " +
 					FeedItemDBEntry.COLUMN_IMAGE_LINK + " TEXT, " +
 					FeedItemDBEntry.COLUMN_DOWNLOADED + " INTEGER, " +
-					FeedItemDBEntry.COLUMN_IMAGE_NAME + " TEXT, " +
 					FeedItemDBEntry.COLUMN_ENABLED + " INTEGER, " +
 					FeedItemDBEntry.COLUMN_RELATED_FEED + " INTEGER, " +
 					" FOREIGN KEY (" + FeedItemDBEntry.COLUMN_RELATED_FEED + ") REFERENCES " + FeedDBEntry.TABLE_NAME + "(" + FeedDBEntry._ID + "));";
@@ -108,7 +107,6 @@ class FeedDBHelper extends SQLiteOpenHelper {
 			values.put(FeedItemDBEntry.COLUMN_LINK, item.link);
 			values.put(FeedItemDBEntry.COLUMN_DESCRIPTION, item.description);
 			values.put(FeedItemDBEntry.COLUMN_IMAGE_LINK, item.imageLink);
-			values.put(FeedItemDBEntry.COLUMN_IMAGE_NAME, item.imageName);
 			values.put(FeedItemDBEntry.COLUMN_ENABLED, 1);
 			values.put(FeedItemDBEntry.COLUMN_DOWNLOADED, 0);
 			values.put(FeedItemDBEntry.COLUMN_CREATION_DATE, new Date().getTime());
@@ -233,11 +231,10 @@ class FeedDBHelper extends SQLiteOpenHelper {
 			String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedItemDBEntry.COLUMN_TITLE));
 			String link = cursor.getString(cursor.getColumnIndexOrThrow(FeedItemDBEntry.COLUMN_LINK));
 			String description = cursor.getString(cursor.getColumnIndexOrThrow(FeedItemDBEntry.COLUMN_DESCRIPTION));
-			String imageName = cursor.getString(cursor.getColumnIndexOrThrow(FeedItemDBEntry.COLUMN_IMAGE_NAME));
 			Date date = new Date();
 			date.setTime(cursor.getLong(cursor.getColumnIndexOrThrow(FeedItemDBEntry.COLUMN_CREATION_DATE)));
 
-			FeedItem item = new FeedItem(id, title, link, description, imageName, date);
+			FeedItem item = new FeedItem(id, title, link, description, date);
 			item.downloaded = cursor.getInt(cursor.getColumnIndexOrThrow(FeedItemDBEntry.COLUMN_DOWNLOADED)) == 1;
 			item.enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedItemDBEntry.COLUMN_ENABLED)) == 1;
 			item.imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedItemDBEntry.COLUMN_IMAGE_LINK));
@@ -258,12 +255,12 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		static final String COLUMN_CREATION_DATE = "creation_date";
 		static final String COLUMN_IMAGE_LINK = "image_link";
 		static final String COLUMN_DOWNLOADED = "downloaded";
-		static final String COLUMN_IMAGE_NAME = "image_name";
+		//		static final String COLUMN_IMAGE_NAME = "image_name";
 		static final String COLUMN_ENABLED = "enabled";
 
 
 		static String[] getAllColumns() {
-			return new String[]{_ID, COLUMN_RELATED_FEED, COLUMN_TITLE, COLUMN_LINK, COLUMN_IMAGE_LINK, COLUMN_DESCRIPTION, COLUMN_CREATION_DATE, COLUMN_DOWNLOADED, COLUMN_IMAGE_NAME, COLUMN_ENABLED};
+			return new String[]{_ID, COLUMN_RELATED_FEED, COLUMN_TITLE, COLUMN_LINK, COLUMN_IMAGE_LINK, COLUMN_DESCRIPTION, COLUMN_CREATION_DATE, COLUMN_DOWNLOADED, COLUMN_ENABLED};
 		}
 	}
 
@@ -300,20 +297,20 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		}
 	}
 
-	Feed getFeedFromSource(String source) {
-		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s='%s'",
-									 FeedDBEntry.TABLE_NAME,
-									 FeedDBEntry.COLUMN_SOURCE,
-									 source
-		);
-
-		List<Feed> returnedFeeds = getFeeds(query);
-		if (returnedFeeds.size() == 0) {
-			return null;
-		} else {
-			return returnedFeeds.get(0);
-		}
-	}
+//	Feed getFeedFromSource(String source) {
+//		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s='%s'",
+//									 FeedDBEntry.TABLE_NAME,
+//									 FeedDBEntry.COLUMN_SOURCE,
+//									 source
+//		);
+//
+//		List<Feed> returnedFeeds = getFeeds(query);
+//		if (returnedFeeds.size() == 0) {
+//			return null;
+//		} else {
+//			return returnedFeeds.get(0);
+//		}
+//	}
 
 	private List<Feed> getFeeds(String query) {
 		SQLiteDatabase db = getWritableDatabase();
@@ -391,24 +388,24 @@ class FeedDBHelper extends SQLiteOpenHelper {
 //		return runFeedUpdateQuery(query);
 //	}
 
-	boolean updateFeedEnabled(int id, boolean enabled) {
-		String query = String.format(Locale.US, "UPDATE %s SET %s=%d WHERE %s='%s'",
-									 FeedDBEntry.TABLE_NAME,
-									 FeedDBEntry.COLUMN_ENABLED,
-									 enabled ? 1 : 0,
-									 FeedDBEntry._ID,
-									 id
-		);
-		return runFeedUpdateQuery(query);
-	}
+//	boolean updateFeedEnabled(int id, boolean enabled) {
+//		String query = String.format(Locale.US, "UPDATE %s SET %s=%d WHERE %s='%s'",
+//									 FeedDBEntry.TABLE_NAME,
+//									 FeedDBEntry.COLUMN_ENABLED,
+//									 enabled ? 1 : 0,
+//									 FeedDBEntry._ID,
+//									 id
+//		);
+//		return runFeedUpdateQuery(query);
+//	}
 
-	private boolean runFeedUpdateQuery(String query) {
-		SQLiteDatabase db = getWritableDatabase();
-		Cursor cursor = db.rawQuery(query, null);
-		boolean success = cursor.moveToFirst() && cursor.getInt(0) == 1;
-		cursor.close();
-		return success;
-	}
+//	private boolean runFeedUpdateQuery(String query) {
+//		SQLiteDatabase db = getWritableDatabase();
+//		Cursor cursor = db.rawQuery(query, null);
+//		boolean success = cursor.moveToFirst() && cursor.getInt(0) == 1;
+//		cursor.close();
+//		return success;
+//	}
 
 	static class FeedDBEntry implements BaseColumns {
 		static final String TABLE_NAME = "feeds";

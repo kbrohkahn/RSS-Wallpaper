@@ -2,30 +2,50 @@ package com.brohkahn.rsswallpaper;
 
 import java.util.Date;
 
-public class FeedItem {
+class FeedItem {
 	public int id;
-	public int feedId;
-	public String title;
-	public String link;
-	public String description;
-	public String imageName;
-	public Date creationDate;
+	int feedId;
+	String title;
+	String link;
+	String description;
+	Date creationDate;
 
-	public String imageLink;
-	public boolean downloaded;
-	public boolean enabled;
+	String imageLink;
+	boolean downloaded;
+	boolean enabled;
 
 	FeedItem(int id,
 			 String title,
 			 String link,
 			 String description,
-			 String imageName,
 			 Date creationDate) {
 		this.id = id;
 		this.title = title;
 		this.link = link;
 		this.description = description;
-		this.imageName = imageName;
 		this.creationDate = creationDate;
+	}
+
+	FeedItem(int id, String title, String imageLink, boolean enabled) {
+		this.id = id;
+		this.title = title;
+		this.imageLink = imageLink;
+		this.enabled = enabled;
+	}
+
+	String getImageName() {
+		if (imageLink != null) {
+			return String.valueOf(id) + imageLink.substring(imageLink.lastIndexOf('.'));
+		} else {
+			return "";
+		}
+	}
+
+	String getIconName() {
+		if (imageLink != null) {
+			return "icon_" + String.valueOf(id) + imageLink.substring(imageLink.lastIndexOf('.'));
+		} else {
+			return "";
+		}
 	}
 }

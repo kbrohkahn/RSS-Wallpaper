@@ -131,17 +131,19 @@ public class DownloadImageService extends IntentService {
 			// purge any other images not in list
 			for (FeedItem item : allItems) {
 				if (item.downloaded && !feedItemIdsInUse.contains(item.id)) {
-					File file = new File(imageDirectory + item.imageName);
-					if (file.delete()) {
-						// deletion success, mark as deleted in DB
-						feedDBHelper = FeedDBHelper.getHelper(this);
-						feedDBHelper.updateImageDownload(item.id, false);
-						feedDBHelper.close();
-					} else {
-						logEvent(String.format(Locale.US, "Unable to delete image %s.", item.imageName),
+					File file = new File(imageDirectory + item.getImageName());
+					if (!file.delete()) {
+						logEvent(String.format(Locale.US, "Unable to delete image %s.", item.getImageName()),
 								 "startImageDownload()",
 								 LogEntry.LogLevel.Warning
 						);
+					}
+
+					if (!file.exists()) {
+						// file doesn't exists, mark as deleted in DB
+						feedDBHelper = FeedDBHelper.getHelper(this);
+						feedDBHelper.updateImageDownload(item.id, false);
+						feedDBHelper.close();
 					}
 				}
 			}
@@ -164,7 +166,7 @@ public class DownloadImageService extends IntentService {
 
 			InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
-			String outputFilePath = imageDirectory + entry.imageName;
+			String outputFilePath = imageDirectory + entry.getImageName();
 			OutputStream output = new FileOutputStream(outputFilePath);
 
 			byte data[] = new byte[1024];

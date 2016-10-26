@@ -65,8 +65,8 @@ public class DownloadRSSService extends IntentService {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
-		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "0"));
-		int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
+//		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "0"));
+//		int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
 
 		// check if we can download anything based on internet connection
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -401,7 +401,8 @@ public class DownloadRSSService extends IntentService {
 
 					String line;
 					while ((line = bReader.readLine()) != null) {
-						sBuilder.append(line + "\n");
+						sBuilder.append(line);
+						sBuilder.append('\n');
 					}
 
 					inputStream.close();
@@ -421,13 +422,9 @@ public class DownloadRSSService extends IntentService {
 				);
 
 				// create item and add to beginning of unsaved items list
-				FeedItem item = new FeedItem(-1, title, link, description, "", null);
+				FeedItem item = new FeedItem(-1, title, link, description, null);
 
 				item.imageLink = imageLink;
-
-				String imageName = item.title.replace(' ', '_');
-				imageName += imageLink.substring(imageLink.lastIndexOf('.'));
-				item.imageName = imageName;
 
 				newFeedItems.add(0, item);
 			} else {

@@ -20,6 +20,7 @@ import android.view.WindowManager;
 
 import com.brohkahn.loggerlibrary.LogEntry;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
@@ -240,92 +241,99 @@ public class ChangeWallpaperService extends Service {
 				 LogEntry.LogLevel.Message
 		);
 		try {
-			String imagePath = imageDirectory + newItem.imageName;
+			String imagePath = imageDirectory + newItem.getImageName();
+			if (!new File(imagePath).exists()) {
+				logEvent(String.format(Locale.US, "File %s not found.", imagePath),
+						 "setNewWallpaper()",
+						 LogEntry.LogLevel.Warning
+				);
+				DownloadImageService.startDownloadImageAction(this);
+			} else {
+				// get screen height (output wallpaper height)
+				Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+				Point size = new Point();
+				display.getSize(size);
+				int screenHeight = size.y;
+				int screenWidth = size.x;
 
-			// get screen height (output wallpaper height)
-			Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-			Point size = new Point();
-			display.getSize(size);
-			int screenHeight = size.y;
-			int screenWidth = size.x;
 
+				// get image dimensions
+				BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+				bitmapOptions.inJustDecodeBounds = true;
+				BitmapFactory.decodeFile(imagePath, bitmapOptions);
 
-			// get image dimensions
-			BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-			bitmapOptions.inJustDecodeBounds = true;
-			BitmapFactory.decodeFile(imagePath, bitmapOptions);
+				// Calculate inSampleSize
+				int imageHeight = bitmapOptions.outHeight;
+				int imageWidth = bitmapOptions.outWidth;
 
-			// Calculate inSampleSize
-			int imageHeight = bitmapOptions.outHeight;
-			int imageWidth = bitmapOptions.outWidth;
-
-			int inSampleSize = 1;
-			while (cropAndScaleType != CROP_CENTER && imageHeight > screenHeight) {
-				imageHeight /= 2;
-				imageWidth /= 2;
-				inSampleSize *= 2;
-			}
-
-			// Decode bitmap with inSampleSize set
-			bitmapOptions.inJustDecodeBounds = false;
-			bitmapOptions.inSampleSize = inSampleSize;
-			Bitmap inputBitmap = BitmapFactory.decodeFile(imagePath, bitmapOptions);
-			Bitmap outputBitmap;
-			int x, y;
-
-			switch (cropAndScaleType) {
-				case SCALE_HEIGHT:
-					outputBitmap = inputBitmap;
-					break;
-				case SCALE_HEIGHT_CROP_CENTER:
-					x = imageWidth / 2 - screenWidth / 2;
-					if (x > 0) {
-						outputBitmap = Bitmap.createBitmap(inputBitmap, x, 0, screenWidth, imageHeight);
-					} else {
-						outputBitmap = inputBitmap;
-					}
-					break;
-				case SCALE_WIDTH_AND_HEIGHT:
-					outputBitmap = Bitmap.createScaledBitmap(inputBitmap, screenWidth, screenHeight, false);
-					break;
-				case CROP_CENTER:
-
-					x = imageWidth / 2 - screenWidth / 2;
-					y = imageHeight / 2 - screenHeight / 2;
-					if (x > 0 && y > 0) {
-						outputBitmap = Bitmap.createBitmap(inputBitmap, x, y, screenWidth, screenHeight);
-					} else {
-						outputBitmap = inputBitmap;
-					}
-					break;
-				default:
-					outputBitmap = inputBitmap;
-			}
-
-			WallpaperManager myWallpaperManager = WallpaperManager.getInstance(this);
-			if (setHomeWallpaper) {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-					myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_SYSTEM);
-				} else {
-					myWallpaperManager.setBitmap(outputBitmap);
+				int inSampleSize = 1;
+				while (cropAndScaleType != CROP_CENTER && imageHeight > screenHeight) {
+					imageHeight /= 2;
+					imageWidth /= 2;
+					inSampleSize *= 2;
 				}
 
-				logEvent("Successfully set wallpaper.",
-						 "setNewWallpaper()",
-						 LogEntry.LogLevel.Message
-				);
-			}
+				// Decode bitmap with inSampleSize set
+				bitmapOptions.inJustDecodeBounds = false;
+				bitmapOptions.inSampleSize = inSampleSize;
+				Bitmap inputBitmap = BitmapFactory.decodeFile(imagePath, bitmapOptions);
+				Bitmap outputBitmap;
+				int x, y;
 
-			if (setLockWallpaper && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-				myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_LOCK);
-				logEvent("Successfully set lock screen wallpaper.",
-						 "setNewWallpaper()",
-						 LogEntry.LogLevel.Message
-				);
-			}
+				switch (cropAndScaleType) {
+					case SCALE_HEIGHT:
+						outputBitmap = inputBitmap;
+						break;
+					case SCALE_HEIGHT_CROP_CENTER:
+						x = imageWidth / 2 - screenWidth / 2;
+						if (x > 0) {
+							outputBitmap = Bitmap.createBitmap(inputBitmap, x, 0, screenWidth, imageHeight);
+						} else {
+							outputBitmap = inputBitmap;
+						}
+						break;
+					case SCALE_WIDTH_AND_HEIGHT:
+						outputBitmap = Bitmap.createScaledBitmap(inputBitmap, screenWidth, screenHeight, false);
+						break;
+					case CROP_CENTER:
 
-			inputBitmap.recycle();
-			outputBitmap.recycle();
+						x = imageWidth / 2 - screenWidth / 2;
+						y = imageHeight / 2 - screenHeight / 2;
+						if (x > 0 && y > 0) {
+							outputBitmap = Bitmap.createBitmap(inputBitmap, x, y, screenWidth, screenHeight);
+						} else {
+							outputBitmap = inputBitmap;
+						}
+						break;
+					default:
+						outputBitmap = inputBitmap;
+				}
+
+				WallpaperManager myWallpaperManager = WallpaperManager.getInstance(this);
+				if (setHomeWallpaper) {
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+						myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_SYSTEM);
+					} else {
+						myWallpaperManager.setBitmap(outputBitmap);
+					}
+
+					logEvent("Successfully set wallpaper.",
+							 "setNewWallpaper()",
+							 LogEntry.LogLevel.Message
+					);
+				}
+
+				if (setLockWallpaper && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+					myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_LOCK);
+					logEvent("Successfully set lock screen wallpaper.",
+							 "setNewWallpaper()",
+							 LogEntry.LogLevel.Message
+					);
+				}
+
+				inputBitmap.recycle();
+				outputBitmap.recycle();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			logException(e, "setNewWallpaper()");
