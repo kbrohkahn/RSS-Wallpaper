@@ -126,11 +126,11 @@ public class FeedListView extends AppCompatActivity {
 			super(context, cursor, flags);
 
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-				CURRENT_FEED_COLOR = getResources().getColor(R.color.color_current_feed, null);
-				DEFAULT_FEED_COLOR = getResources().getColor(R.color.color_transparent, null);
+				CURRENT_FEED_COLOR = getResources().getColor(R.color.current_feed, null);
+				DEFAULT_FEED_COLOR = getResources().getColor(R.color.transparent, null);
 			} else {
-				CURRENT_FEED_COLOR = getResources().getColor(R.color.color_current_feed);
-				DEFAULT_FEED_COLOR = getResources().getColor(R.color.color_transparent);
+				CURRENT_FEED_COLOR = getResources().getColor(R.color.current_feed);
+				DEFAULT_FEED_COLOR = getResources().getColor(R.color.transparent);
 			}
 
 			logEvent(String.format(Locale.US, "Displaying %d available feeds.", cursor.getCount()),

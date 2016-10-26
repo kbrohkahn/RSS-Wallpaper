@@ -1,9 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<color name="colorPrimary">#0B3D91</color>
-	<color name="colorPrimaryDark">#072960</color>
-	<color name="colorAccent">#FC3D21</color>
+	<color name="colorPrimary">@color/secondary_1</color>
+	<color name="colorPrimaryDark">@color/secondary_1_4</color>
+	<color name="colorAccent">@color/primary</color>
 
-	<color name="color_current_feed">#18ba49</color>
-	<color name="color_transparent">#00ffffff</color>
+	<color name="current_feed">@color/secondary_2</color>
+	<color name="transparent">#00ffffff</color>
+
+	<color name="primary">#AA8739</color>
+	/* Main Primary color */
+	<color name="primary_1">#FFE5AA</color>
+	<color name="primary_2">#D4B46A</color>
+	<color name="primary_3">#805F15</color>
+	<color name="primary_4">#553B00</color>
+
+	<color name="secondary_1">#442F74</color>
+	/* Main Secondary color (1) */
+	<color name="secondary_1_1">#8A7BAF</color>
+	<color name="secondary_1_2">#645092</color>
+	<color name="secondary_1_3">#2A1657</color>
+	<color name="secondary_1_4">#16063A</color>
+
+	<color name="secondary_2">#255C69</color>
+	/* Main Secondary color (2) */
+	<color name="secondary_2_1">#6B949E</color>
+	<color name="secondary_2_2">#447784</color>
+	<color name="secondary_2_3">#0F434F</color>
+	<color name="secondary_2_4">#012B35</color>
+
 </resources>
