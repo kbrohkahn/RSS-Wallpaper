@@ -17,16 +17,16 @@
 
 	<TextView
 		android:id="@+id/feed_title"
-		style="@style/feed_item_text"
+		style="@style/large_text"
 		android:autoLink="web"/>
 
 	<TextView
 		android:id="@+id/feed_link"
-		style="@style/feed_item_text"
+		style="@style/small_text"
 		android:autoLink="web"/>
 
 	<TextView
 		android:id="@+id/feed_description"
-		style="@style/feed_item_text"/>
+		style="@style/small_text"/>
 
 </LinearLayout>

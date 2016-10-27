@@ -8,6 +8,8 @@
 	<string name="keep">Keep</string>
 	<string name="request">Request</string>
 	<string name="cancel">Cancel</string>
+	<string name="downloaded_on">Downloaded on %1$s</string>
+	<string name="view_web_page">View on web</string>
 
 	<!-- Permissions -->
 	<!--<string name="permission_request_title">Internet Access Required</string>-->
@@ -42,12 +44,13 @@
 	<string name="activity_feeds">Available Feeds</string>
 	<!--<string name="activity_help">Help</string>-->
 	<string name="activity_main">NASA Wallpaper</string>
-	<string name="activity_rssfeed_view">RSS Feed Details</string>
+	<string name="activity_rss_feed_view">RSS Feed Details</string>
 
 	<!-- Actions -->
 	<string name="action_next_item">Next wallpaper</string>
 	<string name="action_disable">Disable current image</string>
 	<string name="action_view_items_all">View all items</string>
+	<string name="action_view_item_details">RSS Item Details</string>
 	<string name="action_update_feeds">Update available feeds</string>
 	<string name="action_request_feeds">Request feeds</string>
 	<string name="action_view_items_disabled">View disabled items</string>

@@ -45,16 +45,25 @@ public class FeedItemListView extends AppCompatActivity {
 			actionBar.setDisplayHomeAsUpEnabled(true);
 		}
 
+		CursorLoader cursorLoader = getCursorLoader();
+
+		adapter = new FeedItemListAdapter(this, cursorLoader.loadInBackground(), 0);
+
+		ListView listView = (ListView) findViewById(R.id.feed_item_list_view);
+		listView.setAdapter(adapter);
+	}
+
+	private CursorLoader getCursorLoader() {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
 
-		CursorLoader cursorLoader = new CursorLoader(getApplicationContext(),
-													 Uri.EMPTY,
-													 FeedDBHelper.FeedItemDBEntry.getAllColumns(),
-													 String.format(Locale.US, "%s=%d", FeedDBHelper.FeedItemDBEntry.COLUMN_RELATED_FEED, currentFeedId),
-													 null,
-													 FeedDBHelper.FeedItemDBEntry.COLUMN_CREATION_DATE + " DESC"
+		return new CursorLoader(getApplicationContext(),
+								Uri.EMPTY,
+								FeedDBHelper.FeedItemDBEntry.getAllColumns(),
+								String.format(Locale.US, "%s=%d", FeedDBHelper.FeedItemDBEntry.COLUMN_RELATED_FEED, currentFeedId),
+								null,
+								FeedDBHelper.FeedItemDBEntry.COLUMN_CREATION_DATE + " DESC"
 		) {
 			@Override
 			public Cursor loadInBackground() {
@@ -71,11 +80,6 @@ public class FeedItemListView extends AppCompatActivity {
 				);
 			}
 		};
-
-		adapter = new FeedItemListAdapter(this, cursorLoader.loadInBackground(), 0);
-
-		ListView listView = (ListView) findViewById(R.id.feed_item_list_view);
-		listView.setAdapter(adapter);
 	}
 
 	@Override
@@ -83,6 +87,15 @@ public class FeedItemListView extends AppCompatActivity {
 		DownloadImageService.startDownloadImageAction(this);
 
 		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		adapter.getCursor().close();
+		adapter.changeCursor(getCursorLoader().loadInBackground());
+//		adapter.notifyDataSetChanged();
 	}
 
 	@Override

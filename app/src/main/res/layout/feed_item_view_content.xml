@@ -1,36 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 			  android:layout_width="match_parent"
-			  android:layout_marginTop="?attr/actionBarSize"
 			  android:layout_height="match_parent"
-			  android:orientation="vertical">
+			  android:layout_marginTop="?attr/actionBarSize"
+			  android:orientation="vertical"
+			  android:paddingBottom="@dimen/activity_vertical_margin"
+			  android:paddingLeft="@dimen/activity_horizontal_margin"
+			  android:paddingRight="@dimen/activity_horizontal_margin"
+			  android:paddingTop="@dimen/activity_vertical_margin">
 
-	<TextView
-		android:id="@+id/feed_item_link"
-		style="@style/feed_item_text"
-		android:autoLink="web"/>
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal">
+
+
+		<ImageView
+			android:id="@+id/feed_item_image"
+			android:layout_width="@dimen/icon_size"
+			android:layout_height="@dimen/icon_size"
+			android:layout_gravity="center_vertical"
+			android:contentDescription="@string/current_image"/>
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+
+			<TextView
+				android:id="@+id/feed_item_title"
+				style="@style/large_text"
+				android:layout_gravity="center_horizontal"/>
+
+			<Button
+				style="@style/Widget.AppCompat.Button.Colored"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_horizontal"
+				android:onClick="openLink"
+				android:text="@string/view_web_page"/>
+
+		</LinearLayout>
+	</LinearLayout>
 
 	<TextView
 		android:id="@+id/feed_item_published"
-		style="@style/feed_item_text"/>
+		style="@style/small_text"
+		android:layout_marginTop="@dimen/default_margin"/>
 
 	<CheckBox
 		android:id="@+id/feed_item_downloaded"
-		style="@style/feed_item_text"
+		style="@style/small_text"
+		android:layout_marginTop="@dimen/default_margin"
 		android:enabled="false"
 		android:gravity="start|center_vertical"
 		android:text="@string/item_downloaded"/>
 
 	<CheckBox
 		android:id="@+id/feed_item_enabled"
-		style="@style/feed_item_text"
+		style="@style/small_text"
 		android:gravity="start|center_vertical"
 		android:text="@string/item_enabled"/>
 
-	<ImageView
-		android:id="@+id/feed_item_image"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:contentDescription="@string/current_image"/>
 
 </LinearLayout>

@@ -21,10 +21,6 @@
 				<category android:name="android.intent.category.LAUNCHER"/>
 			</intent-filter>
 		</activity>
-		<activity
-			android:name=".FeedItemListView"
-			android:label="@string/action_view_items_all"/>
-		<activity android:name=".FeedItemView"/>
 
 		<receiver
 			android:name=".MyReceiver"
@@ -49,20 +45,24 @@
 			android:exported="false"/>
 
 		<activity
-			android:name=".About"
-			android:label="@string/activity_about"/>
+			android:name=".FeedItemListView"
+			android:label="@string/action_view_items_all"/>
 		<activity
-			android:name=".SettingsActivity"
-			android:theme="@style/AppTheme_WithActionBar"
-			android:label="@string/activity_settings"/>
+			android:name=".FeedItemView"
+			android:label="@string/action_view_item_details"/>
 		<activity
 			android:name=".RSSFeedListView"
 			android:label="@string/activity_feeds"/>
 		<activity
 			android:name=".RSSFeedView"
-			android:label="@string/activity_rssfeed_view"
-			android:theme="@style/AppTheme.NoActionBar">
-		</activity>
+			android:label="@string/activity_rss_feed_view"/>
+		<activity
+			android:name=".About"
+			android:label="@string/activity_about"/>
+		<activity
+			android:name=".SettingsActivity"
+			android:label="@string/activity_settings"
+			android:theme="@style/AppTheme_WithActionBar"/>
 	</application>
 
 </manifest>

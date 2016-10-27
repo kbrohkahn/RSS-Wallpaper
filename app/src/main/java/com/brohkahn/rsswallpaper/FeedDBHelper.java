@@ -383,6 +383,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 			values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_TAG, feed.entryImageLinkTag);
 			values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_ATTRIBUTE, feed.entryImageLinkAttribute);
 
+			// try to update first
 			long updatedRows = db.update(FeedDBEntry.TABLE_NAME,
 										 values,
 										 String.format(Locale.US, "%s='%s'", FeedDBEntry.COLUMN_SOURCE, feed.source),
@@ -391,9 +392,8 @@ class FeedDBHelper extends SQLiteOpenHelper {
 
 			if (updatedRows == 0) {
 				updatedRows = db.insert(FeedDBEntry.TABLE_NAME, null, values);
+				totalInserts += updatedRows;
 			}
-
-			totalInserts += updatedRows;
 		}
 		return totalInserts;
 	}

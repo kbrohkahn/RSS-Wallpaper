@@ -74,12 +74,6 @@ public class RSSFeedListView extends AppCompatActivity {
 			public void onClick(View view) {
 				updateFeedsFromJSON();
 
-//				Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//						.setAction("Action", new View.OnClickListener() {
-//							@Override
-//							public void onClick(View view) {
-//							}
-//						}).show();
 			}
 		});
 
@@ -129,12 +123,6 @@ public class RSSFeedListView extends AppCompatActivity {
 		adapter = null;
 
 		super.onDestroy();
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		adapter.notifyDataSetChanged();
 	}
 
 	public class FeedListAdapter extends CursorAdapter {

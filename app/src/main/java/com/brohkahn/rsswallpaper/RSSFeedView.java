@@ -44,13 +44,6 @@ public class RSSFeedView extends AppCompatActivity {
 			@Override
 			public void onClick(View view) {
 				promptSettingFeed();
-
-//				Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//						.setAction("Action", new View.OnClickListener() {
-//							@Override
-//							public void onClick(View view) {
-//							}
-//						}).show();
 			}
 		});
 

@@ -1,6 +1,12 @@
 package com.brohkahn.rsswallpaper;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -8,6 +14,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.brohkahn.loggerlibrary.LogDBHelper;
@@ -58,13 +65,11 @@ public class FeedItemView extends AppCompatActivity {
 
 		initiallyEnabled = item.enabled;
 
-		setTitle(item.title);
+		((TextView) findViewById(R.id.feed_item_title)).setText(item.title);
 
-		TextView linkTextView = (TextView) findViewById(R.id.feed_item_link);
-		linkTextView.setText(item.link);
-
+		String publishedText = getResources().getString(R.string.downloaded_on, item.creationDate.toString());
 		TextView publishedTextView = (TextView) findViewById(R.id.feed_item_published);
-		publishedTextView.setText(item.creationDate.toString());
+		publishedTextView.setText(publishedText);
 
 		FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.feed_item_view_fab);
 		fab.setOnClickListener(new View.OnClickListener() {
@@ -79,6 +84,25 @@ public class FeedItemView extends AppCompatActivity {
 
 		CheckBox downloadedCheckBox = (CheckBox) findViewById(R.id.feed_item_downloaded);
 		downloadedCheckBox.setChecked(item.downloaded);
+
+		// set icon
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		Resources resources = getResources();
+		String imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
+				.getPath() + "/");
+		String imagePath = imageDirectory + item.getIconName();
+
+		// load imageView, scale bitmap, and set image
+		ImageView imageView = (ImageView) findViewById(R.id.feed_item_image);
+		imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath));
+
+	}
+
+	public void openLink(View view) {
+		Intent intent = new Intent(Intent.ACTION_VIEW);
+		intent.setData(Uri.parse(item.link));
+		startActivity(intent);
+
 	}
 
 	private void setAsCurrentWallpaper() {
