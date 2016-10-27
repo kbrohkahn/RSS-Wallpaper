@@ -9,14 +9,14 @@ final class Constants {
 	static final int APPROXIMATE_FEED_ITEM_COUNT = 100;
 	static final int SUPPORTED_FEED_COUNT = 2;
 
-	static Feed getBuiltInFeed() {
-		return new Feed(0,
-						"http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
-						"NASA Image of the Day",
-						"enclosure",
-						"url",
-						false,
-						true
+	static RSSFeed getBuiltInFeed() {
+		return new RSSFeed(1,
+						   "http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
+						   "NASA Image of the Day",
+						   "enclosure",
+						   "url",
+						   false,
+						   true
 		);
 	}
 

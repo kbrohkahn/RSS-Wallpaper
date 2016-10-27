@@ -1,6 +1,6 @@
 package com.brohkahn.rsswallpaper;
 
-class Feed {
+class RSSFeed {
 	int id;
 	String source;
 	String title;
@@ -12,13 +12,13 @@ class Feed {
 	String entryImageLinkTag;
 	String entryImageLinkAttribute;
 
-	public Feed(int id,
-				String source,
-				String title,
-				String entryImageLinkTag,
-				String entryImageLinkAttribute,
-				boolean imageOnWebPage,
-				boolean enabled) {
+	public RSSFeed(int id,
+				   String source,
+				   String title,
+				   String entryImageLinkTag,
+				   String entryImageLinkAttribute,
+				   boolean imageOnWebPage,
+				   boolean enabled) {
 		this.id = id;
 		this.source = source;
 		this.title = title;
@@ -30,12 +30,12 @@ class Feed {
 
 	}
 
-	public Feed(int id,
-				String source,
-				String title,
-				String link,
-				String description,
-				boolean imageOnWebPage) {
+	public RSSFeed(int id,
+				   String source,
+				   String title,
+				   String link,
+				   String description,
+				   boolean imageOnWebPage) {
 		this.id = id;
 		this.source = source;
 		this.title = title;

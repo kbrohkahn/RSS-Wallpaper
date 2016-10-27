@@ -3,6 +3,8 @@
 	<string name="app_name">RSS Wallpaper</string>
 	<string name="developer_email">kevin@broh-kahn.com</string>
 	<string name="ok">OK</string>
+	<string name="delete">Delete</string>
+	<string name="keep">Keep</string>
 	<string name="request">Request</string>
 	<string name="cancel">Cancel</string>
 
@@ -24,7 +26,7 @@
 	<string name="set_feed_dialog_title">Set new RSS feed</string>
 	<string name="set_feed_dialog_message">Do you want to change your wallpaper according to the %1$s feed?</string>
 
-	<!-- Image and Feed strings -->
+	<!-- Image and RSSFeed strings -->
 	<string name="current_background">Current wallpaper</string>
 	<string name="current_image">Current image</string>
 	<string name="restart_service">Restart service</string>
@@ -39,6 +41,7 @@
 	<string name="activity_feeds">Available Feeds</string>
 	<!--<string name="activity_help">Help</string>-->
 	<string name="activity_main">NASA Wallpaper</string>
+	<string name="activity_rssfeed_view">RSS Feed Details</string>
 
 	<!-- Actions -->
 	<string name="action_next_item">Next wallpaper</string>
@@ -59,9 +62,10 @@
 	<string name="pref_header_rss_feed">RSS Feed</string>
 	<string name="pref_header_wallpaper">Wallpaper</string>
 	<string name="pref_header_notifications">Notifications</string>
+	<string name="pref_header_storage">Manage storage</string>
 
 	<!-- User keys-->
-	<!-- RSS Feed -->
+	<!-- RSS RSSFeed -->
 	<string name="key_current_feed">currentFeed</string>
 	<string name="key_update_interval">updateInterval</string>
 	<string name="key_update_wifi_only">updateWifiOnly</string>
@@ -75,9 +79,12 @@
 	<string name="key_crop_and_scale_type">cropAndScaleType</string>
 	<!-- Notifications -->
 	<string name="key_show_toasts">showToasts</string>
+	<!-- Storage -->
+	<string name="key_delete_items">deleteItems</string>
+	<string name="key_delete_logs">deleteLogs</string>
 
 	<!-- Titles -->
-	<!-- RSS Feed -->
+	<!-- RSS RSSFeed -->
 	<string name="title_current_feed">Current Feed</string>
 	<string name="title_update_interval">Update interval</string>
 	<string name="title_update_wifi_only">Update using Wifi Only</string>
@@ -91,16 +98,22 @@
 	<string name="title_crop_and_scale_type">Crop and scale</string>
 	<!-- Notifications -->
 	<string name="title_show_toasts">Show basic messages</string>
+	<!-- Storage -->
+	<string name="title_delete_items">Delete Items</string>
+	<string name="title_delete_logs">Delete Logs</string>
 
 	<!-- Summaries -->
-	<!-- RSS Feed -->
+	<!-- RSS RSSFeed -->
 	<!-- Wallpaper -->
 	<string name="summary_set_lock_screen">Must have Android 7.0 or later</string>
 	<!-- Notifications -->
 	<string name="summary_show_toasts">Like when wallpaper is changing</string>
+	<!-- Storage -->
+	<string name="summary_delete_items">If app not working properly</string>
+	<string name="summary_delete_logs">Logs useful for monitoring app</string>
 
 	<!-- Values -->
-	<!-- RSS Feed -->
+	<!-- RSS RSSFeed -->
 	<string-array name="titles_array_update_interval">
 		<item>1 hour</item>
 		<item>3 hours</item>
@@ -183,6 +196,12 @@
 		<item>2</item>
 		<item>3</item>
 	</string-array>
+
+	<!-- Delete dialogs title -->
+	<string name="delete_logs_dialog_message">Are you sure you want to delete all the application logs? They don\'t take up much storage space, and are very helpful for monitoring activity and solving potential issues.</string>
+	<string name="delete_items_dialog_message">Recent RSS feed items will be downloaded again, but old ones will be lost. Do you want to delete all the items from the RSS feeds?</string>
+	<string name="delete_dialog_positive">Yes, delete</string>
+	<string name="delete_dialog_negative">No, keep</string>
 
 
 </resources>

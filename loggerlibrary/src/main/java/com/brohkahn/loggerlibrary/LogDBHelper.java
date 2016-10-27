@@ -56,7 +56,7 @@ public class LogDBHelper extends SQLiteOpenHelper {
 //        }
 	}
 
-	void deleteLogs() {
+	public void deleteLogs() {
 		SQLiteDatabase db = getWritableDatabase();
 		db.delete(LogDBEntry.TABLE_NAME, null, null);
 		onCreate(db);

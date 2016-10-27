@@ -1,5 +1,6 @@
 package com.brohkahn.rsswallpaper;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -12,8 +13,10 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.view.MenuItem;
 
+import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
 import java.util.List;
@@ -150,7 +153,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		return PreferenceFragment.class.getName().equals(fragmentName)
 				|| RSSFeedPreferenceFragment.class.getName().equals(fragmentName)
 				|| WallpaperPreferenceFragment.class.getName().equals(fragmentName)
-				|| NotificationPreferenceFragment.class.getName().equals(fragmentName);
+				|| NotificationPreferenceFragment.class.getName().equals(fragmentName)
+				|| StoragePreferenceFragment.class.getName().equals(fragmentName);
 	}
 
 	private void logEvent(String message, String function, LogEntry.LogLevel level) {
@@ -175,7 +179,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			setHasOptionsMenu(true);
 
 			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getActivity());
-			List<Feed> availableFeeds = feedDBHelper.getAvailableFeeds();
+			List<RSSFeed> availableFeeds = feedDBHelper.getAvailableFeeds();
 			int availableFeedsCount = availableFeeds.size();
 
 			if (availableFeedsCount == 0) {
@@ -185,7 +189,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			String[] currentFeedValues = new String[availableFeedsCount];
 			String[] currentFeedTitles = new String[availableFeedsCount];
 			for (int i = 0; i < availableFeedsCount; i++) {
-				Feed feed = availableFeeds.get(i);
+				RSSFeed feed = availableFeeds.get(i);
 				currentFeedTitles[i] = feed.title;
 				currentFeedValues[i] = String.valueOf(feed.id);
 			}
@@ -269,4 +273,96 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			return super.onOptionsItemSelected(item);
 		}
 	}
+
+
+	public static class StoragePreferenceFragment extends PreferenceFragment {
+		@Override
+		public void onCreate(Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
+			addPreferencesFromResource(R.xml.pref_storage);
+			setHasOptionsMenu(true);
+
+			Resources resources = getResources();
+			Preference deleteLogsPreference = findPreference(resources.getString(R.string.key_delete_logs));
+			deleteLogsPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+				@Override
+				public boolean onPreferenceClick(Preference preference) {
+					showDeleteLogsDialog();
+					return false;
+				}
+			});
+
+			Preference deleteItemsPreference = findPreference(resources.getString(R.string.key_delete_items));
+			deleteItemsPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+				@Override
+				public boolean onPreferenceClick(Preference preference) {
+					showDeleteItemsDialog();
+					return false;
+				}
+			});
+		}
+
+		public void showDeleteLogsDialog() {
+			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+			builder.setTitle(R.string.title_delete_logs)
+				   .setMessage(R.string.delete_logs_dialog_message)
+				   .setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
+					   @Override
+					   public void onClick(DialogInterface dialogInterface, int i) {
+						   deleteItems();
+						   dialogInterface.dismiss();
+					   }
+				   })
+				   .setNegativeButton(R.string.delete_dialog_negative, new DialogInterface.OnClickListener() {
+					   @Override
+					   public void onClick(DialogInterface dialogInterface, int i) {
+						   dialogInterface.dismiss();
+					   }
+				   });
+			builder.create().show();
+		}
+
+		public void deleteItems() {
+			FeedDBHelper feedDbHelper = FeedDBHelper.getHelper(getActivity());
+			feedDbHelper.deleteFeedItems();
+			feedDbHelper.close();
+		}
+
+		public void showDeleteItemsDialog() {
+			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+			builder.setTitle(R.string.title_delete_items)
+				   .setMessage(R.string.delete_items_dialog_message)
+				   .setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
+					   @Override
+					   public void onClick(DialogInterface dialogInterface, int i) {
+						   deleteLogs();
+						   dialogInterface.dismiss();
+					   }
+				   })
+				   .setNegativeButton(R.string.delete_dialog_negative, new DialogInterface.OnClickListener() {
+					   @Override
+					   public void onClick(DialogInterface dialogInterface, int i) {
+						   dialogInterface.dismiss();
+					   }
+				   });
+			builder.create().show();
+		}
+
+		public void deleteLogs() {
+			LogDBHelper logDbHelper = LogDBHelper.getHelper(getActivity());
+			logDbHelper.deleteLogs();
+			logDbHelper.close();
+		}
+
+		@Override
+		public boolean onOptionsItemSelected(MenuItem item) {
+			int id = item.getItemId();
+			if (id == android.R.id.home) {
+				startActivity(new Intent(getActivity(), SettingsActivity.class));
+				return true;
+			}
+			return super.onOptionsItemSelected(item);
+		}
+	}
 }
+

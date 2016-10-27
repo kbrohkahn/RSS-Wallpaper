@@ -39,7 +39,7 @@ public class DownloadRSSService extends IntentService {
 
 	private static List<FeedItem> existingFeedItems;
 	private static List<FeedItem> newFeedItems;
-	private static List<Feed> allFeeds;
+	private static List<RSSFeed> allFeeds;
 
 	public DownloadRSSService() {
 		super("DownloadRSSService");
@@ -149,10 +149,10 @@ public class DownloadRSSService extends IntentService {
 			}
 
 			// update feeds
-			long updatedFeedCount = feedDBHelper.updateFeedList(allFeeds, true);
+			long updatedFeedCount = feedDBHelper.updateInfoForFeeds(allFeeds);
 			if (updatedFeedCount == allFeeds.size()) {
 				logEvent(String.format(Locale.US,
-									   "Successfully saved %d new feed items.", updatedFeedCount
+									   "Successfully saved %d new feeds.", updatedFeedCount
 				), "startDownloadIntent()", LogEntry.LogLevel.Message);
 			} else {
 				logEvent(String.format(Locale.US,

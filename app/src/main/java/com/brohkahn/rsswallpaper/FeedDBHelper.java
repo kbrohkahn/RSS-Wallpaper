@@ -97,6 +97,13 @@ class FeedDBHelper extends SQLiteOpenHelper {
 //		return db.insert(FeedItemDBEntry.TABLE_NAME, null, values);
 //	}
 
+	public void deleteFeedItems() {
+		SQLiteDatabase db = getWritableDatabase();
+		db.delete(FeedItemDBEntry.TABLE_NAME, null, null);
+		db.execSQL(SQL_CREATE_ENTRIES_TABLE);
+
+	}
+
 	long saveFeedItemList(List<FeedItem> feedItemList) {
 		SQLiteDatabase db = getWritableDatabase();
 		long inserted = 0;
@@ -264,7 +271,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		}
 	}
 
-	List<Feed> getAvailableFeeds() {
+	List<RSSFeed> getAvailableFeeds() {
 		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=1 ORDER BY %s DESC",
 									 FeedDBEntry.TABLE_NAME,
 									 FeedDBEntry.COLUMN_TITLE,
@@ -274,7 +281,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 
 	}
 
-	List<Feed> getAllFeeds() {
+	List<RSSFeed> getAllFeeds() {
 		String query = String.format(Locale.US, "SELECT * FROM %s ORDER BY %s DESC",
 									 FeedDBEntry.TABLE_NAME,
 									 FeedDBEntry.COLUMN_TITLE
@@ -282,14 +289,14 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		return getFeeds(query);
 	}
 
-	Feed getFeed(int id) {
+	RSSFeed getFeed(int id) {
 		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=%d",
 									 FeedDBEntry.TABLE_NAME,
 									 FeedDBEntry._ID,
 									 id
 		);
 
-		List<Feed> returnedFeeds = getFeeds(query);
+		List<RSSFeed> returnedFeeds = getFeeds(query);
 		if (returnedFeeds.size() == 0) {
 			return null;
 		} else {
@@ -297,14 +304,14 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		}
 	}
 
-//	Feed getFeedFromSource(String source) {
+//	RSSFeed getFeedFromSource(String source) {
 //		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s='%s'",
 //									 FeedDBEntry.TABLE_NAME,
 //									 FeedDBEntry.COLUMN_SOURCE,
 //									 source
 //		);
 //
-//		List<Feed> returnedFeeds = getFeeds(query);
+//		List<RSSFeed> returnedFeeds = getFeeds(query);
 //		if (returnedFeeds.size() == 0) {
 //			return null;
 //		} else {
@@ -312,11 +319,11 @@ class FeedDBHelper extends SQLiteOpenHelper {
 //		}
 //	}
 
-	private List<Feed> getFeeds(String query) {
+	private List<RSSFeed> getFeeds(String query) {
 		SQLiteDatabase db = getWritableDatabase();
 		Cursor cursor = db.rawQuery(query, null);
 
-		List<Feed> feeds = new ArrayList<>();
+		List<RSSFeed> feeds = new ArrayList<>();
 		for (int i = 0; i < cursor.getCount(); i++) {
 			cursor.moveToPosition(i);
 
@@ -327,7 +334,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 			String description = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_DESCRIPTION));
 			boolean imageOnWebPage = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_IMAGE_ON_WEB_PAGE)) == 1;
 
-			Feed feed = new Feed(id, source, title, link, description, imageOnWebPage);
+			RSSFeed feed = new RSSFeed(id, source, title, link, description, imageOnWebPage);
 			feed.enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_ENABLED)) == 1;
 			feed.entryImageLinkTag = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_TAG));
 			feed.entryImageLinkAttribute = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_ATTRIBUTE));
@@ -339,24 +346,17 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		return feeds;
 	}
 
-	long updateFeedList(List<Feed> feedList, boolean updatingInfo) {
+	long updateInfoForFeeds(List<RSSFeed> feedList) {
 		SQLiteDatabase db = getWritableDatabase();
 
-		long totalUpdatesAndInserts = 0;
-		for (Feed feed : feedList) {
+		long totalUpdates = 0;
+		for (RSSFeed feed : feedList) {
 			ContentValues values = new ContentValues();
 
-			if (updatingInfo) {
-				values.put(FeedDBEntry.COLUMN_TITLE, feed.title);
-				values.put(FeedDBEntry.COLUMN_LINK, feed.link);
-				values.put(FeedDBEntry.COLUMN_DESCRIPTION, feed.description);
-			} else {
-				values.put(FeedDBEntry.COLUMN_IMAGE_ON_WEB_PAGE, feed.imageOnWebPage);
-				values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_TAG, feed.entryImageLinkTag);
-				values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_ATTRIBUTE, feed.entryImageLinkAttribute);
-			}
-
+			values.put(FeedDBEntry.COLUMN_TITLE, feed.title);
 			values.put(FeedDBEntry.COLUMN_SOURCE, feed.source);
+			values.put(FeedDBEntry.COLUMN_LINK, feed.link);
+			values.put(FeedDBEntry.COLUMN_DESCRIPTION, feed.description);
 			values.put(FeedDBEntry.COLUMN_ENABLED, feed.enabled);
 
 			long updatedRows = db.update(FeedDBEntry.TABLE_NAME,
@@ -364,13 +364,38 @@ class FeedDBHelper extends SQLiteOpenHelper {
 										 String.format(Locale.US, "%s='%s'", FeedDBEntry.COLUMN_SOURCE, feed.source),
 										 null
 			);
-
-			if (updatingInfo && updatedRows == 0) {
-				updatedRows = db.insert(FeedDBEntry.TABLE_NAME, null, values);
-				totalUpdatesAndInserts += updatedRows;
-			}
+			totalUpdates += updatedRows;
 		}
-		return totalUpdatesAndInserts;
+		return totalUpdates;
+	}
+
+	long saveNewFeeds(List<RSSFeed> feedList) {
+		SQLiteDatabase db = getWritableDatabase();
+
+		long totalInserts = 0;
+		for (RSSFeed feed : feedList) {
+			ContentValues values = new ContentValues();
+
+			values.put(FeedDBEntry.COLUMN_TITLE, feed.title);
+			values.put(FeedDBEntry.COLUMN_SOURCE, feed.source);
+			values.put(FeedDBEntry.COLUMN_ENABLED, feed.enabled);
+			values.put(FeedDBEntry.COLUMN_IMAGE_ON_WEB_PAGE, feed.imageOnWebPage);
+			values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_TAG, feed.entryImageLinkTag);
+			values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_ATTRIBUTE, feed.entryImageLinkAttribute);
+
+			long updatedRows = db.update(FeedDBEntry.TABLE_NAME,
+										 values,
+										 String.format(Locale.US, "%s='%s'", FeedDBEntry.COLUMN_SOURCE, feed.source),
+										 null
+			);
+
+			if (updatedRows == 0) {
+				updatedRows = db.insert(FeedDBEntry.TABLE_NAME, null, values);
+			}
+
+			totalInserts += updatedRows;
+		}
+		return totalInserts;
 	}
 
 //	boolean updateFeedInfo(int id, String title, String link, String description) {

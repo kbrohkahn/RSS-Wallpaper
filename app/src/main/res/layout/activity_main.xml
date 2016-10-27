@@ -1,85 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
+	android:fitsSystemWindows="true"
 	tools:context="com.brohkahn.rsswallpaper.MainActivity">
 
-	<LinearLayout
-		android:id="@+id/activity_main"
+	<android.support.design.widget.AppBarLayout
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:gravity="center_horizontal"
-		android:orientation="vertical"
-		android:paddingBottom="@dimen/activity_vertical_margin"
-		android:paddingLeft="@dimen/activity_horizontal_margin"
-		android:paddingRight="@dimen/activity_horizontal_margin"
-		android:paddingTop="@dimen/activity_vertical_margin">
+		android:theme="@style/AppTheme.AppBarOverlay">
 
-		<TextView
-			android:id="@+id/current_item_title"
-			style="@style/Base.TextAppearance.AppCompat.Large"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:gravity="center_horizontal" />
-
-		<TextView
-			style="@style/Base.TextAppearance.AppCompat.Medium"
-			android:layout_width="wrap_content"
-			android:id="@+id/current_feed"
-
-			android:layout_height="wrap_content"
-			android:layout_marginBottom="@dimen/default_margin"
-			android:gravity="center_horizontal"
-			android:text="@string/current_background" />
-
-		<TextView
-			android:id="@+id/current_item_description"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:gravity="center_horizontal" />
-
-		<TextView
-			android:id="@+id/current_item_link"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_marginBottom="@dimen/default_margin"
-			android:autoLink="web" />
-
-		<ImageView
-			android:id="@+id/current_item_image"
+		<android.support.v7.widget.Toolbar
+			android:id="@+id/activity_main_toolbar"
 			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:adjustViewBounds="true"
-			android:contentDescription="@string/current_image"
-			android:scaleType="fitXY" />
+			android:layout_height="?attr/actionBarSize"
+			android:background="?attr/colorPrimary"
+			app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
+	</android.support.design.widget.AppBarLayout>
 
-		<LinearLayout
-			style="?android:attr/buttonBarStyle"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content">
+	<include layout="@layout/activity_main_content"/>
 
-			<Button
-				android:id="@+id/block_wallpaper_button"
-				style="?android:attr/buttonBarButtonStyle"
-				android:layout_width="0dip"
-				android:layout_height="wrap_content"
-				android:layout_weight="1"
-				android:onClick="blockCurrentWallpaper"
-				android:text="@string/action_disable" />
+	<android.support.design.widget.FloatingActionButton
+		android:id="@+id/activity_main_fab"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="bottom|end"
+		android:layout_margin="@dimen/fab_margin"
+		app:srcCompat="@drawable/ic_block_white_36dp"/>
 
-			<Button
-				android:id="@+id/next_wallpaper_button"
-				style="?android:attr/buttonBarButtonStyle"
-				android:layout_width="0dip"
-				android:layout_height="wrap_content"
-				android:layout_weight="1"
-				android:onClick="getNewWallpaper"
-				android:text="@string/action_next_item" />
-
-		</LinearLayout>
-
-	</LinearLayout>
-
-</ScrollView>
+</android.support.design.widget.CoordinatorLayout>

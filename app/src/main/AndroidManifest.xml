@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.brohkahn.rsswallpaper">
+		  package="com.brohkahn.rsswallpaper">
 
-	<uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.SET_WALLPAPER" />
-	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.INTERNET"/>
+	<uses-permission android:name="android.permission.SET_WALLPAPER"/>
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
 	<application
 		android:name=".MyApplication"
@@ -16,14 +16,14 @@
 		android:theme="@style/AppTheme">
 		<activity android:name=".MainActivity">
 			<intent-filter>
-				<action android:name="android.intent.action.MAIN" />
+				<action android:name="android.intent.action.MAIN"/>
 
-				<category android:name="android.intent.category.LAUNCHER" />
+				<category android:name="android.intent.category.LAUNCHER"/>
 			</intent-filter>
 		</activity>
 		<activity
 			android:name=".FeedItemListView"
-			android:label="@string/action_view_items_all" />
+			android:label="@string/action_view_items_all"/>
 		<activity android:name=".FeedItemView"/>
 
 		<receiver
@@ -31,32 +31,38 @@
 			android:enabled="true"
 			android:exported="false">
 			<intent-filter>
-				<action android:name="android.intent.action.BOOT_COMPLETED" />
+				<action android:name="android.intent.action.BOOT_COMPLETED"/>
 			</intent-filter>
 		</receiver>
 
 		<service
 			android:name=".ChangeWallpaperService"
-			android:enabled="true" />
+			android:enabled="true"/>
 		<service
 			android:name=".DownloadRSSService"
-			android:exported="false" />
+			android:exported="false"/>
 		<service
 			android:name=".DownloadImageService"
-			android:exported="false" />
+			android:exported="false"/>
 		<service
 			android:name=".DownloadIconService"
-			android:exported="false" />
+			android:exported="false"/>
 
 		<activity
 			android:name=".About"
-			android:label="@string/activity_about" />
+			android:label="@string/activity_about"/>
 		<activity
 			android:name=".SettingsActivity"
-			android:label="@string/activity_settings" />
+			android:theme="@style/AppTheme_WithActionBar"
+			android:label="@string/activity_settings"/>
 		<activity
-			android:name=".FeedListView"
-			android:label="@string/activity_feeds" />
+			android:name=".RSSFeedListView"
+			android:label="@string/activity_feeds"/>
+		<activity
+			android:name=".RSSFeedView"
+			android:label="@string/activity_rssfeed_view"
+			android:theme="@style/AppTheme.NoActionBar">
+		</activity>
 	</application>
 
 </manifest>

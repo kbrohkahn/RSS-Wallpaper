@@ -1,44 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+	  xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!--<item-->
-    <!--android:id="@+id/action_block"-->
-    <!--android:icon="@drawable/ic_block_white_24dp"-->
-    <!--android:title="@string/action_disable"-->
-    <!--app:showAsAction="ifRoom" />-->
+	<!--<item-->
+	<!--android:id="@+id/action_block"-->
+	<!--android:icon="@drawable/ic_block_white_24dp"-->
+	<!--android:title="@string/action_disable"-->
+	<!--app:showAsAction="ifRoom" />-->
 
-    <!--<item-->
-    <!--android:id="@+id/action_next_item"-->
-    <!--android:icon="@drawable/ic_fast_forward_white_24dp"-->
-    <!--android:title="@string/action_next_item"-->
-    <!--app:showAsAction="ifRoom" />-->
+	<!--<item-->
+	<!--android:id="@+id/action_next_item"-->
+	<!--android:icon="@drawable/ic_fast_forward_white_24dp"-->
+	<!--android:title="@string/action_next_item"-->
+	<!--app:showAsAction="ifRoom" />-->
 
-    <item
-        android:id="@+id/action_view_items_all"
-        android:icon="@drawable/ic_photo_library_white_24dp"
-        android:title="@string/action_view_items_all"
-        app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/action_view_feeds"
-        android:title="@string/activity_feeds"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_settings"
-        android:title="@string/activity_settings"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_about"
-        android:title="@string/activity_about"
-        app:showAsAction="never" />
+	<item
+		android:id="@+id/action_view_items_all"
+		android:icon="@drawable/ic_photo_library_white_24dp"
+		android:title="@string/action_view_items_all"
+		app:showAsAction="ifRoom"/>
+	<item
+		android:id="@+id/action_view_feeds"
+		android:icon="@drawable/ic_rss_feed_white_24dp"
+		android:title="@string/activity_feeds"
+		app:showAsAction="ifRoom"/>
+	<item
+		android:id="@+id/action_settings"
+		android:title="@string/activity_settings"
+		app:showAsAction="never"/>
+	<item
+		android:id="@+id/action_about"
+		android:title="@string/activity_about"
+		app:showAsAction="never"/>
 
-    <item
-        android:id="@+id/action_view_logs"
-        android:title="@string/action_view_logs"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_restart"
-        android:title="@string/restart_service"
-        app:showAsAction="never" />
+	<item
+		android:id="@+id/action_view_logs"
+		android:title="@string/action_view_logs"
+		app:showAsAction="never"/>
+	<item
+		android:id="@+id/action_restart"
+		android:title="@string/restart_service"
+		app:showAsAction="never"/>
 
 </menu>

@@ -15,8 +15,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
@@ -26,7 +28,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -41,8 +42,10 @@ public class MainActivity extends AppCompatActivity {
 	private int currentItemId;
 
 	private ImageView imageView;
-	private Button nextWallpaperButton;
-	private Button blockWallpaperButton;
+
+	//	private Button nextWallpaperButton;
+	//	private Button blockWallpaperButton;
+	private FloatingActionButton fab;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -52,9 +55,20 @@ public class MainActivity extends AppCompatActivity {
 
 		setContentView(R.layout.activity_main);
 
+		Toolbar toolbar = (Toolbar) findViewById(R.id.activity_main_toolbar);
+		setSupportActionBar(toolbar);
+
+		fab = (FloatingActionButton) findViewById(R.id.activity_main_fab);
+		fab.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				blockCurrentWallpaper();
+			}
+		});
+
 		imageView = ((ImageView) findViewById(R.id.current_item_image));
-		nextWallpaperButton = ((Button) findViewById(R.id.next_wallpaper_button));
-		blockWallpaperButton = ((Button) findViewById(R.id.block_wallpaper_button));
+//		nextWallpaperButton = ((Button) findViewById(R.id.next_wallpaper_button));
+//		blockWallpaperButton = ((Button) findViewById(R.id.block_wallpaper_button));
 
 //        int internetPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
 //        int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
@@ -126,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 		FeedItem currentItem = feedDBHelper.getFeedItem(currentItemId);
-		Feed currentFeed = feedDBHelper.getFeed(currentFeedId);
+		RSSFeed currentFeed = feedDBHelper.getFeed(currentFeedId);
 		feedDBHelper.close();
 
 		Bitmap currentImage;
@@ -180,8 +194,9 @@ public class MainActivity extends AppCompatActivity {
 			}
 		});
 
-		blockWallpaperButton.setEnabled(true);
-		nextWallpaperButton.setEnabled(true);
+		fab.setEnabled(true);
+//		blockWallpaperButton.setEnabled(true);
+//		nextWallpaperButton.setEnabled(true);
 	}
 
 //    public void showPermissionDialog() {
@@ -255,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
 				startActivity(new Intent(this, SettingsActivity.class));
 				return true;
 			case R.id.action_view_feeds:
-				startActivity(new Intent(this, FeedListView.class));
+				startActivity(new Intent(this, RSSFeedListView.class));
 				return true;
 			case R.id.action_about:
 				startActivity(new Intent(this, About.class));
@@ -272,11 +287,11 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-	public void getNewWallpaper(View view) {
-		getNewWallpaper();
-	}
+//	public void getNewWallpaper(View view) {
+//		getNewWallpaper();
+//	}
 
-	public void blockCurrentWallpaper(View view) {
+	public void blockCurrentWallpaper() {
 		logEvent("Disabling current item", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
@@ -289,8 +304,9 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void getNewWallpaper() {
-		blockWallpaperButton.setEnabled(false);
-		nextWallpaperButton.setEnabled(false);
+//		blockWallpaperButton.setEnabled(false);
+//		nextWallpaperButton.setEnabled(false);
+		fab.setEnabled(false);
 
 		logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 

@@ -1,11 +1,13 @@
 package com.brohkahn.rsswallpaper;
 
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.brohkahn.loggerlibrary.LogDBHelper;
@@ -17,11 +19,18 @@ public class FeedItemView extends AppCompatActivity {
 	public static final String TAG = "FeedItemView";
 	public static final String EXTRA_KEY_FEED_ITEM_ID = "feedItemID";
 
+	private boolean initiallyEnabled;
+	private FeedItem item;
+	private CheckBox enabledCheckBox;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.feed_item_view);
+
+		Toolbar toolbar = (Toolbar) findViewById(R.id.feed_item_view_toolbar);
+		setSupportActionBar(toolbar);
 
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
@@ -30,12 +39,12 @@ public class FeedItemView extends AppCompatActivity {
 
 		final int ID = getIntent().getIntExtra(EXTRA_KEY_FEED_ITEM_ID, -1);
 
-		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
-		FeedItem item = feedDBHelper.getFeedItem(ID);
+		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
+		item = feedDBHelper.getFeedItem(ID);
 		feedDBHelper.close();
 
 		if (item == null) {
-			LogDBHelper logDBHelper = LogDBHelper.getHelper(getApplicationContext());
+			LogDBHelper logDBHelper = LogDBHelper.getHelper(this);
 			logDBHelper.saveLogEntry(String.format(Locale.US, "Unable to find feed item with id of %d", ID),
 									 null,
 									 TAG,
@@ -47,6 +56,8 @@ public class FeedItemView extends AppCompatActivity {
 			return;
 		}
 
+		initiallyEnabled = item.enabled;
+
 		setTitle(item.title);
 
 		TextView linkTextView = (TextView) findViewById(R.id.feed_item_link);
@@ -55,38 +66,51 @@ public class FeedItemView extends AppCompatActivity {
 		TextView publishedTextView = (TextView) findViewById(R.id.feed_item_published);
 		publishedTextView.setText(item.creationDate.toString());
 
-		CheckBox enabledCheckBox = (CheckBox) findViewById(R.id.feed_item_enabled);
-		enabledCheckBox.setChecked(item.enabled);
-		enabledCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+		FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.feed_item_view_fab);
+		fab.setOnClickListener(new View.OnClickListener() {
 			@Override
-			public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-				updateItemEnabled(ID, b);
-
+			public void onClick(View view) {
+				setAsCurrentWallpaper();
 			}
 		});
+
+		enabledCheckBox = (CheckBox) findViewById(R.id.feed_item_enabled);
+		enabledCheckBox.setChecked(item.enabled);
 
 		CheckBox downloadedCheckBox = (CheckBox) findViewById(R.id.feed_item_downloaded);
 		downloadedCheckBox.setChecked(item.downloaded);
 	}
 
+	private void setAsCurrentWallpaper() {
+		enabledCheckBox.setChecked(true);
+
+		if (!item.downloaded) {
+			if (!item.enabled) {
+				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
+				feedDBHelper.updateImageEnabled(item.id, true);
+				feedDBHelper.close();
+			}
+
+			DownloadImageService.startDownloadImageAction(this);
+		}
+	}
+
 	@Override
 	protected void onPause() {
-		DownloadImageService.startDownloadImageAction(this);
+		boolean isEnabled = enabledCheckBox.isChecked();
+		if (isEnabled != initiallyEnabled) {
+			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
+			feedDBHelper.updateImageEnabled(item.id, isEnabled);
+			feedDBHelper.close();
+
+			DownloadImageService.startDownloadImageAction(this);
+		}
 
 		super.onPause();
 	}
 
-	private void updateItemEnabled(int itemId, boolean enabled) {
-		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
-		feedDBHelper.updateImageEnabled(itemId, enabled);
-		feedDBHelper.close();
-
-		DownloadImageService.startDownloadImageAction(this);
-	}
-
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle item selection
 		switch (item.getItemId()) {
 			case android.R.id.home:
 				finish();

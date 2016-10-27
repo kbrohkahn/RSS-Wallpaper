@@ -12,11 +12,13 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -46,28 +48,46 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class FeedListView extends AppCompatActivity {
-	public static final String TAG = "FeedListView";
+public class RSSFeedListView extends AppCompatActivity {
+	public static final String TAG = "RSSFeedListView";
 
-	public FeedListView.FeedListAdapter adapter;
+	public RSSFeedListView.FeedListAdapter adapter;
 
 	public int currentFeedId;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.feed_list_view);
+		setContentView(R.layout.rss_feed_list_view);
+
+		Toolbar toolbar = (Toolbar) findViewById(R.id.rss_feed_list_view_toolbar);
+		setSupportActionBar(toolbar);
 
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
 			actionBar.setDisplayHomeAsUpEnabled(true);
 		}
 
+		FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.rss_feed_list_view_fab);
+		fab.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				updateFeedsFromJSON();
+
+//				Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//						.setAction("Action", new View.OnClickListener() {
+//							@Override
+//							public void onClick(View view) {
+//							}
+//						}).show();
+			}
+		});
+
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
 
-		adapter = new FeedListView.FeedListAdapter(this, getCursorLoader().loadInBackground(), 0);
+		adapter = new RSSFeedListView.FeedListAdapter(this, getCursorLoader().loadInBackground(), 0);
 
 		ListView listView = (ListView) findViewById(R.id.feed_list_view);
 		listView.setAdapter(adapter);
@@ -112,10 +132,9 @@ public class FeedListView extends AppCompatActivity {
 	}
 
 	@Override
-	protected void onPause() {
-		DownloadImageService.startDownloadImageAction(this);
-
-		super.onPause();
+	protected void onResume() {
+		super.onResume();
+		adapter.notifyDataSetChanged();
 	}
 
 	public class FeedListAdapter extends CursorAdapter {
@@ -162,47 +181,20 @@ public class FeedListView extends AppCompatActivity {
 			view.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View view) {
-					promptSettingFeed(id, title);
+					displayFeed(id);
 				}
 			});
 		}
 
 		public View newView(Context context, Cursor cursor, ViewGroup parent) {
-			return LayoutInflater.from(context).inflate(R.layout.feed_list_item, parent, false);
+			return LayoutInflater.from(context).inflate(R.layout.rss_feed_list_item, parent, false);
 		}
 	}
 
-	public void promptSettingFeed(final int id, String title) {
-		Resources resources = getResources();
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(R.string.set_feed_dialog_title)
-			   .setMessage(String.format(resources.getString(R.string.set_feed_dialog_message), title))
-			   .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-				   @Override
-				   public void onClick(DialogInterface dialog, int which) {
-					   setNewFeed(id);
-					   dialog.dismiss();
-				   }
-			   })
-			   .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-				   @Override
-				   public void onClick(DialogInterface dialog, int which) {
-					   dialog.dismiss();
-				   }
-			   });
-		builder.create().show();
-	}
-
-	public void setNewFeed(int id) {
-		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this)
-														   .edit();
-		editor.putString(getResources().getString(R.string.key_current_feed), String.valueOf(id));
-		editor.apply();
-
-		currentFeedId = id;
-		adapter.notifyDataSetChanged();
-
-		DownloadImageService.startDownloadImageAction(this);
+	private void displayFeed(int feedId) {
+		Intent intent = new Intent(this, RSSFeedView.class);
+		intent.putExtra(RSSFeedView.EXTRA_KEY_FEED_ID, feedId);
+		startActivity(intent);
 	}
 
 	@Override
@@ -214,13 +206,9 @@ public class FeedListView extends AppCompatActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle item selection
 		switch (item.getItemId()) {
 			case android.R.id.home:
 				finish();
-				return true;
-			case R.id.action_update_feeds:
-				updateFeedsFromJSON();
 				return true;
 			case R.id.action_request_feed:
 				requestFeed();
@@ -275,9 +263,9 @@ public class FeedListView extends AppCompatActivity {
 	}
 
 	private static class UpdateJSONTask extends AsyncTask<String, Void, Long> {
-		private FeedListView containingActivity;
+		private RSSFeedListView containingActivity;
 
-		private UpdateJSONTask(FeedListView containingActivity) {
+		private UpdateJSONTask(RSSFeedListView containingActivity) {
 			this.containingActivity = containingActivity;
 		}
 
@@ -313,7 +301,7 @@ public class FeedListView extends AppCompatActivity {
 				JSONObject fullObject = new JSONObject(JSONString);
 				JSONArray feedItemArray = fullObject.getJSONArray("availableFeeds");
 
-				List<Feed> feedsToUpdate = new ArrayList<>(Constants.SUPPORTED_FEED_COUNT);
+				List<RSSFeed> feedsToUpdate = new ArrayList<>(Constants.SUPPORTED_FEED_COUNT);
 
 				for (int i = 0; i < feedItemArray.length(); i++) {
 					JSONObject feedJSONObject = feedItemArray.getJSONObject(i);
@@ -325,20 +313,20 @@ public class FeedListView extends AppCompatActivity {
 					String entryImageLinkTag = feedJSONObject.getString("entryImageLinkTag");
 					String entryImageLinkAttribute = feedJSONObject.getString("entryImageLinkAttribute");
 
-					Feed feed = new Feed(-1,
-										 source,
-										 title,
-										 entryImageLinkTag,
-										 entryImageLinkAttribute,
-										 imageOnWebPage,
-										 enabled
+					RSSFeed feed = new RSSFeed(-1,
+											   source,
+											   title,
+											   entryImageLinkTag,
+											   entryImageLinkAttribute,
+											   imageOnWebPage,
+											   enabled
 					);
 
 					feedsToUpdate.add(feed);
 				}
 
 				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(containingActivity);
-				result = feedDBHelper.updateFeedList(feedsToUpdate, false);
+				result = feedDBHelper.saveNewFeeds(feedsToUpdate);
 				feedDBHelper.close();
 			} catch (JSONException e) {
 				containingActivity.logException(e, "doInBackground(String... params)");
@@ -352,7 +340,7 @@ public class FeedListView extends AppCompatActivity {
 		protected void onPostExecute(Long result) {
 			String messageString;
 			if (result == 0) {
-				messageString = "No new feeds found, select \"Request new Feed\" in the menu to send the developer a request for a new feed.";
+				messageString = "No new feeds found, select \"Request new RSSFeed\" in the menu to send the developer a request for a new feed.";
 			} else {
 				messageString = String.format(Locale.US, "Found %d new feeds, saving info.", result);
 				DownloadRSSService.startDownloadRSSAction(containingActivity);
