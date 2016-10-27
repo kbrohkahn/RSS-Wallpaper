@@ -2,6 +2,7 @@ package com.brohkahn.rsswallpaper;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
@@ -19,7 +20,9 @@ import android.view.MenuItem;
 import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
+import java.io.File;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -47,7 +50,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 	@Override
 	protected void onPause() {
-		logEvent("Restarting service.", "restartService()", LogEntry.LogLevel.Message);
+		logEvent("Restarting service.", "onPause()", LogEntry.LogLevel.Message);
 		Intent serviceIntent = new Intent(this, ChangeWallpaperService.class);
 		stopService(serviceIntent);
 		startService(serviceIntent);
@@ -276,11 +279,15 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 
 	public static class StoragePreferenceFragment extends PreferenceFragment {
+		private boolean initiallyStoreIcons;
+		private String imageDirectory;
+
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
 			addPreferencesFromResource(R.xml.pref_storage);
 			setHasOptionsMenu(true);
+
 
 			Resources resources = getResources();
 			Preference deleteLogsPreference = findPreference(resources.getString(R.string.key_delete_logs));
@@ -300,6 +307,38 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 					return false;
 				}
 			});
+
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+			initiallyStoreIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
+			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
+												   getActivity().getFilesDir().getPath() + "/"
+			);
+
+		}
+
+		@Override
+		public void onStop() {
+			SwitchPreference storeIconsPreference = (SwitchPreference) findPreference(getResources()
+																							  .getString(R.string.key_store_icons));
+			if (storeIconsPreference.isChecked() && !initiallyStoreIcons) {
+				DownloadIconService.startDownloadIconAction(getActivity());
+			} else if (!storeIconsPreference.isChecked() && initiallyStoreIcons) {
+				// delete all icons
+				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getActivity());
+				List<FeedItem> allItems = feedDBHelper.getAllItems();
+				feedDBHelper.close();
+
+				for (FeedItem item : allItems) {
+					String imagePath = imageDirectory + item.getIconName();
+					File iconFile = new File(imagePath);
+					if (!iconFile.delete()) {
+						((MyApplication) (getActivity().getApplication())).logEvent(
+								String.format(Locale.US, "Unable to delete icon %s.", imagePath), "onStop()", TAG, LogEntry.LogLevel.Warning);
+					}
+				}
+			}
+
+			super.onStop();
 		}
 
 		public void showDeleteLogsDialog() {

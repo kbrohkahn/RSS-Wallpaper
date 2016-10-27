@@ -37,6 +37,7 @@ public class DownloadIconService extends IntentService {
 	}
 
 	public static void startDownloadIconAction(Context context) {
+
 		Intent intent = new Intent(context, DownloadIconService.class);
 		intent.setAction(ACTION_DOWNLOAD_ICONS);
 		context.startService(intent);
@@ -60,7 +61,13 @@ public class DownloadIconService extends IntentService {
 		imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 				.getPath() + "/");
 		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "0"));
+		boolean downloadIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
 		iconSize = resources.getDimension(R.dimen.icon_size);
+
+		if (!downloadIcons) {
+			stopSelf();
+			return;
+		}
 
 		// check if we can download anything based on internet connection
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);

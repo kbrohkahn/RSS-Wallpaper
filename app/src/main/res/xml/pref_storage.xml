@@ -11,4 +11,9 @@
 		android:summary="@string/summary_delete_logs"
 		android:title="@string/key_delete_logs"/>
 
+	<SwitchPreference
+		android:defaultValue="true"
+		android:key="@string/key_store_icons"
+		android:title="@string/title_store_icons"/>
+
 </PreferenceScreen>

@@ -93,6 +93,7 @@
 	<!-- Storage -->
 	<string name="key_delete_items">deleteItems</string>
 	<string name="key_delete_logs">deleteLogs</string>
+	<string name="key_store_icons">storeIcons</string>
 
 	<!-- Titles -->
 	<!-- RSS RSSFeed -->
@@ -112,6 +113,7 @@
 	<!-- Storage -->
 	<string name="title_delete_items">Delete Items</string>
 	<string name="title_delete_logs">Delete Logs</string>
+	<string name="title_store_icons">Use Image Icons</string>
 
 	<!-- Summaries -->
 	<!-- RSS RSSFeed -->
