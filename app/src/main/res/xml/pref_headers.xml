@@ -19,7 +19,7 @@
 
 	<header
 		android:fragment="com.brohkahn.rsswallpaper.SettingsActivity$NotificationPreferenceFragment"
-		android:icon="@drawable/ic_notifications_black_24dp"
+		android:icon="@drawable/ic_sd_storage_black_24dp"
 		android:title="@string/pref_header_notifications" />
 
 

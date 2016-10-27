@@ -2,6 +2,7 @@
 	<!-- Generic -->
 	<string name="app_name">RSS Wallpaper</string>
 	<string name="developer_email">kevin@broh-kahn.com</string>
+	<string name="developer_name">Kevin Broh-Kahn</string>
 	<string name="ok">OK</string>
 	<string name="delete">Delete</string>
 	<string name="keep">Keep</string>
@@ -51,6 +52,13 @@
 	<string name="action_request_feeds">Request feeds</string>
 	<string name="action_view_items_disabled">View disabled items</string>
 	<string name="action_view_logs">View logs</string>
+
+	<!-- About -->
+	<string name="about_package_text">Package %1$s</string>
+	<string name="about_version_text">Version %1$s</string>
+	<string name="about_developer_text">Developed by %1$s</string>
+	<string name="about_app_text">Please do not hesitate to send any feedback or questions to %1$s!</string>
+
 
 	<!-- App settings keys -->
 	<string name="key_current_item">currentItem</string>

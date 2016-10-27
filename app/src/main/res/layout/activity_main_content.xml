@@ -14,34 +14,27 @@
 			  tools:context="com.brohkahn.rsswallpaper.MainActivity">
 
 	<TextView
+		android:id="@+id/current_feed"
+		style="@style/Base.TextAppearance.AppCompat.Medium"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:gravity="center_horizontal"
+		android:text="@string/current_background"/>
+
+	<TextView
 		android:id="@+id/current_item_title"
 		style="@style/Base.TextAppearance.AppCompat.Large"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:gravity="center_horizontal"/>
-
-	<TextView
-		android:id="@+id/current_feed"
-		style="@style/Base.TextAppearance.AppCompat.Medium"
-		android:layout_width="wrap_content"
-
-		android:layout_height="wrap_content"
 		android:layout_marginBottom="@dimen/default_margin"
-		android:gravity="center_horizontal"
-		android:text="@string/current_background"/>
+		android:gravity="center"/>
 
 	<TextView
 		android:id="@+id/current_item_description"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:gravity="center_horizontal"/>
-
-	<TextView
-		android:id="@+id/current_item_link"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
 		android:layout_marginBottom="@dimen/default_margin"
-		android:autoLink="web"/>
+		android:gravity="start"/>
 
 	<ImageView
 		android:id="@+id/current_item_image"

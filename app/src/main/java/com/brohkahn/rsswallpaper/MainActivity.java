@@ -169,19 +169,15 @@ public class MainActivity extends AppCompatActivity {
 
 		recycleCurrentBitmap();
 		imageView.setImageBitmap(currentImage);
-		((TextView) findViewById(R.id.current_item_title)).setText(titleText);
-		((TextView) findViewById(R.id.current_item_link)).setText(linkText);
+
 		((TextView) findViewById(R.id.current_item_description)).setText(Html.fromHtml(descriptionText));
 
-		if (currentFeed == null) {
-			currentFeed = Constants.getBuiltInFeed();
-		}
-
-		SpannableString content = new SpannableString(currentFeed.title);
+		// set title with link to web page
+		SpannableString content = new SpannableString(titleText);
 		content.setSpan(new UnderlineSpan(), 0, content.length(), 0);
 
-		final String feedUrl = currentFeed.link;
-		TextView feedTextView = (TextView) findViewById(R.id.current_feed);
+		final String feedUrl = linkText;
+		TextView feedTextView = (TextView) findViewById(R.id.current_item_title);
 		feedTextView.setTextColor(resources.getColor(R.color.colorAccent));
 		feedTextView.setText(content);
 		feedTextView.setOnClickListener(new View.OnClickListener() {
@@ -193,6 +189,14 @@ public class MainActivity extends AppCompatActivity {
 
 			}
 		});
+		((TextView) findViewById(R.id.current_item_title)).setText(titleText);
+
+
+		if (currentFeed == null) {
+			currentFeed = Constants.getBuiltInFeed();
+		}
+
+		((TextView) findViewById(R.id.current_feed)).setText(currentFeed.title);
 
 		fab.setEnabled(true);
 //		blockWallpaperButton.setEnabled(true);

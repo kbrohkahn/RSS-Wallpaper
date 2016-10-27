@@ -5,8 +5,8 @@ import java.util.Date;
 public class LogEntry {
 	public int id;
 	public String message;
-	public String stackTrace;
-	public String logClass;
+	String stackTrace;
+	String logClass;
 	public String function;
 	public Date time;
 	public LogLevel level;
@@ -34,7 +34,7 @@ public class LogEntry {
 		this.level = LogLevel.values()[levelIndex];
 	}
 
-	public static int getColorId(LogLevel level) {
+	static int getColorId(LogLevel level) {
 		int backgroundColorId;
 		switch (level) {
 			case Error:

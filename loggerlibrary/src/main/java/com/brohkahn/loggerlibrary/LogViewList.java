@@ -8,7 +8,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.widget.CursorAdapter;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -29,6 +31,15 @@ public class LogViewList extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_log_view_list);
+
+		Toolbar toolbar = (Toolbar) findViewById(R.id.log_list_view_toolbar);
+		setSupportActionBar(toolbar);
+
+		ActionBar actionBar = getSupportActionBar();
+		if (actionBar != null) {
+			actionBar.setDisplayHomeAsUpEnabled(true);
+		}
+
 
 		CursorLoader cursorLoader = new CursorLoader(getApplicationContext(),
 													 Uri.EMPTY,
@@ -122,10 +133,14 @@ public class LogViewList extends AppCompatActivity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle item selection
-		if (item.getItemId() == R.id.delete_logs) {
+		int id = item.getItemId();
+		if (id == R.id.delete_logs) {
 			LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext());
 			helper.deleteLogs();
 			helper.close();
+			return true;
+		} else if (id == android.R.id.home) {
+			finish();
 			return true;
 		} else {
 			return super.onOptionsItemSelected(item);

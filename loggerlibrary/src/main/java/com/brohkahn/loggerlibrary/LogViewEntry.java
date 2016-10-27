@@ -1,7 +1,10 @@
 package com.brohkahn.loggerlibrary;
 
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
@@ -13,6 +16,14 @@ public class LogViewEntry extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_log_view_entry);
+
+		Toolbar toolbar = (Toolbar) findViewById(R.id.log_view_entry_toolbar);
+		setSupportActionBar(toolbar);
+
+		ActionBar actionBar = getSupportActionBar();
+		if (actionBar != null) {
+			actionBar.setDisplayHomeAsUpEnabled(true);
+		}
 
 		// get entry from ID
 		int id = getIntent().getIntExtra(EXTRA_KEY_LOG_ENTRY_ID, -1);
@@ -39,6 +50,21 @@ public class LogViewEntry extends AppCompatActivity {
 
 			TextView stackTraceTextView = (TextView) findViewById(R.id.log_entry_stack_trace);
 			stackTraceTextView.setText(entry.stackTrace);
+		}
+	}
+
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle item selection
+		int id = item.getItemId();
+		if (id == R.id.delete_logs) {
+			LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext());
+			helper.deleteLogs();
+			helper.close();
+			return true;
+		} else {
+			return super.onOptionsItemSelected(item);
 		}
 	}
 }
