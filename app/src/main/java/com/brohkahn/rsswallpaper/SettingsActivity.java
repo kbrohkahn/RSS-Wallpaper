@@ -1,10 +1,12 @@
 package com.brohkahn.rsswallpaper;
 
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -323,19 +325,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			if (storeIconsPreference.isChecked() && !initiallyStoreIcons) {
 				DownloadIconService.startDownloadIconAction(getActivity());
 			} else if (!storeIconsPreference.isChecked() && initiallyStoreIcons) {
-				// delete all icons
-				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getActivity());
-				List<FeedItem> allItems = feedDBHelper.getAllItems();
-				feedDBHelper.close();
-
-				for (FeedItem item : allItems) {
-					String imagePath = imageDirectory + item.getIconName();
-					File iconFile = new File(imagePath);
-					if (!iconFile.delete()) {
-						((MyApplication) (getActivity().getApplication())).logEvent(
-								String.format(Locale.US, "Unable to delete icon %s.", imagePath), "onStop()", TAG, LogEntry.LogLevel.Warning);
-					}
-				}
+				new DeleteIconsTask(getActivity(), imageDirectory).execute();
 			}
 
 			super.onStop();
@@ -403,5 +393,42 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			return super.onOptionsItemSelected(item);
 		}
 	}
+
+
+	static class DeleteIconsTask extends AsyncTask<Void, Void, Void> {
+		private Activity activity;
+		private String imageDirectory;
+
+
+		DeleteIconsTask(Activity activity, String imageDirectory) {
+			this.activity = activity;
+			this.imageDirectory = imageDirectory;
+		}
+
+		@Override
+		protected Void doInBackground(Void... voids) {
+			// delete all icons
+			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(activity);
+			List<FeedItem> allItems = feedDBHelper.getAllItems();
+			feedDBHelper.close();
+
+			for (FeedItem item : allItems) {
+				String imagePath = imageDirectory + item.getIconName();
+				File iconFile = new File(imagePath);
+				if (!iconFile.delete()) {
+					((MyApplication) (activity.getApplication())).logEvent(
+							String.format(Locale.US, "Unable to delete icon %s.", imagePath), "onStop()", TAG, LogEntry.LogLevel.Warning);
+				}
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void aVoid) {
+			activity = null;
+			super.onPostExecute(aVoid);
+		}
+	}
+
 }
 

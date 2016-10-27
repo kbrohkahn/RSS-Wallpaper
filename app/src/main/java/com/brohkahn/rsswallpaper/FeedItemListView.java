@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
@@ -152,9 +153,14 @@ public class FeedItemListView extends AppCompatActivity {
 
 			ImageView imageView = (ImageView) view.findViewById(R.id.feed_item_icon);
 			String imagePath = imageDirectory + item.getIconName();
-
-			// load imageView, scale bitmap, and set image
-			imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath));
+			Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+			if (bitmap == null) {
+				imageView.setVisibility(View.GONE);
+				imageView.setImageBitmap(null);
+			} else {
+				imageView.setVisibility(View.VISIBLE);
+				imageView.setImageBitmap(bitmap);
+			}
 
 			view.setOnClickListener(new View.OnClickListener() {
 				@Override

@@ -20,7 +20,7 @@
 	<header
 		android:fragment="com.brohkahn.rsswallpaper.SettingsActivity$StoragePreferenceFragment"
 		android:icon="@drawable/ic_sd_storage_black_24dp"
-		android:title="@string/pref_header_notifications" />
+		android:title="@string/pref_header_storage"/>
 
 
 </preference-headers>
