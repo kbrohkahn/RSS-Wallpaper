@@ -77,9 +77,7 @@ public class RSSFeedListView extends AppCompatActivity {
 			}
 		});
 
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-		Resources resources = getResources();
-		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
+		resetCurrentFeed();
 
 		adapter = new RSSFeedListView.FeedListAdapter(this, getCursorLoader().loadInBackground(), 0);
 
@@ -111,9 +109,25 @@ public class RSSFeedListView extends AppCompatActivity {
 		};
 	}
 
+	private void resetCurrentFeed() {
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+		Resources resources = getResources();
+		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
+
+	}
+
 	private void getNewCursor() {
 		adapter.getCursor().close();
 		adapter.changeCursor(getCursorLoader().loadInBackground());
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		resetCurrentFeed();
+
+		adapter.notifyDataSetChanged();
 	}
 
 	@Override
@@ -128,6 +142,8 @@ public class RSSFeedListView extends AppCompatActivity {
 	public class FeedListAdapter extends CursorAdapter {
 		private final int CURRENT_FEED_COLOR;
 		private final int DEFAULT_FEED_COLOR;
+		private final int CURRENT_FEED_TEXT_COLOR;
+		private final int DEFAULT_FEED_TEXT_COLOR;
 
 		private FeedListAdapter(Context context, Cursor cursor, int flags) {
 			super(context, cursor, flags);
@@ -135,9 +151,13 @@ public class RSSFeedListView extends AppCompatActivity {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 				CURRENT_FEED_COLOR = getResources().getColor(R.color.current_feed, null);
 				DEFAULT_FEED_COLOR = getResources().getColor(R.color.transparent, null);
+				CURRENT_FEED_TEXT_COLOR = getResources().getColor(android.R.color.white, null);
+				DEFAULT_FEED_TEXT_COLOR = getResources().getColor(android.R.color.black, null);
 			} else {
 				CURRENT_FEED_COLOR = getResources().getColor(R.color.current_feed);
 				DEFAULT_FEED_COLOR = getResources().getColor(R.color.transparent);
+				CURRENT_FEED_TEXT_COLOR = getResources().getColor(android.R.color.white);
+				DEFAULT_FEED_TEXT_COLOR = getResources().getColor(android.R.color.black);
 			}
 
 			logEvent(String.format(Locale.US, "Displaying %d available feeds.", cursor.getCount()),
@@ -147,10 +167,6 @@ public class RSSFeedListView extends AppCompatActivity {
 		}
 
 		public void bindView(View view, Context context, Cursor cursor) {
-			TextView titleTextView = (TextView) view.findViewById(R.id.feed_title);
-			final String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry.COLUMN_TITLE));
-			titleTextView.setText(title);
-
 			boolean enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry.COLUMN_ENABLED)) == 1;
 			view.setEnabled(enabled);
 			if (enabled) {
@@ -159,11 +175,17 @@ public class RSSFeedListView extends AppCompatActivity {
 				view.setAlpha(33 / 100);
 			}
 
+			TextView titleTextView = (TextView) view.findViewById(R.id.feed_title);
+			final String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry.COLUMN_TITLE));
+			titleTextView.setText(title);
+
 			final int id = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedDBEntry._ID));
 			if (id == currentFeedId) {
 				view.setBackgroundColor(CURRENT_FEED_COLOR);
+				titleTextView.setTextColor(CURRENT_FEED_TEXT_COLOR);
 			} else {
 				view.setBackgroundColor(DEFAULT_FEED_COLOR);
+				titleTextView.setTextColor(DEFAULT_FEED_TEXT_COLOR);
 			}
 
 			view.setOnClickListener(new View.OnClickListener() {

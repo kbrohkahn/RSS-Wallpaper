@@ -187,6 +187,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 			if (availableFeedsCount == 0) {
 				availableFeeds.add(Constants.getBuiltInFeed());
+				availableFeedsCount += 1;
 			}
 
 			String[] currentFeedValues = new String[availableFeedsCount];
@@ -336,32 +337,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 				   .setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
 					   @Override
 					   public void onClick(DialogInterface dialogInterface, int i) {
-						   deleteItems();
-						   dialogInterface.dismiss();
-					   }
-				   })
-				   .setNegativeButton(R.string.delete_dialog_negative, new DialogInterface.OnClickListener() {
-					   @Override
-					   public void onClick(DialogInterface dialogInterface, int i) {
-						   dialogInterface.dismiss();
-					   }
-				   });
-			builder.create().show();
-		}
-
-		public void deleteItems() {
-			FeedDBHelper feedDbHelper = FeedDBHelper.getHelper(getActivity());
-			feedDbHelper.deleteFeedItems();
-			feedDbHelper.close();
-		}
-
-		public void showDeleteItemsDialog() {
-			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-			builder.setTitle(R.string.title_delete_items)
-				   .setMessage(R.string.delete_items_dialog_message)
-				   .setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
-					   @Override
-					   public void onClick(DialogInterface dialogInterface, int i) {
 						   deleteLogs();
 						   dialogInterface.dismiss();
 					   }
@@ -379,6 +354,32 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			LogDBHelper logDbHelper = LogDBHelper.getHelper(getActivity());
 			logDbHelper.deleteLogs();
 			logDbHelper.close();
+		}
+
+		public void showDeleteItemsDialog() {
+			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+			builder.setTitle(R.string.title_delete_items)
+				   .setMessage(R.string.delete_items_dialog_message)
+				   .setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
+					   @Override
+					   public void onClick(DialogInterface dialogInterface, int i) {
+						   deleteItems();
+						   dialogInterface.dismiss();
+					   }
+				   })
+				   .setNegativeButton(R.string.delete_dialog_negative, new DialogInterface.OnClickListener() {
+					   @Override
+					   public void onClick(DialogInterface dialogInterface, int i) {
+						   dialogInterface.dismiss();
+					   }
+				   });
+			builder.create().show();
+		}
+
+		public void deleteItems() {
+			FeedDBHelper feedDbHelper = FeedDBHelper.getHelper(getActivity());
+			feedDbHelper.deleteFeedItems();
+			feedDbHelper.close();
 		}
 
 		@Override

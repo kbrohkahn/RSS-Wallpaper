@@ -34,8 +34,8 @@ public class DownloadRSSService extends IntentService {
 	private static final String ACTION_DOWNLOAD_RSS = "com.brohkahn.rsswallpaper.action.download_rss";
 
 	private static final String[] imageSuffices = {".png", ".jpg", ".jpeg"};
-	private static final String[] absoluteURLPrefixes = {"http://", "https://"};
-	private static final String[] relativeURLImagePrefixes = {"href=\"", "src=\""};
+//	private static final String[] absoluteURLPrefixes = {"http://", "https://"};
+//	private static final String[] relativeURLImagePrefixes = {"href=\"", "src=\""};
 
 	private static List<FeedItem> existingFeedItems;
 	private static List<FeedItem> newFeedItems;
@@ -113,16 +113,16 @@ public class DownloadRSSService extends IntentService {
 					connection.connect();
 
 					// download the file
-					logEvent("Downloading RSS file.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Message);
+					logEvent("Downloading RSS file.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Trace);
 					InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
 					// parse xml
-					logEvent("Parsing XML.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Message);
+					logEvent("Parsing XML.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Trace);
 					FeedParser feedParser = new FeedParser(i, this);
 					feedParser.parse(input);
 					input.close();
 
-					logEvent("XML parse complete.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Message);
+					logEvent("XML parse complete.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Trace);
 
 				} catch (XmlPullParserException | ParseException | IOException e) {
 					Log.e("Error: ", e.getMessage());
@@ -139,7 +139,7 @@ public class DownloadRSSService extends IntentService {
 			if (updatedFeedItemCount == newFeedItems.size()) {
 				logEvent(String.format(Locale.US,
 									   "Successfully saved %d new feed items.", updatedFeedItemCount
-				), "startDownloadIntent()", LogEntry.LogLevel.Message);
+				), "startDownloadIntent()", LogEntry.LogLevel.Trace);
 			} else {
 				logEvent(String.format(Locale.US,
 									   "Failed to save all feed items, wanted to save %d but only saved %d.",
@@ -151,15 +151,18 @@ public class DownloadRSSService extends IntentService {
 			// update feeds
 			long updatedFeedCount = feedDBHelper.updateInfoForFeeds(allFeeds);
 			if (updatedFeedCount == allFeeds.size()) {
-				logEvent(String.format(Locale.US,
-									   "Successfully saved %d new feeds.", updatedFeedCount
-				), "startDownloadIntent()", LogEntry.LogLevel.Message);
+				logEvent(String.format(Locale.US, "Successfully updated %d feeds.", updatedFeedCount),
+						 "startDownloadIntent()",
+						 LogEntry.LogLevel.Trace
+				);
 			} else {
 				logEvent(String.format(Locale.US,
 									   "Failed to save all feeds, wanted to save %d but only saved %d.",
 									   allFeeds.size(),
 									   updatedFeedCount
-				), "startDownloadIntent()", LogEntry.LogLevel.Warning);
+						 ), "startDownloadIntent()",
+						 LogEntry.LogLevel.Warning
+				);
 			}
 
 			// all done, close DB
@@ -183,43 +186,59 @@ public class DownloadRSSService extends IntentService {
 			int endIndex = text.indexOf(imageExtension);
 			if (endIndex > -1) {
 				int endIndexWithExtension = endIndex + imageExtension.length();
-				int startIndex = -1;
+				int startIndex = text.lastIndexOf('"', endIndex) + 1;
+				if (startIndex >= 0) {
+					if (text.substring(startIndex, startIndex + 4).equals("http")) {
+						link = text.substring(startIndex, endIndexWithExtension);
+					} else {
+						String relativePath = text.substring(startIndex, endIndexWithExtension);
+						int absolutePathStart = url.indexOf("/", 10);
+						if (absolutePathStart > -1) {
+							url = url.substring(0, absolutePathStart + 1);
+						}
 
-				// check for absolute URLs
-				for (String prefix : absoluteURLPrefixes) {
-					int index = text.lastIndexOf(prefix, endIndex);
-					if (index > startIndex) {
-						startIndex = index;
+						// append backslash
+						if (!url.endsWith("/")) {
+							url += "/";
+						}
+
+						link = url + relativePath;
 					}
 				}
-
-				if (startIndex > -1 && startIndex + Constants.MAX_URL_CHARS > endIndexWithExtension) {
-					link = text.substring(startIndex, endIndexWithExtension);
-					break;
-				}
-
-				// check for relative URLs
-				for (String prefix : relativeURLImagePrefixes) {
-					int index = text.lastIndexOf(prefix, endIndex);
-					if (index > startIndex) {
-						startIndex = index + prefix.length();
-					}
-				}
-				if (startIndex > -1 && startIndex + Constants.MAX_URL_CHARS > endIndexWithExtension) {
-					// get absolute url
-					int absolutePathStart = url.indexOf("/", 10);
-					if (absolutePathStart > -1) {
-						url = url.substring(0, absolutePathStart);
-					}
-
-					// append backslash
-					if (!url.endsWith("/")) {
-						url += "/";
-					}
-
-					link = url + text.substring(startIndex, endIndexWithExtension);
-					break;
-				}
+//				// check for absolute URLs
+//				for (String prefix : absoluteURLPrefixes) {
+//					int index = text.lastIndexOf(prefix, endIndex);
+//					if (index > startIndex) {
+//						startIndex = index;
+//					}
+//				}
+//
+//				if (startIndex > -1 && startIndex + Constants.MAX_URL_CHARS > endIndexWithExtension) {
+//					break;
+//				}
+//
+//				// check for relative URLs
+//				for (String prefix : relativeURLImagePrefixes) {
+//					int index = text.lastIndexOf(prefix, endIndex);
+//					if (index > startIndex) {
+//						startIndex = index + prefix.length();
+//					}
+//				}
+//				if (startIndex > -1 && startIndex + Constants.MAX_URL_CHARS > endIndexWithExtension) {
+//					// get absolute url
+//					int absolutePathStart = url.indexOf("/", 10);
+//					if (absolutePathStart > -1) {
+//						url = url.substring(0, absolutePathStart);
+//					}
+//
+//					// append backslash
+//					if (!url.endsWith("/")) {
+//						url += "/";
+//					}
+//
+//					link = url + text.substring(startIndex, endIndexWithExtension);
+//					break;
+//				}
 			}
 		}
 		return link;
@@ -535,7 +554,6 @@ public class DownloadRSSService extends IntentService {
 				}
 			}
 		}
-
 
 		private void logEvent(String message, String function, LogEntry.LogLevel level) {
 			((MyApplication) callingService.getApplication()).logEvent(message, function, TAG, level);

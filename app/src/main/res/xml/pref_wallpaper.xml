@@ -10,10 +10,10 @@
 		android:singleLine="true"
 		android:title="@string/title_number_to_rotate" />
 
-	<SwitchPreference
-		android:defaultValue="true"
-		android:key="@string/key_shuffle"
-		android:title="@string/title_shuffle" />
+	<!--<SwitchPreference-->
+	<!--android:defaultValue="true"-->
+	<!--android:key="@string/key_shuffle"-->
+	<!--android:title="@string/title_shuffle" />-->
 
 	<ListPreference
 		android:defaultValue="30"

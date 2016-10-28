@@ -19,4 +19,10 @@
 	<string name="function">Function</string>
 	<string name="stack_trace">Stack Trace</string>
 
+	<!-- Delete dialogs title -->
+	<string name="delete_logs_dialog_title">Delete Logs</string>
+	<string name="delete_logs_dialog_message">Are you sure you want to delete all the application logs? They don\'t take up much storage space, and are very helpful for monitoring activity and solving potential issues.</string>
+	<string name="delete_dialog_positive">Yes, delete</string>
+	<string name="delete_dialog_negative">No, keep</string>
+
 </resources>

@@ -97,11 +97,9 @@ class FeedDBHelper extends SQLiteOpenHelper {
 //		return db.insert(FeedItemDBEntry.TABLE_NAME, null, values);
 //	}
 
-	public void deleteFeedItems() {
+	void deleteFeedItems() {
 		SQLiteDatabase db = getWritableDatabase();
 		db.delete(FeedItemDBEntry.TABLE_NAME, null, null);
-		db.execSQL(SQL_CREATE_ENTRIES_TABLE);
-
 	}
 
 	long saveFeedItemList(List<FeedItem> feedItemList) {
@@ -274,8 +272,8 @@ class FeedDBHelper extends SQLiteOpenHelper {
 	List<RSSFeed> getAvailableFeeds() {
 		String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s=1 ORDER BY %s DESC",
 									 FeedDBEntry.TABLE_NAME,
-									 FeedDBEntry.COLUMN_TITLE,
-									 FeedDBEntry.COLUMN_ENABLED
+									 FeedDBEntry.COLUMN_ENABLED,
+									 FeedDBEntry.COLUMN_TITLE
 		);
 		return getFeeds(query);
 

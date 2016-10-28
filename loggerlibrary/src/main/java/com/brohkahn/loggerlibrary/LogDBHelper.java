@@ -59,7 +59,6 @@ public class LogDBHelper extends SQLiteOpenHelper {
 	public void deleteLogs() {
 		SQLiteDatabase db = getWritableDatabase();
 		db.delete(LogDBEntry.TABLE_NAME, null, null);
-		onCreate(db);
 	}
 
 	public long saveLogEntry(String message,

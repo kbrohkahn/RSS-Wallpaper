@@ -1,6 +1,7 @@
 package com.brohkahn.loggerlibrary;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -9,6 +10,7 @@ import android.os.Bundle;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -40,13 +42,19 @@ public class LogViewList extends AppCompatActivity {
 			actionBar.setDisplayHomeAsUpEnabled(true);
 		}
 
+		adapter = new LogViewListAdapter(this, getCursorLoader().loadInBackground(), 0);
 
-		CursorLoader cursorLoader = new CursorLoader(getApplicationContext(),
-													 Uri.EMPTY,
-													 LogDBHelper.LogDBEntry.getAllColumns(),
-													 null,
-													 null,
-													 LogDBHelper.LogDBEntry.COLUMN_TIME + " DESC"
+		ListView listView = (ListView) findViewById(R.id.log_list_view);
+		listView.setAdapter(adapter);
+	}
+
+	private CursorLoader getCursorLoader() {
+		return new CursorLoader(getApplicationContext(),
+								Uri.EMPTY,
+								LogDBHelper.LogDBEntry.getAllColumns(),
+								null,
+								null,
+								LogDBHelper.LogDBEntry.COLUMN_TIME + " DESC"
 		) {
 			@Override
 			public Cursor loadInBackground() {
@@ -63,10 +71,6 @@ public class LogViewList extends AppCompatActivity {
 				);
 			}
 		};
-		adapter = new LogViewListAdapter(this, cursorLoader.loadInBackground(), 0);
-
-		ListView listView = (ListView) findViewById(R.id.log_list_view);
-		listView.setAdapter(adapter);
 	}
 
 	@Override
@@ -134,17 +138,44 @@ public class LogViewList extends AppCompatActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle item selection
 		int id = item.getItemId();
-		if (id == R.id.delete_logs) {
-			LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext());
-			helper.deleteLogs();
-			helper.close();
-			return true;
-		} else if (id == android.R.id.home) {
+		if (id == android.R.id.home) {
 			finish();
+			return true;
+		} else if (id == R.id.delete_logs) {
+			showDeleteLogsDialog();
 			return true;
 		} else {
 			return super.onOptionsItemSelected(item);
 		}
 	}
 
+
+	public void showDeleteLogsDialog() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(R.string.delete_logs_dialog_title)
+			   .setMessage(R.string.delete_logs_dialog_message)
+			   .setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
+				   @Override
+				   public void onClick(DialogInterface dialogInterface, int i) {
+					   deleteLogs();
+					   dialogInterface.dismiss();
+				   }
+			   })
+			   .setNegativeButton(R.string.delete_dialog_negative, new DialogInterface.OnClickListener() {
+				   @Override
+				   public void onClick(DialogInterface dialogInterface, int i) {
+					   dialogInterface.dismiss();
+				   }
+			   });
+		builder.create().show();
+	}
+
+	public void deleteLogs() {
+		LogDBHelper logDbHelper = LogDBHelper.getHelper(this);
+		logDbHelper.deleteLogs();
+		logDbHelper.close();
+
+		adapter.getCursor().close();
+		adapter.changeCursor(getCursorLoader().loadInBackground());
+	}
 }

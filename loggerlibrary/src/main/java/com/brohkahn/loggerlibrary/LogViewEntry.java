@@ -58,10 +58,9 @@ public class LogViewEntry extends AppCompatActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle item selection
 		int id = item.getItemId();
-		if (id == R.id.delete_logs) {
-			LogDBHelper helper = LogDBHelper.getHelper(getApplicationContext());
-			helper.deleteLogs();
-			helper.close();
+
+		if (id == android.R.id.home) {
+			finish();
 			return true;
 		} else {
 			return super.onOptionsItemSelected(item);

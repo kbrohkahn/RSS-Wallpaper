@@ -4,12 +4,12 @@
 	<Preference
 		android:key="@string/key_delete_items"
 		android:summary="@string/summary_delete_items"
-		android:title="@string/key_delete_items"/>
+		android:title="@string/title_delete_items"/>
 
 	<Preference
 		android:key="@string/key_delete_logs"
 		android:summary="@string/summary_delete_logs"
-		android:title="@string/key_delete_logs"/>
+		android:title="@string/title_delete_logs"/>
 
 	<SwitchPreference
 		android:defaultValue="true"
