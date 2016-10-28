@@ -247,7 +247,7 @@ public class ChangeWallpaperService extends Service {
 						 "setNewWallpaper()",
 						 LogEntry.LogLevel.Warning
 				);
-				DownloadImageService.startDownloadImageAction(this);
+				DownloadImageService.startDownloadImageAction(this, false);
 			} else {
 				// get screen height (output wallpaper height)
 				Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();

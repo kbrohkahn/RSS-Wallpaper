@@ -79,6 +79,10 @@ public class FeedItemView extends AppCompatActivity {
 			}
 		});
 
+		// TODO
+		fab.setEnabled(false);
+		fab.setVisibility(View.GONE);
+
 		enabledCheckBox = (CheckBox) findViewById(R.id.feed_item_enabled);
 		enabledCheckBox.setChecked(item.enabled);
 
@@ -115,7 +119,7 @@ public class FeedItemView extends AppCompatActivity {
 				feedDBHelper.close();
 			}
 
-			DownloadImageService.startDownloadImageAction(this);
+			DownloadImageService.startDownloadImageAction(this, true);
 		}
 	}
 
@@ -127,7 +131,7 @@ public class FeedItemView extends AppCompatActivity {
 			feedDBHelper.updateImageEnabled(item.id, isEnabled);
 			feedDBHelper.close();
 
-			DownloadImageService.startDownloadImageAction(this);
+			DownloadImageService.startDownloadImageAction(this, false);
 		}
 
 		super.onPause();

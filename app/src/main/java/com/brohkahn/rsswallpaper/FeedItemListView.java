@@ -32,6 +32,7 @@ public class FeedItemListView extends AppCompatActivity {
 //	public static final String TAG = "FeedItemListView";
 
 	public FeedItemListAdapter adapter;
+	private int currentFeedId;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +47,10 @@ public class FeedItemListView extends AppCompatActivity {
 			actionBar.setDisplayHomeAsUpEnabled(true);
 		}
 
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+		Resources resources = getResources();
+		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
+
 		CursorLoader cursorLoader = getCursorLoader();
 
 		adapter = new FeedItemListAdapter(this, cursorLoader.loadInBackground(), 0);
@@ -55,9 +60,6 @@ public class FeedItemListView extends AppCompatActivity {
 	}
 
 	private CursorLoader getCursorLoader() {
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-		Resources resources = getResources();
-		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
 
 		return new CursorLoader(getApplicationContext(),
 								Uri.EMPTY,
@@ -85,7 +87,7 @@ public class FeedItemListView extends AppCompatActivity {
 
 	@Override
 	protected void onPause() {
-		DownloadImageService.startDownloadImageAction(this);
+		DownloadImageService.startDownloadImageAction(this, false);
 
 		super.onPause();
 	}
@@ -181,7 +183,10 @@ public class FeedItemListView extends AppCompatActivity {
 		helper.updateImageEnabled(itemId, enabled);
 		helper.close();
 
-		DownloadImageService.startDownloadImageAction(this);
+		if (itemId == currentFeedId) {
+			DownloadImageService.startDownloadImageAction(this, false);
+		}
+
 	}
 
 	public void displayFeedItem(int ID) {

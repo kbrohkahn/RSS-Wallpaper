@@ -68,9 +68,9 @@ public class RSSFeedView extends AppCompatActivity {
 
 
 		title = feed.title;
-		((TextView) findViewById(R.id.feed_title)).setText(title);
-		((TextView) findViewById(R.id.feed_description)).setText(feed.description);
-		((TextView) findViewById(R.id.feed_link)).setText(feed.link);
+		((TextView) findViewById(R.id.rss_feed_view_title)).setText(title);
+		((TextView) findViewById(R.id.rss_feed_view_description)).setText(feed.description);
+		((TextView) findViewById(R.id.rss_feed_view_link)).setText(feed.link);
 
 	}
 
@@ -103,7 +103,7 @@ public class RSSFeedView extends AppCompatActivity {
 		editor.apply();
 
 		// immediately get new images and icons
-		DownloadImageService.startDownloadImageAction(this);
+		DownloadImageService.startDownloadImageAction(this, true);
 		DownloadIconService.startDownloadIconAction(this);
 	}
 

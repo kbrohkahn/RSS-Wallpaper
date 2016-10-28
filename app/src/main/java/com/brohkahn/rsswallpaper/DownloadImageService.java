@@ -28,6 +28,7 @@ public class DownloadImageService extends IntentService {
 	private static final String TAG = "DownloadImageService";
 
 	private static final String ACTION_DOWNLOAD_IMAGES = "com.brohkahn.rsswallpaper.action.download_images";
+	private static final String EXTRA_SET_NEW_WALLPAPER = "setNewWallpaper";
 
 	private String imageDirectory;
 
@@ -35,9 +36,10 @@ public class DownloadImageService extends IntentService {
 		super("DownloadImageService");
 	}
 
-	public static void startDownloadImageAction(Context context) {
+	public static void startDownloadImageAction(Context context, boolean setNewWallpaper) {
 		Intent intent = new Intent(context, DownloadImageService.class);
 		intent.setAction(ACTION_DOWNLOAD_IMAGES);
+		intent.putExtra(EXTRA_SET_NEW_WALLPAPER, setNewWallpaper);
 		context.startService(intent);
 	}
 
@@ -46,12 +48,12 @@ public class DownloadImageService extends IntentService {
 		if (intent != null) {
 			String action = intent.getAction();
 			if (ACTION_DOWNLOAD_IMAGES.equals(action)) {
-				startImageDownload();
+				startImageDownload(intent.getBooleanExtra(EXTRA_SET_NEW_WALLPAPER, false));
 			}
 		}
 	}
 
-	protected void startImageDownload() {
+	protected void startImageDownload(boolean setNewWallpaper) {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
@@ -86,7 +88,6 @@ public class DownloadImageService extends IntentService {
 
 		logEvent(message, "startImageDownload()", LogEntry.LogLevel.Message);
 
-		boolean newImage = true;
 		if (canDownload) {
 			List<Integer> feedItemIdsInUse = new ArrayList<>();
 
@@ -114,14 +115,14 @@ public class DownloadImageService extends IntentService {
 						);
 					}
 
-					if (newImage) {
+					if (setNewWallpaper) {
 						// immediately set wallpaper to new image
 						logEvent("New image downloaded, setting as wallpaper.",
 								 "startImageDownload()",
-								 LogEntry.LogLevel.Warning
+								 LogEntry.LogLevel.Message
 						);
 
-						newImage = false;
+						setNewWallpaper = false;
 						Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
 						LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 					}

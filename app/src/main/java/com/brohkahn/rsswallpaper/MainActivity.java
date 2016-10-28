@@ -13,7 +13,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
@@ -298,30 +297,39 @@ public class MainActivity extends AppCompatActivity {
 	public void blockCurrentWallpaper() {
 		logEvent("Disabling current item", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 
-		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
-		feedDBHelper.updateImageEnabled(currentItemId, false);
-		feedDBHelper.close();
 
-		getNewWallpaper();
-
-		DownloadImageService.startDownloadImageAction(this);
-	}
-
-	private void getNewWallpaper() {
 //		blockWallpaperButton.setEnabled(false);
 //		nextWallpaperButton.setEnabled(false);
 		fab.setEnabled(false);
 
-		logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 
-		new Handler().post(new Runnable() {
-			@Override
-			public void run() {
-				Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
-				LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-			}
-		});
+		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
+		feedDBHelper.updateImageEnabled(currentItemId, false);
+		feedDBHelper.close();
+
+//		getNewWallpaper();
+
+		Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
+		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
+		DownloadImageService.startDownloadImageAction(this, false);
 	}
+
+//	private void getNewWallpaper() {
+//		blockWallpaperButton.setEnabled(false);
+//		nextWallpaperButton.setEnabled(false);
+//		fab.setEnabled(false);
+//
+//		logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
+//
+//		new Handler().post(new Runnable() {
+//			@Override
+//			public void run() {
+//				Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
+//				LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+//			}
+//		});
+//	}
 
 //    private void showToast(String message) {
 //        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();

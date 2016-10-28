@@ -57,8 +57,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		stopService(serviceIntent);
 		startService(serviceIntent);
 
-		DownloadImageService.startDownloadImageAction(this);
-
 		super.onPause();
 	}
 

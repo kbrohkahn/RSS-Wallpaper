@@ -169,7 +169,7 @@ public class DownloadRSSService extends IntentService {
 			DownloadIconService.startDownloadIconAction(this);
 
 			// start image download service as soon as we find an item we haven't downloaded
-			DownloadImageService.startDownloadImageAction(this);
+			DownloadImageService.startDownloadImageAction(this, false);
 
 		}
 

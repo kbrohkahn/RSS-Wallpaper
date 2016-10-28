@@ -3,10 +3,10 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
-	android:id="@+id/content_rssfeed_view"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:layout_marginTop="?attr/actionBarSize"
+	android:orientation="vertical"
 	android:paddingBottom="@dimen/activity_vertical_margin"
 	android:paddingLeft="@dimen/activity_horizontal_margin"
 	android:paddingRight="@dimen/activity_horizontal_margin"
@@ -16,17 +16,20 @@
 	tools:showIn="@layout/rss_feed_view">
 
 	<TextView
-		android:id="@+id/feed_title"
+		android:id="@+id/rss_feed_view_title"
 		style="@style/large_text"
-		android:autoLink="web"/>
+		android:layout_marginBottom="@dimen/default_margin"/>
 
 	<TextView
-		android:id="@+id/feed_link"
+		android:id="@+id/rss_feed_view_link"
 		style="@style/small_text"
-		android:autoLink="web"/>
+		android:layout_marginBottom="@dimen/default_margin"
+		android:autoLink="web"
+		android:gravity="center"/>
 
 	<TextView
-		android:id="@+id/feed_description"
-		style="@style/small_text"/>
+		android:id="@+id/rss_feed_view_description"
+		style="@style/small_text"
+		android:gravity="center"/>
 
 </LinearLayout>
