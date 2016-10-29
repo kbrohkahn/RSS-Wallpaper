@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/NASAWallpaper.iml" filepath="$PROJECT_DIR$/NASAWallpaper.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/loggerlibrary/loggerlibrary.iml" filepath="$PROJECT_DIR$/loggerlibrary/loggerlibrary.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rss-wallpaper-android.iml" filepath="$PROJECT_DIR$/rss-wallpaper-android.iml" />
     </modules>
   </component>
 </project>

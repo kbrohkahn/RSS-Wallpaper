@@ -4,8 +4,6 @@
 	<string name="developer_email">kevin@broh-kahn.com</string>
 	<string name="developer_name">Kevin Broh-Kahn</string>
 	<string name="ok">OK</string>
-	<string name="delete">Delete</string>
-	<string name="keep">Keep</string>
 	<string name="request">Request</string>
 	<string name="cancel">Cancel</string>
 	<string name="downloaded_on">Downloaded on %1$s</string>
@@ -38,12 +36,10 @@
 	<string name="item_enabled">Item enabled</string>
 
 	<!-- Activity strings -->
-	<string name="activity_logs">Logs</string>
 	<string name="activity_about">About</string>
 	<string name="activity_settings">Settings</string>
 	<string name="activity_feeds">Available Feeds</string>
 	<!--<string name="activity_help">Help</string>-->
-	<string name="activity_main">NASA Wallpaper</string>
 	<string name="activity_rss_feed_view">RSS Feed Details</string>
 
 	<!-- Actions -->
@@ -89,7 +85,8 @@
 	<string name="key_set_lock_screen">setLockScreen</string>
 	<string name="key_crop_and_scale_type">cropAndScaleType</string>
 	<!-- Notifications -->
-	<string name="key_show_toasts">showToasts</string>
+	<string name="key_show_message_toasts">showMessageToasts</string>
+	<string name="key_show_error_toasts">showErrorToasts</string>
 	<!-- Storage -->
 	<string name="key_delete_items">deleteItems</string>
 	<string name="key_delete_logs">deleteLogs</string>
@@ -109,7 +106,8 @@
 	<string name="title_set_lock_screen">Set lock wallpaper</string>
 	<string name="title_crop_and_scale_type">Crop and scale</string>
 	<!-- Notifications -->
-	<string name="title_show_toasts">Show basic messages</string>
+	<string name="title_show_message_toasts">Show basic messages</string>
+	<string name="title_show_error_toasts">Show error messages</string>
 	<!-- Storage -->
 	<string name="title_delete_items">Delete Items</string>
 	<string name="title_delete_logs">Delete Logs</string>
@@ -120,7 +118,8 @@
 	<!-- Wallpaper -->
 	<string name="summary_set_lock_screen">Must have Android 7.0 or later</string>
 	<!-- Notifications -->
-	<string name="summary_show_toasts">Like when wallpaper is changing</string>
+	<string name="summary_show_message_toasts">Like when wallpaper is changing</string>
+	<string name="summary_show_error_toasts">Like inability to download an image</string>
 	<!-- Storage -->
 	<string name="summary_delete_items">If app not working properly</string>
 	<string name="summary_delete_logs">Logs useful for monitoring app</string>

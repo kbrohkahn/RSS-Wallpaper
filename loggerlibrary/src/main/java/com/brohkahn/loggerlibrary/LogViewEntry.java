@@ -1,6 +1,7 @@
 package com.brohkahn.loggerlibrary;
 
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -31,7 +32,8 @@ public class LogViewEntry extends AppCompatActivity {
 		LogEntry entry = helper.getLogEntry(id);
 		helper.close();
 
-		findViewById(R.id.log_entry_layout).setBackgroundColor(getResources().getColor(LogEntry.getColorId(entry.level)));
+
+		findViewById(R.id.log_entry_layout).setBackgroundColor(ContextCompat.getColor(this, LogEntry.getColorId(entry.level)));
 
 		TextView timeTextView = (TextView) findViewById(R.id.log_entry_time);
 		timeTextView.setText(entry.time.toString());

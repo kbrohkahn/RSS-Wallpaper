@@ -49,7 +49,7 @@ public class FeedItemListView extends AppCompatActivity {
 
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
-		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
+		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "1"));
 
 		CursorLoader cursorLoader = getCursorLoader();
 
@@ -62,24 +62,24 @@ public class FeedItemListView extends AppCompatActivity {
 	private CursorLoader getCursorLoader() {
 
 		return new CursorLoader(getApplicationContext(),
-								Uri.EMPTY,
-								FeedDBHelper.FeedItemDBEntry.getAllColumns(),
-								String.format(Locale.US, "%s=%d", FeedDBHelper.FeedItemDBEntry.COLUMN_RELATED_FEED, currentFeedId),
-								null,
-								FeedDBHelper.FeedItemDBEntry.COLUMN_CREATION_DATE + " DESC"
+				Uri.EMPTY,
+				FeedDBHelper.FeedItemDBEntry.getAllColumns(),
+				String.format(Locale.US, "%s=%d", FeedDBHelper.FeedItemDBEntry.COLUMN_RELATED_FEED, currentFeedId),
+				null,
+				FeedDBHelper.FeedItemDBEntry.COLUMN_CREATION_DATE + " DESC"
 		) {
 			@Override
 			public Cursor loadInBackground() {
 				FeedDBHelper dbHelper = FeedDBHelper.getHelper(getApplicationContext());
 				SQLiteDatabase db = dbHelper.getReadableDatabase();
 				return db.query(FeedDBHelper.FeedItemDBEntry.TABLE_NAME,
-								getProjection(),
-								getSelection(),
-								getSelectionArgs(),
-								null,
-								null,
-								this.getSortOrder(),
-								"100"
+						getProjection(),
+						getSelection(),
+						getSelectionArgs(),
+						null,
+						null,
+						this.getSortOrder(),
+						"100"
 				);
 			}
 		};
@@ -87,6 +87,8 @@ public class FeedItemListView extends AppCompatActivity {
 
 	@Override
 	protected void onPause() {
+		adapter.getCursor().close();
+
 		DownloadImageService.startDownloadImageAction(this, false);
 
 		super.onPause();
@@ -96,18 +98,16 @@ public class FeedItemListView extends AppCompatActivity {
 	protected void onResume() {
 		super.onResume();
 
-		adapter.getCursor().close();
 		adapter.changeCursor(getCursorLoader().loadInBackground());
 //		adapter.notifyDataSetChanged();
 	}
 
-	@Override
-	protected void onDestroy() {
-		adapter.getCursor().close();
-		adapter.changeCursor(null);
-		adapter = null;
-		super.onDestroy();
-	}
+//	@Override
+//	protected void onDestroy() {
+//		adapter.changeCursor(null);
+//		adapter = null;
+//		super.onDestroy();
+//	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -139,7 +139,7 @@ public class FeedItemListView extends AppCompatActivity {
 			String imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_IMAGE_LINK));
 			boolean enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_ENABLED)) == 1;
 
-			final FeedItem item = new FeedItem(id, title, imageLink, enabled);
+			final FeedItem item = new FeedItem(id, -1, title, null, null, imageLink, false, enabled, null);
 
 			TextView titleTextView = (TextView) view.findViewById(R.id.feed_item_title);
 			titleTextView.setText(title);
@@ -174,7 +174,7 @@ public class FeedItemListView extends AppCompatActivity {
 
 		public View newView(Context context, Cursor cursor, ViewGroup parent) {
 			return LayoutInflater.from(context)
-								 .inflate(R.layout.feed_item_list_item, parent, false);
+					.inflate(R.layout.feed_item_list_item, parent, false);
 		}
 	}
 

@@ -1,8 +1,14 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<SwitchPreference
-		android:defaultValue="true"
-		android:key="@string/key_show_toasts"
-		android:summary="@string/summary_show_toasts"
-		android:title="@string/title_show_toasts" />
+			android:defaultValue="true"
+			android:key="@string/key_show_message_toasts"
+			android:summary="@string/title_show_message_toasts"
+			android:title="@string/summary_show_message_toasts" />
+
+	<SwitchPreference
+			android:defaultValue="true"
+			android:key="@string/key_show_error_toasts"
+			android:summary="@string/title_show_error_toasts"
+			android:title="@string/summary_show_error_toasts" />
 </PreferenceScreen>

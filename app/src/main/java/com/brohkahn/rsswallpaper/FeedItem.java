@@ -15,23 +15,31 @@ class FeedItem {
 	boolean enabled;
 
 	FeedItem(int id,
+			 int feedId,
 			 String title,
 			 String link,
 			 String description,
+			 String imageLink,
+			 boolean downloaded,
+			 boolean enabled,
 			 Date creationDate) {
 		this.id = id;
+		this.feedId = feedId;
 		this.title = title;
 		this.link = link;
 		this.description = description;
+		this.imageLink = imageLink;
+		this.downloaded = downloaded;
+		this.enabled = enabled;
 		this.creationDate = creationDate;
 	}
 
-	FeedItem(int id, String title, String imageLink, boolean enabled) {
-		this.id = id;
-		this.title = title;
-		this.imageLink = imageLink;
-		this.enabled = enabled;
-	}
+//	FeedItem(int id, String title, String imageLink, boolean enabled) {
+//		this.id = id;
+//		this.title = title;
+//		this.imageLink = imageLink;
+//		this.enabled = enabled;
+//	}
 
 	String getImageName() {
 		if (imageLink != null) {

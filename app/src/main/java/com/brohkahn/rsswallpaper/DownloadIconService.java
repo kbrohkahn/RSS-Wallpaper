@@ -60,7 +60,7 @@ public class DownloadIconService extends IntentService {
 		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
 		imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 				.getPath() + "/");
-		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "0"));
+		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "1"));
 		boolean downloadIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
 		iconSize = resources.getDimension(R.dimen.icon_size);
 
@@ -93,9 +93,11 @@ public class DownloadIconService extends IntentService {
 			}
 		}
 
-		logEvent(message, "startIconDownload()", LogEntry.LogLevel.Message);
+		if (!canDownload) {
+			logEvent(message, "startImageDownload()", LogEntry.LogLevel.Message);
+		} else {
+			logEvent(message, "startImageDownload()", LogEntry.LogLevel.Trace);
 
-		if (canDownload) {
 			List<Integer> feedItemIdsInUse = new ArrayList<>();
 
 			// get items in current feed and all items

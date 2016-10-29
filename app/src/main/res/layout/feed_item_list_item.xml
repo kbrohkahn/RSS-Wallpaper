@@ -20,7 +20,7 @@
         android:layout_height="@dimen/icon_size"
         android:scaleType="center"
         android:foregroundGravity="center"
-        android:layout_marginRight="@dimen/default_margin"
+        android:layout_marginEnd="@dimen/default_margin"
         android:contentDescription="@string/current_image" />
 
     <TextView

@@ -53,10 +53,10 @@ public class FeedItemView extends AppCompatActivity {
 		if (item == null) {
 			LogDBHelper logDBHelper = LogDBHelper.getHelper(this);
 			logDBHelper.saveLogEntry(String.format(Locale.US, "Unable to find feed item with id of %d", ID),
-									 null,
-									 TAG,
-									 "onCreate(Bundle savedInstanceState)",
-									 LogEntry.LogLevel.Warning
+					null,
+					TAG,
+					"onCreate(Bundle savedInstanceState)",
+					LogEntry.LogLevel.Warning
 			);
 			logDBHelper.close();
 			finish();
@@ -106,7 +106,6 @@ public class FeedItemView extends AppCompatActivity {
 		Intent intent = new Intent(Intent.ACTION_VIEW);
 		intent.setData(Uri.parse(item.link));
 		startActivity(intent);
-
 	}
 
 	private void setAsCurrentWallpaper() {

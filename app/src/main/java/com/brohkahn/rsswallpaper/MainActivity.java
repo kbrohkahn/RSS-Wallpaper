@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -33,17 +34,16 @@ import android.widget.TextView;
 import com.brohkahn.loggerlibrary.LogEntry;
 import com.brohkahn.loggerlibrary.LogViewList;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 	private static final String TAG = "MainActivity";
-
-//    private final int REQUEST_PERMISSIONS = 0;
 
 	private int currentItemId;
 
 	private ImageView imageView;
 
-	//	private Button nextWallpaperButton;
-	//	private Button blockWallpaperButton;
 	private FloatingActionButton fab;
 
 	@Override
@@ -66,37 +66,50 @@ public class MainActivity extends AppCompatActivity {
 		});
 
 		imageView = ((ImageView) findViewById(R.id.current_item_image));
-//		nextWallpaperButton = ((Button) findViewById(R.id.next_wallpaper_button));
-//		blockWallpaperButton = ((Button) findViewById(R.id.block_wallpaper_button));
 
-//        int internetPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
-//        int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
-//        if (internetPermission != PackageManager.PERMISSION_GRANTED || wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
-//            logEvent("Missing permissions.", "onCreate(Bundle savedInstanceState)", LogEntry.LogLevel.Message);
-//
-//            showPermissionDialog();
-//        } else {
-//            if (!ChangeWallpaperService.isRunning) {
-//                logEvent("Service not running, restarting.", "onCreate(Bundle savedInstanceState)", LogEntry.LogLevel.Message);
-//
-//                restartService();
-//            }
-//
-//            updateCurrentItem();
-//        }
+		// check if any feeds exist, if not save defaults
+		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
+		if (feedDBHelper.getAllFeeds().size() == 0) {
+			List<RSSFeed> defaultFeedList = new ArrayList<>();
+			defaultFeedList.add(new RSSFeed(0,
+					"http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
+					"NASA Image of the Day",
+					"enclosure",
+					"url",
+					false,
+					true
+			));
+			feedDBHelper.saveNewFeeds(defaultFeedList);
+
+			int currentFeedId = feedDBHelper.getAllFeeds().get(0).id;
+			Resources resources = getResources();
+
+			SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+			editor.putString(resources.getString(R.string.key_current_feed), String.valueOf(currentFeedId));
+			editor.apply();
+		}
+		feedDBHelper.close();
 
 		if (!ChangeWallpaperService.isRunning) {
-			logEvent("Service not running, restarting.", "onCreate(Bundle savedInstanceState)", LogEntry.LogLevel.Message);
+			logEvent("Service not running, restarting.", "onCreate(Bundle savedInstanceState)", LogEntry.LogLevel.Trace);
 
 			restartService();
+		} else {
+			updateCurrentItem();
 		}
-
-		updateCurrentItem();
 
 		IntentFilter mStatusIntentFilter = new IntentFilter(Constants.WALLPAPER_UPDATED);
 		LocalBroadcastManager.getInstance(this)
-							 .registerReceiver(wallpaperUpdated, mStatusIntentFilter);
+				.registerReceiver(wallpaperUpdated, mStatusIntentFilter);
 	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		updateCurrentItem();
+	}
+
 
 	@Override
 	protected void onDestroy() {
@@ -121,8 +134,8 @@ public class MainActivity extends AppCompatActivity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			logEvent("Received wallpaperUpdated broadcast.",
-					 "onReceive(Context context, Intent intent)",
-					 LogEntry.LogLevel.Trace
+					"onReceive(Context context, Intent intent)",
+					LogEntry.LogLevel.Trace
 			);
 
 			updateCurrentItem();
@@ -132,10 +145,10 @@ public class MainActivity extends AppCompatActivity {
 	public void updateCurrentItem() {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
-		currentItemId = settings.getInt(resources.getString(R.string.key_current_item), 0);
+		currentItemId = settings.getInt(resources.getString(R.string.key_current_item), -1);
 		String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 				.getPath() + "/");
-		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
+		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "1"));
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 		FeedItem currentItem = feedDBHelper.getFeedItem(currentItemId);
@@ -177,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
 
 		final String feedUrl = linkText;
 		TextView feedTextView = (TextView) findViewById(R.id.current_item_title);
-		feedTextView.setTextColor(resources.getColor(R.color.colorAccent));
+		feedTextView.setTextColor(ContextCompat.getColor(this, R.color.colorAccent));
 		feedTextView.setText(content);
 		feedTextView.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -189,17 +202,9 @@ public class MainActivity extends AppCompatActivity {
 			}
 		});
 		((TextView) findViewById(R.id.current_item_title)).setText(titleText);
-
-
-		if (currentFeed == null) {
-			currentFeed = Constants.getBuiltInFeed();
-		}
-
 		((TextView) findViewById(R.id.current_feed)).setText(currentFeed.title);
 
 		fab.setEnabled(true);
-//		blockWallpaperButton.setEnabled(true);
-//		nextWallpaperButton.setEnabled(true);
 	}
 
 //    public void showPermissionDialog() {
@@ -249,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
 //    }
 
 	public void restartService() {
-		logEvent("Restarting service.", "restartService()", LogEntry.LogLevel.Message);
+		logEvent("Restarting service.", "restartService()", LogEntry.LogLevel.Trace);
 		Intent serviceIntent = new Intent(this, ChangeWallpaperService.class);
 		stopService(serviceIntent);
 		startService(serviceIntent);
@@ -264,7 +269,6 @@ public class MainActivity extends AppCompatActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle item selection
 		switch (item.getItemId()) {
 			case R.id.action_view_items_all:
 				startActivity(new Intent(this, FeedItemListView.class));
@@ -290,24 +294,15 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-//	public void getNewWallpaper(View view) {
-//		getNewWallpaper();
-//	}
-
 	public void blockCurrentWallpaper() {
 		logEvent("Disabling current item", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 
-
-//		blockWallpaperButton.setEnabled(false);
-//		nextWallpaperButton.setEnabled(false);
 		fab.setEnabled(false);
 
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 		feedDBHelper.updateImageEnabled(currentItemId, false);
 		feedDBHelper.close();
-
-//		getNewWallpaper();
 
 		Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
 		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);

@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.ActionBar;
@@ -104,7 +105,7 @@ public class LogViewList extends AppCompatActivity {
 
 			int logLevelInt = cursor.getInt(cursor.getColumnIndexOrThrow(LogDBHelper.LogDBEntry.COLUMN_LEVEL));
 			LogEntry.LogLevel logLevel = LogEntry.LogLevel.values()[logLevelInt];
-			view.setBackgroundColor(getResources().getColor(LogEntry.getColorId(logLevel)));
+			view.setBackgroundColor(ContextCompat.getColor(context, LogEntry.getColorId(logLevel)));
 
 			final int ID = cursor.getInt(cursor.getColumnIndexOrThrow(LogDBHelper.LogDBEntry._ID));
 			view.setOnClickListener(new View.OnClickListener() {

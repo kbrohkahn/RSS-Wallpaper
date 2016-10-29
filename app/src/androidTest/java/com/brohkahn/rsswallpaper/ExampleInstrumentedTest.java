@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.brohkahn.nasawallpaper", appContext.getPackageName());
+        assertEquals("com.brohkahn.rsswallpaper", appContext.getPackageName());
     }
 }

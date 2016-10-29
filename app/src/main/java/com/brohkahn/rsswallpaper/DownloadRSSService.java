@@ -65,7 +65,7 @@ public class DownloadRSSService extends IntentService {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
-//		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "0"));
+//		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "1"));
 //		int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
 
 		// check if we can download anything based on internet connection
@@ -92,16 +92,13 @@ public class DownloadRSSService extends IntentService {
 			}
 		}
 
-		logEvent(message, "startDownloadIntent()", LogEntry.LogLevel.Message);
+		logEvent(message, "startDownloadIntent()", LogEntry.LogLevel.Trace);
 
 		if (canDownload) {
 			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
 			allFeeds = feedDBHelper.getAllFeeds();
 			existingFeedItems = feedDBHelper.getAllItems();
 			feedDBHelper.close();
-			if (allFeeds.size() == 0) {
-				allFeeds.add(Constants.getBuiltInFeed());
-			}
 
 			newFeedItems = new ArrayList<>(Constants.APPROXIMATE_FEED_ITEM_COUNT);
 
@@ -138,13 +135,13 @@ public class DownloadRSSService extends IntentService {
 			long updatedFeedItemCount = feedDBHelper.saveFeedItemList(newFeedItems);
 			if (updatedFeedItemCount == newFeedItems.size()) {
 				logEvent(String.format(Locale.US,
-									   "Successfully saved %d new feed items.", updatedFeedItemCount
+						"Successfully saved %d new feed items.", updatedFeedItemCount
 				), "startDownloadIntent()", LogEntry.LogLevel.Trace);
 			} else {
 				logEvent(String.format(Locale.US,
-									   "Failed to save all feed items, wanted to save %d but only saved %d.",
-									   newFeedItems.size(),
-									   updatedFeedItemCount
+						"Failed to save all feed items, wanted to save %d but only saved %d.",
+						newFeedItems.size(),
+						updatedFeedItemCount
 				), "startDownloadIntent()", LogEntry.LogLevel.Warning);
 			}
 
@@ -152,16 +149,16 @@ public class DownloadRSSService extends IntentService {
 			long updatedFeedCount = feedDBHelper.updateInfoForFeeds(allFeeds);
 			if (updatedFeedCount == allFeeds.size()) {
 				logEvent(String.format(Locale.US, "Successfully updated %d feeds.", updatedFeedCount),
-						 "startDownloadIntent()",
-						 LogEntry.LogLevel.Trace
+						"startDownloadIntent()",
+						LogEntry.LogLevel.Trace
 				);
 			} else {
 				logEvent(String.format(Locale.US,
-									   "Failed to save all feeds, wanted to save %d but only saved %d.",
-									   allFeeds.size(),
-									   updatedFeedCount
-						 ), "startDownloadIntent()",
-						 LogEntry.LogLevel.Warning
+						"Failed to save all feeds, wanted to save %d but only saved %d.",
+						allFeeds.size(),
+						updatedFeedCount
+						), "startDownloadIntent()",
+						LogEntry.LogLevel.Warning
 				);
 			}
 
@@ -289,7 +286,7 @@ public class DownloadRSSService extends IntentService {
 		 */
 		private void parse(InputStream in)
 				throws XmlPullParserException, IOException, ParseException {
-			logEvent("Parsing feed.", "parse(InputStream in)", LogEntry.LogLevel.Message);
+			logEvent("Parsing feed.", "parse(InputStream in)", LogEntry.LogLevel.Trace);
 
 			XmlPullParser parser = Xml.newPullParser();
 			parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -434,23 +431,25 @@ public class DownloadRSSService extends IntentService {
 				}
 			}
 
-			if (imageLink != null && !feedItemExists(imageLink, allFeeds.get(feedIndex).id)) {
-				logEvent(String.format("New feed item title=%s.", title),
-						 "readFeedItem(XmlPullParser parser)",
-						 LogEntry.LogLevel.Message
-				);
-
-				// create item and add to beginning of unsaved items list
-				FeedItem item = new FeedItem(-1, title, link, description, null);
-
-				item.imageLink = imageLink;
-
-				newFeedItems.add(0, item);
-			} else {
+			if (imageLink == null) {
 				logEvent(String.format("No image link found for item %s.", title),
-						 "readFeedItem(XmlPullParser parser)",
-						 LogEntry.LogLevel.Warning
+						"readFeedItem(XmlPullParser parser)",
+						LogEntry.LogLevel.Warning
 				);
+			} else {
+				int currentFeedId = allFeeds.get(feedIndex).id;
+				if (!feedItemExists(imageLink, currentFeedId)) {
+					logEvent(String.format("New feed item title=%s.", title),
+							"readFeedItem(XmlPullParser parser)",
+							LogEntry.LogLevel.Trace
+					);
+
+					// create item and add to beginning of unsaved items list
+					FeedItem item = new FeedItem(-1, currentFeedId, title, link, description, imageLink, false,
+							true, null);
+
+					newFeedItems.add(0, item);
+				}
 
 			}
 		}
@@ -502,8 +501,8 @@ public class DownloadRSSService extends IntentService {
 
 			if (imageLink == null) {
 				logEvent(String.format("Link not found in text %s.", text),
-						 "getLink(XmlPullParser parser, String text)",
-						 LogEntry.LogLevel.Warning
+						"getLink(XmlPullParser parser, String text)",
+						LogEntry.LogLevel.Warning
 				);
 			}
 

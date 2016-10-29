@@ -52,7 +52,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 	@Override
 	protected void onPause() {
-		logEvent("Restarting service.", "onPause()", LogEntry.LogLevel.Message);
+		logEvent("Restarting service.", "onPause()", LogEntry.LogLevel.Trace);
 		Intent serviceIntent = new Intent(this, ChangeWallpaperService.class);
 		stopService(serviceIntent);
 		startService(serviceIntent);
@@ -90,9 +90,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		// Trigger the listener immediately with the preference's
 		// current value.
 		sBindPreferenceSummaryToValueListener.onPreferenceChange(preference, PreferenceManager.getDefaultSharedPreferences(preference
-																																   .getContext())
-																							  .getString(preference
-																												 .getKey(), "")
+				.getContext())
+				.getString(preference
+						.getKey(), "")
 		);
 	}
 
@@ -183,13 +183,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getActivity());
 			List<RSSFeed> availableFeeds = feedDBHelper.getAvailableFeeds();
+			feedDBHelper.close();
+
 			int availableFeedsCount = availableFeeds.size();
-
-			if (availableFeedsCount == 0) {
-				availableFeeds.add(Constants.getBuiltInFeed());
-				availableFeedsCount += 1;
-			}
-
 			String[] currentFeedValues = new String[availableFeedsCount];
 			String[] currentFeedTitles = new String[availableFeedsCount];
 			for (int i = 0; i < availableFeedsCount; i++) {
@@ -230,9 +226,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 		@Override
 		public void onStop() {
+			SwitchPreference showMessageToastsPreference = (SwitchPreference) findPreference(getResources()
+					.getString(R.string.key_show_message_toasts));
+			MyApplication.showMessageToasts = showMessageToastsPreference.isChecked();
+
 			SwitchPreference showToastsPreference = (SwitchPreference) findPreference(getResources()
-																							  .getString(R.string.key_show_toasts));
-			MyApplication.showToasts = showToastsPreference.isChecked();
+					.getString(R.string.key_show_error_toasts));
+			MyApplication.showErrorToasts = showToastsPreference.isChecked();
 			super.onStop();
 		}
 
@@ -312,7 +312,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 			initiallyStoreIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
 			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
-												   getActivity().getFilesDir().getPath() + "/"
+					getActivity().getFilesDir().getPath() + "/"
 			);
 
 		}
@@ -320,11 +320,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		@Override
 		public void onStop() {
 			SwitchPreference storeIconsPreference = (SwitchPreference) findPreference(getResources()
-																							  .getString(R.string.key_store_icons));
+					.getString(R.string.key_store_icons));
 			if (storeIconsPreference.isChecked() && !initiallyStoreIcons) {
 				DownloadIconService.startDownloadIconAction(getActivity());
 			} else if (!storeIconsPreference.isChecked() && initiallyStoreIcons) {
-				new DeleteIconsTask(getActivity(), imageDirectory).execute();
+				new DeleteIconsTask(getActivity(), imageDirectory, false, true).execute();
 			}
 
 			super.onStop();
@@ -333,20 +333,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		public void showDeleteLogsDialog() {
 			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 			builder.setTitle(R.string.title_delete_logs)
-				   .setMessage(R.string.delete_logs_dialog_message)
-				   .setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
-					   @Override
-					   public void onClick(DialogInterface dialogInterface, int i) {
-						   deleteLogs();
-						   dialogInterface.dismiss();
-					   }
-				   })
-				   .setNegativeButton(R.string.delete_dialog_negative, new DialogInterface.OnClickListener() {
-					   @Override
-					   public void onClick(DialogInterface dialogInterface, int i) {
-						   dialogInterface.dismiss();
-					   }
-				   });
+					.setMessage(R.string.delete_logs_dialog_message)
+					.setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialogInterface, int i) {
+							deleteLogs();
+							dialogInterface.dismiss();
+						}
+					})
+					.setNegativeButton(R.string.delete_dialog_negative, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialogInterface, int i) {
+							dialogInterface.dismiss();
+						}
+					});
 			builder.create().show();
 		}
 
@@ -359,20 +359,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		public void showDeleteItemsDialog() {
 			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 			builder.setTitle(R.string.title_delete_items)
-				   .setMessage(R.string.delete_items_dialog_message)
-				   .setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
-					   @Override
-					   public void onClick(DialogInterface dialogInterface, int i) {
-						   deleteItems();
-						   dialogInterface.dismiss();
-					   }
-				   })
-				   .setNegativeButton(R.string.delete_dialog_negative, new DialogInterface.OnClickListener() {
-					   @Override
-					   public void onClick(DialogInterface dialogInterface, int i) {
-						   dialogInterface.dismiss();
-					   }
-				   });
+					.setMessage(R.string.delete_items_dialog_message)
+					.setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialogInterface, int i) {
+							deleteItems();
+							dialogInterface.dismiss();
+						}
+					})
+					.setNegativeButton(R.string.delete_dialog_negative, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialogInterface, int i) {
+							dialogInterface.dismiss();
+						}
+					});
 			builder.create().show();
 		}
 
@@ -380,6 +380,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			FeedDBHelper feedDbHelper = FeedDBHelper.getHelper(getActivity());
 			feedDbHelper.deleteFeedItems();
 			feedDbHelper.close();
+
+			new DeleteIconsTask(getActivity(), imageDirectory, true, true).execute();
 		}
 
 		@Override
@@ -398,25 +400,60 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		private Activity activity;
 		private String imageDirectory;
 
+		private boolean deleteImages;
+		private boolean deleteIcons;
 
-		DeleteIconsTask(Activity activity, String imageDirectory) {
+		DeleteIconsTask(Activity activity, String imageDirectory, boolean deleteImages, boolean deleteIcons) {
 			this.activity = activity;
 			this.imageDirectory = imageDirectory;
+			this.deleteImages = deleteImages;
+			this.deleteIcons = deleteIcons;
 		}
 
 		@Override
 		protected Void doInBackground(Void... voids) {
+
+			if (deleteIcons && deleteImages) {
+				((MyApplication) (activity.getApplication())).logEvent(
+						"Deleting icons from RSS feed items",
+						"doInBackground",
+						TAG,
+						LogEntry.LogLevel.Message);
+			} else if (deleteIcons) {
+				((MyApplication) (activity.getApplication())).logEvent(
+						"Deleting all images from RSS feed items",
+						"doInBackground",
+						TAG,
+						LogEntry.LogLevel.Message);
+			}
+
 			// delete all icons
 			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(activity);
 			List<FeedItem> allItems = feedDBHelper.getAllItems();
 			feedDBHelper.close();
 
 			for (FeedItem item : allItems) {
-				String imagePath = imageDirectory + item.getIconName();
-				File iconFile = new File(imagePath);
-				if (!iconFile.delete()) {
-					((MyApplication) (activity.getApplication())).logEvent(
-							String.format(Locale.US, "Unable to delete icon %s.", imagePath), "onStop()", TAG, LogEntry.LogLevel.Warning);
+				if (deleteIcons) {
+					String iconPath = imageDirectory + item.getIconName();
+					File iconFile = new File(iconPath);
+					if (!iconFile.delete()) {
+						((MyApplication) (activity.getApplication())).logEvent(
+								String.format(Locale.US, "Unable to delete icon %s.", iconPath),
+								"doInBackground",
+								TAG,
+								LogEntry.LogLevel.Warning);
+					}
+				}
+				if (deleteImages) {
+					String imagePath = imageDirectory + item.getImageName();
+					File imageFile = new File(imagePath);
+					if (!imageFile.delete()) {
+						((MyApplication) (activity.getApplication())).logEvent(
+								String.format(Locale.US, "Unable to delete icon %s.", imagePath),
+								"doInBackground()",
+								TAG,
+								LogEntry.LogLevel.Warning);
+					}
 				}
 			}
 			return null;

@@ -60,7 +60,7 @@ public class DownloadImageService extends IntentService {
 		imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 				.getPath() + "/");
 		int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
-		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "0"));
+		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "1"));
 
 		// check if we can download anything based on internet connection
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -86,9 +86,10 @@ public class DownloadImageService extends IntentService {
 			}
 		}
 
-		logEvent(message, "startImageDownload()", LogEntry.LogLevel.Message);
-
-		if (canDownload) {
+		if (!canDownload) {
+			logEvent(message, "startImageDownload()", LogEntry.LogLevel.Message);
+		} else {
+			logEvent(message, "startImageDownload()", LogEntry.LogLevel.Trace);
 			List<Integer> feedItemIdsInUse = new ArrayList<>();
 
 			// get list of recent entries and all entries
@@ -110,16 +111,16 @@ public class DownloadImageService extends IntentService {
 						downloadFeedImage(item);
 					} else {
 						logEvent(String.format(Locale.US, "No image link for %s found.", item.title),
-								 "startImageDownload()",
-								 LogEntry.LogLevel.Warning
+								"startImageDownload()",
+								LogEntry.LogLevel.Warning
 						);
 					}
 
 					if (setNewWallpaper) {
 						// immediately set wallpaper to new image
 						logEvent("New image downloaded, setting as wallpaper.",
-								 "startImageDownload()",
-								 LogEntry.LogLevel.Message
+								"startImageDownload()",
+								LogEntry.LogLevel.Trace
 						);
 
 						setNewWallpaper = false;
@@ -130,24 +131,24 @@ public class DownloadImageService extends IntentService {
 			}
 
 			// purge any other images not in list
+			feedDBHelper = FeedDBHelper.getHelper(this);
 			for (FeedItem item : allItems) {
 				if (item.downloaded && !feedItemIdsInUse.contains(item.id)) {
 					File file = new File(imageDirectory + item.getImageName());
 					if (!file.delete()) {
 						logEvent(String.format(Locale.US, "Unable to delete image %s.", item.getImageName()),
-								 "startImageDownload()",
-								 LogEntry.LogLevel.Warning
+								"startImageDownload()",
+								LogEntry.LogLevel.Warning
 						);
 					}
 
 					if (!file.exists()) {
 						// file doesn't exists, mark as deleted in DB
-						feedDBHelper = FeedDBHelper.getHelper(this);
 						feedDBHelper.updateImageDownload(item.id, false);
-						feedDBHelper.close();
 					}
 				}
 			}
+			feedDBHelper.close();
 		}
 
 		// download complete, stop service
@@ -156,8 +157,8 @@ public class DownloadImageService extends IntentService {
 
 	private void downloadFeedImage(FeedItem entry) {
 		logEvent(String.format(Locale.US, "Downloading feed image for %s.", entry.title),
-				 "downloadFeedImage(FeedItem entry)",
-				 LogEntry.LogLevel.Trace
+				"downloadFeedImage(FeedItem entry)",
+				LogEntry.LogLevel.Trace
 		);
 
 		try {
@@ -187,8 +188,8 @@ public class DownloadImageService extends IntentService {
 			feedDBHelper.close();
 
 			logEvent(String.format(Locale.US, "Successfully downloaded and saved feed image for %s.", entry.title),
-					 "downloadFeedImage(FeedItem entry)",
-					 LogEntry.LogLevel.Trace
+					"downloadFeedImage(FeedItem entry)",
+					LogEntry.LogLevel.Trace
 			);
 
 		} catch (Exception e) {

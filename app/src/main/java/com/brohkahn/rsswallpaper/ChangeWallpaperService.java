@@ -71,7 +71,7 @@ public class ChangeWallpaperService extends Service {
 //		int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
 //		if (internetPermission != PackageManager.PERMISSION_GRANTED || wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
 //			logEvent(
-//					"Perrmissions not granted, stopping service and requesting permissions in MainActivity",
+//					"Permissions not granted, stopping service and requesting permissions in MainActivity",
 //					"onCreate()",
 //					LogEntry.LogLevel.Message
 //			);
@@ -82,16 +82,13 @@ public class ChangeWallpaperService extends Service {
 		// stop if already running an instance
 		if (isRunning) {
 			logEvent("Service already started, stopping this instance",
-					 "onCreate()",
-					 LogEntry.LogLevel.Trace
+					"onCreate()",
+					LogEntry.LogLevel.Trace
 			);
 			stopSelf(START_STICKY);
 		}
 
-		logEvent("Creating instance of service.",
-				 "onCreate()",
-				 LogEntry.LogLevel.Trace
-		);
+		logEvent("ChangeWallpaperService is starting.", "onCreate()", LogEntry.LogLevel.Message);
 		isRunning = true;
 
 		// get settings
@@ -108,7 +105,7 @@ public class ChangeWallpaperService extends Service {
 		// rss feed
 		int updateInterval = Integer.parseInt(prefs.getString(res.getString(R.string.key_update_interval), "24"));
 		int updateTime = Integer.parseInt(prefs.getString(res.getString(R.string.key_update_time), "3"));
-		currentFeedId = Integer.parseInt(prefs.getString(res.getString(R.string.key_current_feed), "0"));
+		currentFeedId = Integer.parseInt(prefs.getString(res.getString(R.string.key_current_feed), "1"));
 
 		// app setting
 		imageDirectory = prefs.getString(res.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
@@ -117,7 +114,7 @@ public class ChangeWallpaperService extends Service {
 		// The filter's action is BROADCAST_ACTION
 		IntentFilter mStatusIntentFilter = new IntentFilter(Constants.SET_WALLPAPER_ACTION);
 		LocalBroadcastManager.getInstance(this)
-							 .registerReceiver(changeWallpaperNow, mStatusIntentFilter);
+				.registerReceiver(changeWallpaperNow, mStatusIntentFilter);
 
 		startRSSDownloadIntent();
 
@@ -146,8 +143,8 @@ public class ChangeWallpaperService extends Service {
 
 		// schedule update task
 		timer.scheduleAtFixedRate(downloadRSSTask,
-								  downloadTime.getTime(),
-								  updateInterval * MS_HOUR
+				downloadTime.getTime(),
+				updateInterval * MS_HOUR
 		);
 
 		// schedule change task
@@ -164,9 +161,9 @@ public class ChangeWallpaperService extends Service {
 	@Override
 	public void onDestroy() {
 		logEvent("Service has been destroyed, removing changeWallpaperNow broadcast receiver, " +
-						 "setting isRunning to false, and cancelling and purging timer.",
-				 "onCreate()",
-				 LogEntry.LogLevel.Trace
+						"setting isRunning to false, and cancelling and purging timer.",
+				"onCreate()",
+				LogEntry.LogLevel.Trace
 		);
 
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(changeWallpaperNow);
@@ -183,8 +180,8 @@ public class ChangeWallpaperService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			logEvent("Received changeWallpaperNow broadcast.",
-					 "onReceive(Context context, Intent intent)",
-					 LogEntry.LogLevel.Trace
+					"onReceive(Context context, Intent intent)",
+					LogEntry.LogLevel.Trace
 			);
 			setNewWallpaper();
 		}
@@ -198,11 +195,11 @@ public class ChangeWallpaperService extends Service {
 	};
 
 	private void setNewWallpaper() {
-		logEvent("Setting new wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Message);
+		logEvent("Setting new wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Trace);
 
 		String keyCurrentItem = getResources().getString(R.string.key_current_item);
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-		int currentItemId = settings.getInt(keyCurrentItem, 0);
+		int currentItemId = settings.getInt(keyCurrentItem, -1);
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
 		List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItemsWithImages(numberToRotate, currentFeedId);
@@ -210,10 +207,7 @@ public class ChangeWallpaperService extends Service {
 
 		int availableItems = itemsToShuffle.size();
 		if (availableItems == 0) {
-			logEvent("No available images to set as wallpaper",
-					 "setNewWallpaper()",
-					 LogEntry.LogLevel.Warning
-			);
+			logEvent("No available images to set as wallpaper.", "setNewWallpaper()", LogEntry.LogLevel.Warning);
 			return;
 		}
 
@@ -232,20 +226,16 @@ public class ChangeWallpaperService extends Service {
 
 		FeedItem newItem = itemsToShuffle.get(newItemIndex);
 
-		logEvent(String.format(Locale.US,
-							   "Setting wallpaper to %s with id of %d.",
-							   newItem.title,
-							   newItem.id
-				 ),
-				 "setNewWallpaper()",
-				 LogEntry.LogLevel.Message
+		logEvent(String.format(Locale.US, "Setting wallpaper(s) to %s.", newItem.title),
+				"setNewWallpaper()",
+				LogEntry.LogLevel.Message
 		);
 		try {
 			String imagePath = imageDirectory + newItem.getImageName();
 			if (!new File(imagePath).exists()) {
-				logEvent(String.format(Locale.US, "File %s not found.", imagePath),
-						 "setNewWallpaper()",
-						 LogEntry.LogLevel.Warning
+				logEvent(String.format(Locale.US, "File %s not found, unable to set wallpaper.", imagePath),
+						"setNewWallpaper()",
+						LogEntry.LogLevel.Warning
 				);
 				DownloadImageService.startDownloadImageAction(this, false);
 			} else {
@@ -317,17 +307,17 @@ public class ChangeWallpaperService extends Service {
 						myWallpaperManager.setBitmap(outputBitmap);
 					}
 
-					logEvent("Successfully set wallpaper.",
-							 "setNewWallpaper()",
-							 LogEntry.LogLevel.Message
+					logEvent(String.format("Successfully set wallpaper to %s.", newItem.title),
+							"setNewWallpaper()",
+							LogEntry.LogLevel.Trace
 					);
 				}
 
 				if (setLockWallpaper && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 					myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_LOCK);
-					logEvent("Successfully set lock screen wallpaper.",
-							 "setNewWallpaper()",
-							 LogEntry.LogLevel.Message
+					logEvent(String.format("Successfully set lock screen wallpaper to %s.", newItem.title),
+							"setNewWallpaper()",
+							LogEntry.LogLevel.Trace
 					);
 				}
 

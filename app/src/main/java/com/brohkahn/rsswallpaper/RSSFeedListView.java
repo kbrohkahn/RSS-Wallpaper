@@ -9,10 +9,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.ActionBar;
@@ -77,8 +77,6 @@ public class RSSFeedListView extends AppCompatActivity {
 			}
 		});
 
-		resetCurrentFeed();
-
 		adapter = new RSSFeedListView.FeedListAdapter(this, getCursorLoader().loadInBackground(), 0);
 
 		ListView listView = (ListView) findViewById(R.id.feed_list_view);
@@ -87,48 +85,52 @@ public class RSSFeedListView extends AppCompatActivity {
 
 	private CursorLoader getCursorLoader() {
 		return new CursorLoader(getApplicationContext(),
-								Uri.EMPTY,
-								FeedDBHelper.FeedDBEntry.getAllColumns(),
-								null,
-								null,
-								FeedDBHelper.FeedDBEntry.COLUMN_TITLE + " ASC"
+				Uri.EMPTY,
+				FeedDBHelper.FeedDBEntry.getAllColumns(),
+				null,
+				null,
+				FeedDBHelper.FeedDBEntry.COLUMN_TITLE + " ASC"
 		) {
 			@Override
 			public Cursor loadInBackground() {
 				FeedDBHelper dbHelper = FeedDBHelper.getHelper(getApplicationContext());
 				SQLiteDatabase db = dbHelper.getReadableDatabase();
 				return db.query(FeedDBHelper.FeedDBEntry.TABLE_NAME,
-								getProjection(),
-								getSelection(),
-								getSelectionArgs(),
-								null,
-								null,
-								this.getSortOrder()
+						getProjection(),
+						getSelection(),
+						getSelectionArgs(),
+						null,
+						null,
+						this.getSortOrder()
 				);
 			}
 		};
 	}
 
-	private void resetCurrentFeed() {
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-		Resources resources = getResources();
-		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "0"));
 
-	}
-
-	private void getNewCursor() {
+	@Override
+	protected void onPause() {
 		adapter.getCursor().close();
-		adapter.changeCursor(getCursorLoader().loadInBackground());
+
+		DownloadImageService.startDownloadImageAction(this, false);
+
+		super.onPause();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 
-		resetCurrentFeed();
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+		Resources resources = getResources();
+		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "1"));
 
-		adapter.notifyDataSetChanged();
+		if (adapter.getCursor().isClosed()) {
+			adapter.changeCursor(getCursorLoader().loadInBackground());
+		}
+//		adapter.notifyDataSetChanged();
 	}
+
 
 	@Override
 	protected void onDestroy() {
@@ -137,6 +139,11 @@ public class RSSFeedListView extends AppCompatActivity {
 		adapter = null;
 
 		super.onDestroy();
+	}
+
+	private void getNewCursor() {
+		adapter.getCursor().close();
+		adapter.changeCursor(getCursorLoader().loadInBackground());
 	}
 
 	public class FeedListAdapter extends CursorAdapter {
@@ -148,21 +155,14 @@ public class RSSFeedListView extends AppCompatActivity {
 		private FeedListAdapter(Context context, Cursor cursor, int flags) {
 			super(context, cursor, flags);
 
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-				CURRENT_FEED_COLOR = getResources().getColor(R.color.current_feed, null);
-				DEFAULT_FEED_COLOR = getResources().getColor(R.color.transparent, null);
-				CURRENT_FEED_TEXT_COLOR = getResources().getColor(android.R.color.white, null);
-				DEFAULT_FEED_TEXT_COLOR = getResources().getColor(android.R.color.black, null);
-			} else {
-				CURRENT_FEED_COLOR = getResources().getColor(R.color.current_feed);
-				DEFAULT_FEED_COLOR = getResources().getColor(R.color.transparent);
-				CURRENT_FEED_TEXT_COLOR = getResources().getColor(android.R.color.white);
-				DEFAULT_FEED_TEXT_COLOR = getResources().getColor(android.R.color.black);
-			}
+			CURRENT_FEED_COLOR = ContextCompat.getColor(context, R.color.current_feed);
+			DEFAULT_FEED_COLOR = ContextCompat.getColor(context, R.color.transparent);
+			CURRENT_FEED_TEXT_COLOR = ContextCompat.getColor(context, android.R.color.white);
+			DEFAULT_FEED_TEXT_COLOR = ContextCompat.getColor(context, android.R.color.black);
 
 			logEvent(String.format(Locale.US, "Displaying %d available feeds.", cursor.getCount()),
-					 "FeedListAdapter(Context context, Cursor cursor, int flags)",
-					 LogEntry.LogLevel.Trace
+					"FeedListAdapter(Context context, Cursor cursor, int flags)",
+					LogEntry.LogLevel.Trace
 			);
 		}
 
@@ -233,21 +233,21 @@ public class RSSFeedListView extends AppCompatActivity {
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(R.string.request_feed_dialog_title)
-			   .setMessage(R.string.request_feed_dialog_message)
-			   .setPositiveButton(R.string.request, new DialogInterface.OnClickListener() {
-				   @Override
-				   public void onClick(DialogInterface dialog, int which) {
-					   sendRequestEmail(editText.getText().toString());
-					   dialog.dismiss();
-				   }
-			   })
-			   .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-				   @Override
-				   public void onClick(DialogInterface dialog, int which) {
-					   dialog.dismiss();
-				   }
-			   })
-			   .setView(editText);
+				.setMessage(R.string.request_feed_dialog_message)
+				.setPositiveButton(R.string.request, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						sendRequestEmail(editText.getText().toString());
+						dialog.dismiss();
+					}
+				})
+				.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				})
+				.setView(editText);
 		builder.create().show();
 
 	}
@@ -324,12 +324,12 @@ public class RSSFeedListView extends AppCompatActivity {
 					String entryImageLinkAttribute = feedJSONObject.getString("entryImageLinkAttribute");
 
 					RSSFeed feed = new RSSFeed(-1,
-											   source,
-											   title,
-											   entryImageLinkTag,
-											   entryImageLinkAttribute,
-											   imageOnWebPage,
-											   enabled
+							source,
+							title,
+							entryImageLinkTag,
+							entryImageLinkAttribute,
+							imageOnWebPage,
+							enabled
 					);
 
 					feedsToUpdate.add(feed);
@@ -357,8 +357,8 @@ public class RSSFeedListView extends AppCompatActivity {
 			}
 
 			containingActivity.logEvent(String.format(Locale.US, messageString, result),
-										"onPostExecute(Integer result)",
-										LogEntry.LogLevel.Trace
+					"onPostExecute(Integer result)",
+					LogEntry.LogLevel.Trace
 			);
 			Toast.makeText(containingActivity, messageString, Toast.LENGTH_SHORT).show();
 

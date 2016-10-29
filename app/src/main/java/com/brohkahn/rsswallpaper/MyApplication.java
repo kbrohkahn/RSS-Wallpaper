@@ -16,7 +16,8 @@ import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
 public class MyApplication extends Application {
-	public static boolean showToasts;
+	public static boolean showMessageToasts;
+	public static boolean showErrorToasts;
 
 	@Override
 	public void onCreate() {
@@ -24,12 +25,17 @@ public class MyApplication extends Application {
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources res = getResources();
-		showToasts = prefs.getBoolean(res.getString(R.string.key_show_toasts), true);
+		showMessageToasts = prefs.getBoolean(res.getString(R.string.key_show_message_toasts), true);
+		showErrorToasts = prefs.getBoolean(res.getString(R.string.key_show_error_toasts), true);
 
 	}
 
 	private static class ToastHandler extends Handler {
 		public Context context;
+
+		ToastHandler(Context context) {
+			this.context = context;
+		}
 
 		@Override
 		public void handleMessage(Message msg) {
@@ -41,17 +47,13 @@ public class MyApplication extends Application {
 		}
 	}
 
-	private ToastHandler toastHandler = new ToastHandler() {
-		@Override
-		public void handleMessage(Message msg) {
-			super.handleMessage(msg);
-		}
-	};
+	private ToastHandler toastHandler = new ToastHandler(this);
 
 	public void logEvent(String message, String function, String tag, LogEntry.LogLevel level) {
 		Log.d(tag, function + ": " + message);
 
-		if (showToasts && (level == LogEntry.LogLevel.Message || level == LogEntry.LogLevel.Warning)) {
+		if ((showMessageToasts && level == LogEntry.LogLevel.Message)
+				|| (showErrorToasts && level == LogEntry.LogLevel.Warning)) {
 			Message messageObject = new Message();
 			messageObject.obj = message;
 			toastHandler.sendMessage(messageObject);
@@ -67,10 +69,10 @@ public class MyApplication extends Application {
 		Log.d(tag, function + ": " + e.getLocalizedMessage());
 		LogDBHelper helper = LogDBHelper.getHelper(this);
 		helper.saveLogEntry(e.getLocalizedMessage(),
-							ErrorHandler.getStackTraceString(e),
-							tag,
-							function,
-							LogEntry.LogLevel.Error
+				ErrorHandler.getStackTraceString(e),
+				tag,
+				function,
+				LogEntry.LogLevel.Error
 		);
 		helper.close();
 	}
