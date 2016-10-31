@@ -50,7 +50,8 @@ public class ChangeWallpaperService extends Service {
 	private String imageDirectory;
 
 	private Random random = new Random();
-	private Timer timer = new Timer();
+	private Timer wallpaperTimer = new Timer();
+	private Timer rssTimer = new Timer();
 
 	public static boolean isRunning = false;
 
@@ -142,13 +143,13 @@ public class ChangeWallpaperService extends Service {
 		downloadTime.set(Calendar.MILLISECOND, 0);
 
 		// schedule update task
-		timer.scheduleAtFixedRate(downloadRSSTask,
+		rssTimer.scheduleAtFixedRate(downloadRSSTask,
 				downloadTime.getTime(),
 				updateInterval * MS_HOUR
 		);
 
 		// schedule change task
-		timer.scheduleAtFixedRate(changeWallpaperTask, 0, changeInterval * MS_MINUTE);
+		wallpaperTimer.scheduleAtFixedRate(changeWallpaperTask, 0, changeInterval * MS_MINUTE);
 
 		super.onCreate();
 	}
@@ -170,9 +171,14 @@ public class ChangeWallpaperService extends Service {
 
 		isRunning = false;
 
-		timer.cancel();
-		timer.purge();
-		timer = null;
+		wallpaperTimer.cancel();
+		wallpaperTimer.purge();
+		wallpaperTimer = null;
+
+		rssTimer.cancel();
+		rssTimer.purge();
+		rssTimer = null;
+		
 		super.onDestroy();
 	}
 

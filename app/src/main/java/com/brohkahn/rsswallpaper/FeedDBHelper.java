@@ -125,8 +125,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 
 
 	boolean updateImageDownload(int id, boolean downloaded) {
-		String query = String.format(Locale.US, "UPDATE %s SET %s" +
-						"=%d WHERE %s=%d",
+		String query = String.format(Locale.US, "UPDATE %s SET %s=%d WHERE %s=%d",
 				FeedItemDBEntry.TABLE_NAME,
 				FeedItemDBEntry.COLUMN_DOWNLOADED,
 				downloaded ? 1 : 0,
