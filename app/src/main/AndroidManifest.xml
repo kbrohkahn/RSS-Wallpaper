@@ -23,12 +23,12 @@
 		</activity>
 
 		<receiver
-				android:name=".DeviceBootReceiver"
+				android:name=".MyBroadcastReceiver"
 				android:enabled="true"
 				android:exported="false">
 			<intent-filter>
 				<action android:name="android.intent.action.BOOT_COMPLETED"/>
-				<action android:name="com.brohkahn.rsswallpaper.schedule_alarms"/>
+				<action android:name="com.brohkahn.rsswallpaper.action_schedule_alarms"/>
 			</intent-filter>
 		</receiver>
 

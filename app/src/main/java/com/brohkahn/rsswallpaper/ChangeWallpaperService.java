@@ -11,7 +11,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.os.Build;
 import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -191,7 +190,7 @@ public class ChangeWallpaperService extends IntentService {
 					editor.putInt(keyCurrentItem, newItem.id);
 					editor.apply();
 
-					LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(Constants.BROADCAST_WALLPAPER_UPDATED));
+					sendBroadcast(new Intent(Constants.ACTION_WALLPAPER_UPDATED));
 				}
 			}
 		}

@@ -8,7 +8,6 @@ import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.brohkahn.loggerlibrary.LogEntry;
@@ -117,7 +116,7 @@ public class DownloadImageService extends IntentService {
 							);
 
 							setNewWallpaper = false;
-							LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
+							sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
 						}
 					}
 				}

@@ -98,17 +98,14 @@ public class MainActivity extends AppCompatActivity {
 
 		// if no initial items, we need to download and restart timers
 		if (noInitialItems) {
-			Intent alarmIntent = new Intent(Constants.BROADCAST_SCHEDULE_ALARMS);
-			LocalBroadcastManager.getInstance(this).sendBroadcast(alarmIntent);
-
-			Intent rssIntent = new Intent(Constants.BROADCAST_DOWNLOAD_RSS);
-			LocalBroadcastManager.getInstance(this).sendBroadcast(rssIntent);
+			sendBroadcast(new Intent(Constants.ACTION_SCHEDULE_ALARMS));
+			sendBroadcast(new Intent(Constants.ACTION_DOWNLOAD_RSS));
 		} else {
 			updateCurrentItem();
 		}
 
 		// listen for wallpaper updates while active
-		IntentFilter mStatusIntentFilter = new IntentFilter(Constants.BROADCAST_WALLPAPER_UPDATED);
+		IntentFilter mStatusIntentFilter = new IntentFilter(Constants.ACTION_WALLPAPER_UPDATED);
 		LocalBroadcastManager.getInstance(this).registerReceiver(wallpaperUpdated, mStatusIntentFilter);
 	}
 
@@ -305,8 +302,7 @@ public class MainActivity extends AppCompatActivity {
 		feedDBHelper.updateImageEnabled(currentItemId, false);
 		feedDBHelper.close();
 
-		Intent intent = new Intent(Constants.ACTION_CHANGE_WALLPAPER);
-		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+		sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
 
 		DownloadImageService.startDownloadImageAction(this, false);
 	}

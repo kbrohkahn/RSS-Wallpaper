@@ -14,7 +14,6 @@ import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -355,7 +354,7 @@ public class RSSFeedListView extends AppCompatActivity {
 			} else {
 				messageString = String.format(Locale.US, "Found %d new feeds, saving info.", result);
 
-				LocalBroadcastManager.getInstance(containingActivity).sendBroadcast(new Intent(Constants.BROADCAST_DOWNLOAD_RSS));
+				containingActivity.sendBroadcast(new Intent(Constants.ACTION_DOWNLOAD_RSS));
 
 			}
 

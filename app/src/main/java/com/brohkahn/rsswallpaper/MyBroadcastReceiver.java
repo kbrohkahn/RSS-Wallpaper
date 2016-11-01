@@ -16,8 +16,8 @@ import com.brohkahn.loggerlibrary.LogEntry;
 import java.util.Calendar;
 import java.util.Locale;
 
-public class DeviceBootReceiver extends BroadcastReceiver {
-	private static final String TAG = "DeviceBootReceiver";
+public class MyBroadcastReceiver extends BroadcastReceiver {
+	private static final String TAG = "MyBroadcastReceiver";
 
 	private static final int MS_MINUTE = 1000 * 60;
 	private static final int MS_HOUR = MS_MINUTE * 60;
