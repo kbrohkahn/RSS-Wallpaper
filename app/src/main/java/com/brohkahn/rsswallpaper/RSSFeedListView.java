@@ -14,6 +14,7 @@ import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -353,7 +354,9 @@ public class RSSFeedListView extends AppCompatActivity {
 				messageString = "No new feeds found, select \"Request new RSSFeed\" in the menu to send the developer a request for a new feed.";
 			} else {
 				messageString = String.format(Locale.US, "Found %d new feeds, saving info.", result);
-				DownloadRSSService.startDownloadRSSAction(containingActivity);
+
+				LocalBroadcastManager.getInstance(containingActivity).sendBroadcast(new Intent(Constants.BROADCAST_DOWNLOAD_RSS));
+
 			}
 
 			containingActivity.logEvent(String.format(Locale.US, messageString, result),
@@ -366,7 +369,6 @@ public class RSSFeedListView extends AppCompatActivity {
 			containingActivity = null;
 			super.onPostExecute(result);
 		}
-
 	}
 
 	private void logException(Exception e, String function) {

@@ -70,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
 		// check if any feeds exist, if not save defaults
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
 		if (feedDBHelper.getAllFeeds().size() == 0) {
+
+			// get and save default feed
 			List<RSSFeed> defaultFeedList = new ArrayList<>();
 			defaultFeedList.add(new RSSFeed(0,
 					"http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
@@ -81,35 +83,34 @@ public class MainActivity extends AppCompatActivity {
 			));
 			feedDBHelper.saveNewFeeds(defaultFeedList);
 
+			// get id of feed we just saved, put it in preferences
 			int currentFeedId = feedDBHelper.getAllFeeds().get(0).id;
 			Resources resources = getResources();
-
 			SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
 			editor.putString(resources.getString(R.string.key_current_feed), String.valueOf(currentFeedId));
 			editor.apply();
 		}
+
+		// check if we have no initial items before closing helper
+		boolean noInitialItems = feedDBHelper.getAllItems().size() == 0;
+
 		feedDBHelper.close();
 
-		if (!ChangeWallpaperService.isRunning) {
-			logEvent("Service not running, restarting.", "onCreate(Bundle savedInstanceState)", LogEntry.LogLevel.Trace);
+		// if no initial items, we need to download and restart timers
+		if (noInitialItems) {
+			Intent alarmIntent = new Intent(Constants.BROADCAST_SCHEDULE_ALARMS);
+			LocalBroadcastManager.getInstance(this).sendBroadcast(alarmIntent);
 
-			restartService();
+			Intent rssIntent = new Intent(Constants.BROADCAST_DOWNLOAD_RSS);
+			LocalBroadcastManager.getInstance(this).sendBroadcast(rssIntent);
 		} else {
 			updateCurrentItem();
 		}
 
-		IntentFilter mStatusIntentFilter = new IntentFilter(Constants.WALLPAPER_UPDATED);
-		LocalBroadcastManager.getInstance(this)
-				.registerReceiver(wallpaperUpdated, mStatusIntentFilter);
+		// listen for wallpaper updates while active
+		IntentFilter mStatusIntentFilter = new IntentFilter(Constants.BROADCAST_WALLPAPER_UPDATED);
+		LocalBroadcastManager.getInstance(this).registerReceiver(wallpaperUpdated, mStatusIntentFilter);
 	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-
-		updateCurrentItem();
-	}
-
 
 	@Override
 	protected void onDestroy() {
@@ -304,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
 		feedDBHelper.updateImageEnabled(currentItemId, false);
 		feedDBHelper.close();
 
-		Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
+		Intent intent = new Intent(Constants.ACTION_CHANGE_WALLPAPER);
 		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 
 		DownloadImageService.startDownloadImageAction(this, false);
@@ -320,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
 //		new Handler().post(new Runnable() {
 //			@Override
 //			public void run() {
-//				Intent intent = new Intent(Constants.SET_WALLPAPER_ACTION);
+//				Intent intent = new Intent(Constants.ACTION_CHANGE_WALLPAPER);
 //				LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 //			}
 //		});

@@ -7,13 +7,13 @@
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
 	<application
-		android:name=".MyApplication"
-		android:allowBackup="true"
-		android:fullBackupContent="@xml/backup_content"
-		android:icon="@mipmap/ic_launcher"
-		android:label="@string/app_name"
-		android:supportsRtl="true"
-		android:theme="@style/AppTheme">
+			android:name=".MyApplication"
+			android:allowBackup="true"
+			android:fullBackupContent="@xml/backup_content"
+			android:icon="@mipmap/ic_launcher"
+			android:label="@string/app_name"
+			android:supportsRtl="true"
+			android:theme="@style/AppTheme">
 		<activity android:name=".MainActivity">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN"/>
@@ -23,46 +23,65 @@
 		</activity>
 
 		<receiver
-			android:name=".MyReceiver"
-			android:enabled="true"
-			android:exported="false">
+				android:name=".DeviceBootReceiver"
+				android:enabled="true"
+				android:exported="false">
 			<intent-filter>
 				<action android:name="android.intent.action.BOOT_COMPLETED"/>
+				<action android:name="com.brohkahn.rsswallpaper.schedule_alarms"/>
+			</intent-filter>
+		</receiver>
+
+		<receiver
+				android:name=".ChangeWallpaperReceiver"
+				android:enabled="true"
+				android:exported="false">
+			<intent-filter>
+				<action android:name="com.brohkahn.rsswallpaper.change_wallpaper"/>
+			</intent-filter>
+		</receiver>
+
+		<receiver
+				android:name=".DownloadRSSReceiver"
+				android:enabled="true"
+				android:exported="false">
+			<intent-filter>
+				<action android:name="com.brohkahn.rsswallpaper.download_rss"/>
 			</intent-filter>
 		</receiver>
 
 		<service
-			android:name=".ChangeWallpaperService"
-			android:enabled="true"/>
+				android:name=".ChangeWallpaperService"
+				android:enabled="true"/>
 		<service
-			android:name=".DownloadRSSService"
-			android:exported="false"/>
+				android:name=".DownloadRSSService"
+				android:exported="false"/>
 		<service
-			android:name=".DownloadImageService"
-			android:exported="false"/>
+				android:name=".DownloadImageService"
+				android:exported="false"/>
 		<service
-			android:name=".DownloadIconService"
-			android:exported="false"/>
+				android:name=".DownloadIconService"
+				android:exported="false"/>
 
 		<activity
-			android:name=".FeedItemListView"
-			android:label="@string/action_view_items_all"/>
+				android:name=".FeedItemListView"
+				android:label="@string/action_view_items_all"/>
 		<activity
-			android:name=".FeedItemView"
-			android:label="@string/action_view_item_details"/>
+				android:name=".FeedItemView"
+				android:label="@string/action_view_item_details"/>
 		<activity
-			android:name=".RSSFeedListView"
-			android:label="@string/activity_feeds"/>
+				android:name=".RSSFeedListView"
+				android:label="@string/activity_feeds"/>
 		<activity
-			android:name=".RSSFeedView"
-			android:label="@string/activity_rss_feed_view"/>
+				android:name=".RSSFeedView"
+				android:label="@string/activity_rss_feed_view"/>
 		<activity
-			android:name=".About"
-			android:label="@string/activity_about"/>
+				android:name=".About"
+				android:label="@string/activity_about"/>
 		<activity
-			android:name=".SettingsActivity"
-			android:label="@string/activity_settings"
-			android:theme="@style/AppTheme_WithActionBar"/>
+				android:name=".SettingsActivity"
+				android:label="@string/activity_settings"
+				android:theme="@style/AppTheme_WithActionBar"/>
 	</application>
 
 </manifest>

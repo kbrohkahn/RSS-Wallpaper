@@ -27,8 +27,6 @@ import java.util.Locale;
 public class DownloadIconService extends IntentService {
 	private static final String TAG = "DownloadIconService";
 
-	private static final String ACTION_DOWNLOAD_ICONS = "com.brohkahn.rsswallpaper.action.download_icons";
-
 	private String imageDirectory;
 	private float iconSize;
 
@@ -37,103 +35,96 @@ public class DownloadIconService extends IntentService {
 	}
 
 	public static void startDownloadIconAction(Context context) {
-
 		Intent intent = new Intent(context, DownloadIconService.class);
-		intent.setAction(ACTION_DOWNLOAD_ICONS);
+		intent.setAction(Constants.ACTION_DOWNLOAD_ICONS);
 		context.startService(intent);
 	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
-		if (intent != null) {
-			String action = intent.getAction();
-			if (ACTION_DOWNLOAD_ICONS.equals(action)) {
-				startIconDownload();
+		// make sure it's the right intent
+		if (intent != null && intent.getAction().equals(Constants.ACTION_DOWNLOAD_ICONS)) {
+
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+			Resources resources = getResources();
+			boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
+			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
+					.getPath() + "/");
+			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "1"));
+			boolean downloadIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
+			iconSize = resources.getDimension(R.dimen.icon_size);
+
+			if (!downloadIcons) {
+				stopSelf();
+				return;
 			}
-		}
-	}
 
+			// check if we can download anything based on internet connection
+			ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
-	protected void startIconDownload() {
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		Resources resources = getResources();
-		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
-		imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
-				.getPath() + "/");
-		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "1"));
-		boolean downloadIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
-		iconSize = resources.getDimension(R.dimen.icon_size);
-
-		if (!downloadIcons) {
-			stopSelf();
-			return;
-		}
-
-		// check if we can download anything based on internet connection
-		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-
-		String message;
-		boolean canDownload;
-		if (activeNetwork == null) {
-			message = "Not connected to internet, unable to download icons.";
-			canDownload = false;
-		} else {
-			boolean wifiConnection = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
-			if (wifiOnly && !wifiConnection) {
-				message = "Not connected to Wifi, unable to download icons.";
+			String message;
+			boolean canDownload;
+			if (activeNetwork == null) {
+				message = "Not connected to internet, unable to download icons.";
 				canDownload = false;
 			} else {
-				canDownload = true;
-				if (wifiOnly) {
-					message = "Connected to Wifi, starting download of icons.";
+				boolean wifiConnection = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+				if (wifiOnly && !wifiConnection) {
+					message = "Not connected to Wifi, unable to download icons.";
+					canDownload = false;
 				} else {
-					message = "Connected to internet, starting download of icons.";
-				}
-			}
-		}
-
-		if (!canDownload) {
-			logEvent(message, "startImageDownload()", LogEntry.LogLevel.Message);
-		} else {
-			logEvent(message, "startImageDownload()", LogEntry.LogLevel.Trace);
-
-			List<Integer> feedItemIdsInUse = new ArrayList<>();
-
-			// get items in current feed and all items
-			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
-			List<FeedItem> recentItems = feedDBHelper.getAllItemsInFeed(currentFeedId);
-			List<FeedItem> allItems = feedDBHelper.getAllItems();
-			feedDBHelper.close();
-
-			for (int i = 0; i < recentItems.size(); i++) {
-				FeedItem item = recentItems.get(i);
-
-				// add id to list of recent items
-				feedItemIdsInUse.add(item.id);
-
-				File iconFile = new File(imageDirectory + item.getIconName());
-				if (!iconFile.exists()) {
-					if (item.imageLink == null) {
-						logEvent(String.format(Locale.US, "No image link for %s found.", item.title),
-								 "startIconDownload()",
-								 LogEntry.LogLevel.Warning
-						);
+					canDownload = true;
+					if (wifiOnly) {
+						message = "Connected to Wifi, starting download of icons.";
 					} else {
-						downloadFeedIcon(item);
+						message = "Connected to internet, starting download of icons.";
 					}
 				}
 			}
 
-			// purge any other images not in list
-			for (FeedItem item : allItems) {
-				if (item.downloaded && !feedItemIdsInUse.contains(item.id)) {
-					File file = new File(imageDirectory + item.getIconName());
-					if (!file.delete()) {
-						logEvent(String.format(Locale.US, "Unable to delete icon %s.", item.getIconName()),
-								 "startIconDownload()",
-								 LogEntry.LogLevel.Warning
-						);
+			if (!canDownload) {
+				logEvent(message, "startImageDownload()", LogEntry.LogLevel.Message);
+			} else {
+				logEvent(message, "startImageDownload()", LogEntry.LogLevel.Trace);
+
+				List<Integer> feedItemIdsInUse = new ArrayList<>();
+
+				// get items in current feed and all items
+				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
+				List<FeedItem> recentItems = feedDBHelper.getAllItemsInFeed(currentFeedId);
+				List<FeedItem> allItems = feedDBHelper.getAllItems();
+				feedDBHelper.close();
+
+				for (int i = 0; i < recentItems.size(); i++) {
+					FeedItem item = recentItems.get(i);
+
+					// add id to list of recent items
+					feedItemIdsInUse.add(item.id);
+
+					File iconFile = new File(imageDirectory + item.getIconName());
+					if (!iconFile.exists()) {
+						if (item.imageLink == null) {
+							logEvent(String.format(Locale.US, "No image link for %s found.", item.title),
+									"startIconDownload()",
+									LogEntry.LogLevel.Warning
+							);
+						} else {
+							downloadFeedIcon(item);
+						}
+					}
+				}
+
+				// purge any other images not in list
+				for (FeedItem item : allItems) {
+					if (item.downloaded && !feedItemIdsInUse.contains(item.id)) {
+						File file = new File(imageDirectory + item.getIconName());
+						if (!file.delete()) {
+							logEvent(String.format(Locale.US, "Unable to delete icon %s.", item.getIconName()),
+									"startIconDownload()",
+									LogEntry.LogLevel.Warning
+							);
+						}
 					}
 				}
 			}
@@ -146,8 +137,8 @@ public class DownloadIconService extends IntentService {
 
 	private void downloadFeedIcon(FeedItem entry) {
 		logEvent(String.format(Locale.US, "Downloading feed icon for %s.", entry.title),
-				 "downloadFeedIcon(FeedItem entry)",
-				 LogEntry.LogLevel.Trace
+				"downloadFeedIcon(FeedItem entry)",
+				LogEntry.LogLevel.Trace
 		);
 		try {
 			URL url = new URL(entry.imageLink);
@@ -192,8 +183,8 @@ public class DownloadIconService extends IntentService {
 			bitmap.recycle();
 
 			logEvent(String.format(Locale.US, "Successfully downloaded and saved icon for %s.", entry.title),
-					 "downloadFeedIcon(FeedItem entry)",
-					 LogEntry.LogLevel.Trace
+					"downloadFeedIcon(FeedItem entry)",
+					LogEntry.LogLevel.Trace
 			);
 
 		} catch (Exception e) {

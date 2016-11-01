@@ -31,7 +31,6 @@ import java.util.Locale;
 public class DownloadRSSService extends IntentService {
 	private static final String TAG = "DownloadRSSService";
 
-	private static final String ACTION_DOWNLOAD_RSS = "com.brohkahn.rsswallpaper.action.download_rss";
 
 	private static final String[] imageSuffices = {".png", ".jpg", ".jpeg"};
 //	private static final String[] absoluteURLPrefixes = {"http://", "https://"};
@@ -45,17 +44,12 @@ public class DownloadRSSService extends IntentService {
 		super("DownloadRSSService");
 	}
 
-	public static void startDownloadRSSAction(Context context) {
-		Intent intent = new Intent(context, DownloadRSSService.class);
-		intent.setAction(ACTION_DOWNLOAD_RSS);
-		context.startService(intent);
-	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		if (intent != null) {
 			String action = intent.getAction();
-			if (ACTION_DOWNLOAD_RSS.equals(action)) {
+			if (Constants.ACTION_DOWNLOAD_RSS.equals(action)) {
 				startDownload();
 			}
 		}
