@@ -37,9 +37,9 @@
 		android:id="@+id/action_view_logs"
 		android:title="@string/action_view_logs"
 		app:showAsAction="never"/>
-	<item
-		android:id="@+id/action_restart"
-		android:title="@string/restart_service"
-		app:showAsAction="never"/>
+	<!--<item-->
+	<!--android:id="@+id/action_restart"-->
+	<!--android:title="@string/restart_service"-->
+	<!--app:showAsAction="never"/>-->
 
 </menu>

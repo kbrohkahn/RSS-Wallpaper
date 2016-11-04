@@ -127,6 +127,9 @@ public class DownloadIconService extends IntentService {
 						}
 					}
 				}
+
+				logEvent("Icon download complete", "startImageDownload()", LogEntry.LogLevel.Trace);
+
 			}
 		}
 

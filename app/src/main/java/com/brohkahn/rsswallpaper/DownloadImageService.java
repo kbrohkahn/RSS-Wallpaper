@@ -140,6 +140,9 @@ public class DownloadImageService extends IntentService {
 					}
 				}
 				feedDBHelper.close();
+
+				logEvent("Image download complete", "startImageDownload()", LogEntry.LogLevel.Trace);
+
 			}
 
 			// download complete, stop service

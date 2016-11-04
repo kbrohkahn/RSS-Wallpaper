@@ -52,10 +52,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 	@Override
 	protected void onPause() {
-		logEvent("Restarting service.", "onPause()", LogEntry.LogLevel.Trace);
-		Intent serviceIntent = new Intent(this, ChangeWallpaperService.class);
-		stopService(serviceIntent);
-		startService(serviceIntent);
+		sendBroadcast(new Intent(Constants.ACTION_SCHEDULE_ALARMS));
 
 		super.onPause();
 	}

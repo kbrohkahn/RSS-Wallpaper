@@ -14,60 +14,60 @@
 			  tools:context="com.brohkahn.rsswallpaper.MainActivity">
 
 	<TextView
-		android:id="@+id/current_feed"
-		style="@style/Base.TextAppearance.AppCompat.Medium"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:gravity="center_horizontal"
-		android:text="@string/current_background"/>
+			android:id="@+id/current_feed"
+			style="@style/Base.TextAppearance.AppCompat.Medium"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="center_horizontal"
+			android:text="@string/current_background"/>
 
 	<TextView
-		android:id="@+id/current_item_title"
-		style="@style/Base.TextAppearance.AppCompat.Large"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_marginBottom="@dimen/default_margin"
-		android:gravity="center"/>
+			android:id="@+id/current_item_title"
+			style="@style/Base.TextAppearance.AppCompat.Large"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="@dimen/default_margin"
+			android:gravity="center"/>
 
 	<TextView
-		android:id="@+id/current_item_description"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_marginBottom="@dimen/default_margin"
-		android:gravity="start"/>
+			android:id="@+id/current_item_description"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="@dimen/default_margin"
+			android:gravity="start"/>
 
 	<ImageView
-		android:id="@+id/current_item_image"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:adjustViewBounds="true"
-		android:contentDescription="@string/current_image"
-		android:scaleType="fitXY"/>
+			android:id="@+id/current_item_image"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:adjustViewBounds="true"
+			android:contentDescription="@string/current_image"
+			android:scaleType="fitXY"/>
 
 
-	<!--<LinearLayout-->
-	<!--style="?android:attr/buttonBarStyle"-->
-	<!--android:layout_width="match_parent"-->
-	<!--android:layout_height="wrap_content">-->
+	<LinearLayout
+			style="?android:attr/buttonBarStyle"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content">
 
-	<!--<Button-->
-	<!--android:id="@+id/block_wallpaper_button"-->
-	<!--style="?android:attr/buttonBarButtonStyle"-->
-	<!--android:layout_width="0dip"-->
-	<!--android:layout_height="wrap_content"-->
-	<!--android:layout_weight="1"-->
-	<!--android:onClick="blockCurrentWallpaper"-->
-	<!--android:text="@string/action_disable" />-->
+		<Button
+				android:id="@+id/block_wallpaper_button"
+				style="?android:attr/buttonBarButtonStyle"
+				android:layout_width="0dip"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:onClick="blockCurrentWallpaper"
+				android:text="@string/action_disable"/>
 
-	<!--<Button-->
-	<!--android:id="@+id/next_wallpaper_button"-->
-	<!--style="?android:attr/buttonBarButtonStyle"-->
-	<!--android:layout_width="0dip"-->
-	<!--android:layout_height="wrap_content"-->
-	<!--android:layout_weight="1"-->
-	<!--android:onClick="getNewWallpaper"-->
-	<!--android:text="@string/action_next_item" />-->
+		<Button
+				android:id="@+id/next_wallpaper_button"
+				style="?android:attr/buttonBarButtonStyle"
+				android:layout_width="0dip"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:onClick="getNewWallpaper"
+				android:text="@string/action_next_item"/>
 
-	<!--</LinearLayout>-->
+	</LinearLayout>
 
 </LinearLayout>

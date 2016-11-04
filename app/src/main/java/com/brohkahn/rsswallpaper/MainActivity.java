@@ -14,7 +14,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -28,6 +27,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -44,7 +44,8 @@ public class MainActivity extends AppCompatActivity {
 
 	private ImageView imageView;
 
-	private FloatingActionButton fab;
+	private Button blockWallpaperButton;
+	private Button nextWallpaperButton;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -57,13 +58,9 @@ public class MainActivity extends AppCompatActivity {
 		Toolbar toolbar = (Toolbar) findViewById(R.id.activity_main_toolbar);
 		setSupportActionBar(toolbar);
 
-		fab = (FloatingActionButton) findViewById(R.id.activity_main_fab);
-		fab.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				blockCurrentWallpaper();
-			}
-		});
+
+		blockWallpaperButton = (Button) findViewById(R.id.block_wallpaper_button);
+		nextWallpaperButton = (Button) findViewById(R.id.next_wallpaper_button);
 
 		imageView = ((ImageView) findViewById(R.id.current_item_image));
 
@@ -202,7 +199,8 @@ public class MainActivity extends AppCompatActivity {
 		((TextView) findViewById(R.id.current_item_title)).setText(titleText);
 		((TextView) findViewById(R.id.current_feed)).setText(currentFeed.title);
 
-		fab.setEnabled(true);
+		blockWallpaperButton.setEnabled(true);
+		nextWallpaperButton.setEnabled(true);
 	}
 
 //    public void showPermissionDialog() {
@@ -243,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
 //                            "onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults)",
 //                            LogEntry.LogLevel.Message);
 //
-//                    restartService();
+//                    restartTimers();
 //                } else {
 //                    showPermissionDialog();
 //                }
@@ -251,12 +249,33 @@ public class MainActivity extends AppCompatActivity {
 //        }
 //    }
 
-	public void restartService() {
-		logEvent("Restarting service.", "restartService()", LogEntry.LogLevel.Trace);
-		Intent serviceIntent = new Intent(this, ChangeWallpaperService.class);
-		stopService(serviceIntent);
-		startService(serviceIntent);
+	public void blockCurrentWallpaper(View view) {
+		blockWallpaperButton.setEnabled(false);
+		nextWallpaperButton.setEnabled(false);
+
+		logEvent("Disabling current item", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
+
+		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
+		feedDBHelper.updateImageEnabled(currentItemId, false);
+		feedDBHelper.close();
+
+		sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
+
+		DownloadImageService.startDownloadImageAction(this, false);
 	}
+
+	public void getNewWallpaper(View view) {
+		blockWallpaperButton.setEnabled(false);
+		nextWallpaperButton.setEnabled(false);
+
+		logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
+
+		sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
+	}
+
+//    private void showToast(String message) {
+//        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+//    }
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -283,49 +302,14 @@ public class MainActivity extends AppCompatActivity {
 			case R.id.action_view_logs:
 				startActivity(new Intent(this, LogViewList.class));
 				return true;
-			case R.id.action_restart:
-				restartService();
-				return true;
-
+//			case R.id.action_restart:
+//				sendBroadcast(new Intent(Constants.ACTION_SCHEDULE_ALARMS));
+//				return true;
 			default:
 				return super.onOptionsItemSelected(item);
 		}
 	}
 
-	public void blockCurrentWallpaper() {
-		logEvent("Disabling current item", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
-
-		fab.setEnabled(false);
-
-
-		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
-		feedDBHelper.updateImageEnabled(currentItemId, false);
-		feedDBHelper.close();
-
-		sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
-
-		DownloadImageService.startDownloadImageAction(this, false);
-	}
-
-//	private void getNewWallpaper() {
-//		blockWallpaperButton.setEnabled(false);
-//		nextWallpaperButton.setEnabled(false);
-//		fab.setEnabled(false);
-//
-//		logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
-//
-//		new Handler().post(new Runnable() {
-//			@Override
-//			public void run() {
-//				Intent intent = new Intent(Constants.ACTION_CHANGE_WALLPAPER);
-//				LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-//			}
-//		});
-//	}
-
-//    private void showToast(String message) {
-//        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-//    }
 
 	private void logEvent(String message, String function, LogEntry.LogLevel level) {
 		((MyApplication) getApplication()).logEvent(message, function, TAG, level);

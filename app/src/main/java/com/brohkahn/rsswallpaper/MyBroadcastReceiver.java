@@ -26,7 +26,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();
 		if (action.equals(Intent.ACTION_BOOT_COMPLETED)
-				|| action.equals("com.brohkahn.rsswallpaper.SCHEDULE_ALARMS")) {
+				|| action.equals(Constants.ACTION_SCHEDULE_ALARMS)) {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 			Resources resources = context.getResources();
 			int rssUpdateInterval = Integer.parseInt(preferences.getString(resources.getString(R.string.key_update_interval), "24"));
@@ -34,12 +34,11 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
 			int changeWallpaperInterval = Integer.parseInt(preferences.getString(resources.getString(R.string.key_change_interval), "30"));
 
 
-			// create intent and pending intent for ChangeWallpaperService
-			Intent changeWallpaperIntent = new Intent(context, ChangeWallpaperService.class);
-			changeWallpaperIntent.setAction(Constants.ACTION_CHANGE_WALLPAPER);
+			// create intent and pending intent for ChangeWallpaperReceiver
+			Intent changeWallpaperIntent = new Intent(context, ChangeWallpaperReceiver.class);
+			PendingIntent wallpaperScheduleIntent = PendingIntent.getBroadcast(context, 0, changeWallpaperIntent, 0);
 
-			// create pending intent, cancel (if already running), and reschedule
-			PendingIntent wallpaperScheduleIntent = PendingIntent.getService(context, 0, changeWallpaperIntent, 0);
+			// cancel alarm (if already running), and reschedule
 			AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 			alarmManager.cancel(wallpaperScheduleIntent);
 			alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, 0, changeWallpaperInterval * MS_MINUTE, wallpaperScheduleIntent);
@@ -47,21 +46,18 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
 
 			// set RSS update time
 			Calendar downloadTime = Calendar.getInstance();
-			if (downloadTime.get(Calendar.HOUR_OF_DAY) > rssUpdateTime) {
-				// set to next day if we've already passed hour
-				downloadTime.set(Calendar.DAY_OF_YEAR, downloadTime.get(Calendar.DAY_OF_YEAR) + 1);
-			}
+//			if (downloadTime.get(Calendar.HOUR_OF_DAY) > rssUpdateTime) {
+//				// set to next day if we've already passed hour
+//				downloadTime.set(Calendar.DAY_OF_YEAR, downloadTime.get(Calendar.DAY_OF_YEAR) + 1);
+//			}
+			downloadTime.setTimeInMillis(System.currentTimeMillis());
 			downloadTime.set(Calendar.HOUR_OF_DAY, rssUpdateTime);
-			downloadTime.set(Calendar.MINUTE, 0);
-			downloadTime.set(Calendar.SECOND, 0);
-			downloadTime.set(Calendar.MILLISECOND, 0);
 
 			// create intent and pending intent for DownloadRSSService
-			Intent downloadRSSIntent = new Intent(context, DownloadRSSService.class);
-			downloadRSSIntent.setAction(Constants.ACTION_CHANGE_WALLPAPER);
+			Intent downloadRSSIntent = new Intent(context, DownloadRSSReceiver.class);
+			PendingIntent rssScheduleIntent = PendingIntent.getBroadcast(context, 0, downloadRSSIntent, 0);
 
-			// create pending intent, cancel (if already running), and reschedule
-			PendingIntent rssScheduleIntent = PendingIntent.getService(context, 0, downloadRSSIntent, 0);
+			// cancel alarm (if already running), and reschedule
 			alarmManager.cancel(rssScheduleIntent);
 			alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, downloadTime.getTimeInMillis(), rssUpdateInterval
 					* MS_HOUR, rssScheduleIntent);
