@@ -108,7 +108,9 @@ public class DownloadRSSService extends IntentService {
 					InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
 					// parse xml
-					logEvent("Parsing XML.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Trace);
+					logEvent(String.format(Locale.US, "Parsing XML for feed %s.", allFeeds.get(i).title),
+							"saveFeedItems(String urlString)",
+							LogEntry.LogLevel.Trace);
 					FeedParser feedParser = new FeedParser(i, this);
 					feedParser.parse(input);
 					input.close();

@@ -64,7 +64,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
 
 
 			String message = String.format(Locale.US,
-					"Scheduled downloadRSSIntent every %s hours and changeWallpaperIntent every %d minutes",
+					"Scheduled downloadRSSIntent every %d hours and changeWallpaperIntent every %d minutes",
 					rssUpdateInterval,
 					changeWallpaperInterval);
 			Log.d(TAG, "onReceive(Context context, Intent intent): " + message);
