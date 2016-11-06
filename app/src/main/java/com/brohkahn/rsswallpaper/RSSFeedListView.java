@@ -354,8 +354,9 @@ public class RSSFeedListView extends AppCompatActivity {
 			} else {
 				messageString = String.format(Locale.US, "Found %d new feeds, saving info.", result);
 
-				containingActivity.sendBroadcast(new Intent(Constants.ACTION_DOWNLOAD_RSS));
-
+				Intent newIntent = new Intent(containingActivity, DownloadRSSService.class);
+				newIntent.setAction(Constants.ACTION_WALLPAPER_UPDATED);
+				containingActivity.startService(newIntent);
 			}
 
 			containingActivity.logEvent(String.format(Locale.US, messageString, result),

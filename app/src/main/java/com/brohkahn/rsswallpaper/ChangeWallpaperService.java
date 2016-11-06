@@ -207,8 +207,9 @@ public class ChangeWallpaperService extends IntentService {
 					sendBroadcast(new Intent(Constants.ACTION_WALLPAPER_UPDATED));
 				}
 			}
+
+			ChangeWallpaperReceiver.completeWakefulIntent(intent);
 		}
-		stopSelf();
 	}
 
 	private void logEvent(String message, String function, LogEntry.LogLevel level) {

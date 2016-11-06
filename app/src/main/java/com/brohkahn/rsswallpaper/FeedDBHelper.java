@@ -164,7 +164,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 	List<FeedItem> getAllItemsInFeed(int feedId) {
 		String query = "SELECT *" +
 				" FROM " + FeedItemDBEntry.TABLE_NAME +
-				" AND " + FeedItemDBEntry.COLUMN_RELATED_FEED + "=" + String.valueOf(feedId) +
+				" WHERE " + FeedItemDBEntry.COLUMN_RELATED_FEED + "=" + String.valueOf(feedId) +
 				" AND " + FeedItemDBEntry.COLUMN_IMAGE_LINK + " IS NOT NULL" +
 				" ORDER BY " + FeedItemDBEntry.COLUMN_CREATION_DATE + " DESC";
 		return getItems(query);

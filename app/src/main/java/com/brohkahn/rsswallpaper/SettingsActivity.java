@@ -52,7 +52,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 	@Override
 	protected void onPause() {
-		sendBroadcast(new Intent(Constants.ACTION_SCHEDULE_ALARMS));
+		Intent newIntent = new Intent(this, ScheduleTimerService.class);
+		newIntent.setAction(Constants.ACTION_SCHEDULE_ALARMS);
+		startService(newIntent);
 
 		super.onPause();
 	}
@@ -155,10 +157,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 				|| WallpaperPreferenceFragment.class.getName().equals(fragmentName)
 				|| NotificationPreferenceFragment.class.getName().equals(fragmentName)
 				|| StoragePreferenceFragment.class.getName().equals(fragmentName);
-	}
-
-	private void logEvent(String message, String function, LogEntry.LogLevel level) {
-		((MyApplication) getApplication()).logEvent(message, function, TAG, level);
 	}
 
 	@Override

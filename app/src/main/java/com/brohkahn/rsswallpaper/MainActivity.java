@@ -15,7 +15,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
@@ -95,22 +94,26 @@ public class MainActivity extends AppCompatActivity {
 
 		// if no initial items, we need to download and restart timers
 		if (noInitialItems) {
-			sendBroadcast(new Intent(Constants.ACTION_SCHEDULE_ALARMS));
 			sendBroadcast(new Intent(Constants.ACTION_DOWNLOAD_RSS));
+
+			Intent newIntent = new Intent(this, ScheduleTimerService.class);
+			newIntent.setAction(Constants.ACTION_SCHEDULE_ALARMS);
+			startService(newIntent);
+
 		} else {
 			updateCurrentItem();
 		}
 
 		// listen for wallpaper updates while active
 		IntentFilter mStatusIntentFilter = new IntentFilter(Constants.ACTION_WALLPAPER_UPDATED);
-		LocalBroadcastManager.getInstance(this).registerReceiver(wallpaperUpdated, mStatusIntentFilter);
+		registerReceiver(wallpaperUpdated, mStatusIntentFilter);
 	}
 
 	@Override
 	protected void onDestroy() {
 		recycleCurrentBitmap();
 
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(wallpaperUpdated);
+		unregisterReceiver(wallpaperUpdated);
 		super.onDestroy();
 	}
 
@@ -184,10 +187,10 @@ public class MainActivity extends AppCompatActivity {
 		content.setSpan(new UnderlineSpan(), 0, content.length(), 0);
 
 		final String feedUrl = linkText;
-		TextView feedTextView = (TextView) findViewById(R.id.current_item_title);
-		feedTextView.setTextColor(ContextCompat.getColor(this, R.color.colorAccent));
-		feedTextView.setText(content);
-		feedTextView.setOnClickListener(new View.OnClickListener() {
+		TextView titleTextView = (TextView) findViewById(R.id.current_item_title);
+		titleTextView.setTextColor(ContextCompat.getColor(this, R.color.colorAccent));
+		titleTextView.setText(content);
+		titleTextView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -268,7 +271,10 @@ public class MainActivity extends AppCompatActivity {
 		blockWallpaperButton.setEnabled(false);
 		nextWallpaperButton.setEnabled(false);
 
-		logEvent("Sending set wallpaper broadcast", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
+		logEvent("Sending " + Constants.ACTION_CHANGE_WALLPAPER + " broadcast"
+				, "onOptionsItemSelected(MenuItem item)"
+				, LogEntry.LogLevel.Trace);
+
 
 		sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
 	}

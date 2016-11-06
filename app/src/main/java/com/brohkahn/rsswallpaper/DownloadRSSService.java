@@ -47,130 +47,122 @@ public class DownloadRSSService extends IntentService {
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
-		if (intent != null) {
-			String action = intent.getAction();
-			if (Constants.ACTION_DOWNLOAD_RSS.equals(action)) {
-				startDownload();
-			}
-		}
-	}
-
-	public void startDownload() {
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		Resources resources = getResources();
-		boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
+		if (intent != null && intent.getAction().equals(Constants.ACTION_DOWNLOAD_RSS)) {
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+			Resources resources = getResources();
+			boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
 //		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "1"));
 //		int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
 
-		// check if we can download anything based on internet connection
-		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+			// check if we can download anything based on internet connection
+			ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
-		String message;
-		boolean canDownload;
-		if (activeNetwork == null) {
-			message = "Not connected to internet, unable to download feeds.";
-			canDownload = false;
-		} else {
-			boolean wifiConnection = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
-			if (wifiOnly && !wifiConnection) {
-				message = "Not connected to Wifi, unable to download feeds.";
+			String message;
+			boolean canDownload;
+			if (activeNetwork == null) {
+				message = "Not connected to internet, unable to download feeds.";
 				canDownload = false;
 			} else {
-				canDownload = true;
-				if (wifiOnly) {
-					message = "Connected to Wifi, starting download of feeds.";
+				boolean wifiConnection = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+				if (wifiOnly && !wifiConnection) {
+					message = "Not connected to Wifi, unable to download feeds.";
+					canDownload = false;
 				} else {
-					message = "Connected to internet, starting download of feeds.";
-				}
-			}
-		}
-
-		logEvent(message, "startDownloadIntent()", LogEntry.LogLevel.Trace);
-
-		if (canDownload) {
-			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
-			allFeeds = feedDBHelper.getAllFeeds();
-			existingFeedItems = feedDBHelper.getAllItems();
-			feedDBHelper.close();
-
-			newFeedItems = new ArrayList<>(Constants.APPROXIMATE_FEED_ITEM_COUNT);
-
-			// download all feeds and feed items
-			for (int i = 0; i < allFeeds.size(); i++) {
-				try {
-					URL url = new URL(allFeeds.get(i).source);
-					URLConnection connection = url.openConnection();
-					connection.connect();
-
-					// download the file
-					logEvent("Downloading RSS file.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Trace);
-					InputStream input = new BufferedInputStream(url.openStream(), 8192);
-
-					// parse xml
-					logEvent(String.format(Locale.US, "Parsing XML for feed %s.", allFeeds.get(i).title),
-							"saveFeedItems(String urlString)",
-							LogEntry.LogLevel.Trace);
-					FeedParser feedParser = new FeedParser(i, this);
-					feedParser.parse(input);
-					input.close();
-
-					logEvent("XML parse complete.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Trace);
-
-				} catch (XmlPullParserException | ParseException | IOException e) {
-					Log.e("Error: ", e.getMessage());
-					logException(e, "saveFeedItems(String urlString)");
+					canDownload = true;
+					if (wifiOnly) {
+						message = "Connected to Wifi, starting download of feeds.";
+					} else {
+						message = "Connected to internet, starting download of feeds.";
+					}
 				}
 			}
 
+			logEvent(message, "startDownloadIntent()", LogEntry.LogLevel.Trace);
 
-			// finished parsing, do all writes
-			feedDBHelper = FeedDBHelper.getHelper(this);
+			if (canDownload) {
+				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
+				allFeeds = feedDBHelper.getAllFeeds();
+				existingFeedItems = feedDBHelper.getAllItems();
+				feedDBHelper.close();
 
-			// save all new feed items
-			long updatedFeedItemCount = feedDBHelper.saveFeedItemList(newFeedItems);
-			if (updatedFeedItemCount == newFeedItems.size()) {
-				logEvent(String.format(Locale.US,
-						"Successfully saved %d new feed items.", updatedFeedItemCount
-				), "startDownloadIntent()", LogEntry.LogLevel.Trace);
-			} else {
-				logEvent(String.format(Locale.US,
-						"Failed to save all feed items, wanted to save %d but only saved %d.",
-						newFeedItems.size(),
-						updatedFeedItemCount
-				), "startDownloadIntent()", LogEntry.LogLevel.Warning);
+				newFeedItems = new ArrayList<>(Constants.APPROXIMATE_FEED_ITEM_COUNT);
+
+				// download all feeds and feed items
+				for (int i = 0; i < allFeeds.size(); i++) {
+					try {
+						URL url = new URL(allFeeds.get(i).source);
+						URLConnection connection = url.openConnection();
+						connection.connect();
+
+						// download the file
+						logEvent("Downloading RSS file.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Trace);
+						InputStream input = new BufferedInputStream(url.openStream(), 8192);
+
+						// parse xml
+						logEvent(String.format(Locale.US, "Parsing XML for feed %s.", allFeeds.get(i).title),
+								"saveFeedItems(String urlString)",
+								LogEntry.LogLevel.Trace);
+						FeedParser feedParser = new FeedParser(i, this);
+						feedParser.parse(input);
+						input.close();
+
+						logEvent("XML parse complete.", "saveFeedItems(String urlString)", LogEntry.LogLevel.Trace);
+
+					} catch (XmlPullParserException | ParseException | IOException e) {
+						Log.e("Error: ", e.getMessage());
+						logException(e, "saveFeedItems(String urlString)");
+					}
+				}
+
+
+				// finished parsing, do all writes
+				feedDBHelper = FeedDBHelper.getHelper(this);
+
+				// save all new feed items
+				long updatedFeedItemCount = feedDBHelper.saveFeedItemList(newFeedItems);
+				if (updatedFeedItemCount == newFeedItems.size()) {
+					logEvent(String.format(Locale.US,
+							"Successfully saved %d new feed items.", updatedFeedItemCount
+					), "startDownloadIntent()", LogEntry.LogLevel.Trace);
+				} else {
+					logEvent(String.format(Locale.US,
+							"Failed to save all feed items, wanted to save %d but only saved %d.",
+							newFeedItems.size(),
+							updatedFeedItemCount
+					), "startDownloadIntent()", LogEntry.LogLevel.Warning);
+				}
+
+				// update feeds
+				long updatedFeedCount = feedDBHelper.updateInfoForFeeds(allFeeds);
+				if (updatedFeedCount == allFeeds.size()) {
+					logEvent(String.format(Locale.US, "Successfully updated %d feeds.", updatedFeedCount),
+							"startDownloadIntent()",
+							LogEntry.LogLevel.Trace
+					);
+				} else {
+					logEvent(String.format(Locale.US,
+							"Failed to save all feeds, wanted to save %d but only saved %d.",
+							allFeeds.size(),
+							updatedFeedCount
+							), "startDownloadIntent()",
+							LogEntry.LogLevel.Warning
+					);
+				}
+
+				// all done, close DB
+				feedDBHelper.close();
+
+				// download icons when finished all feeds
+				DownloadIconService.startDownloadIconAction(this);
+
+				// start image download service as soon as we find an item we haven't downloaded
+				DownloadImageService.startDownloadImageAction(this, false);
+
 			}
-
-			// update feeds
-			long updatedFeedCount = feedDBHelper.updateInfoForFeeds(allFeeds);
-			if (updatedFeedCount == allFeeds.size()) {
-				logEvent(String.format(Locale.US, "Successfully updated %d feeds.", updatedFeedCount),
-						"startDownloadIntent()",
-						LogEntry.LogLevel.Trace
-				);
-			} else {
-				logEvent(String.format(Locale.US,
-						"Failed to save all feeds, wanted to save %d but only saved %d.",
-						allFeeds.size(),
-						updatedFeedCount
-						), "startDownloadIntent()",
-						LogEntry.LogLevel.Warning
-				);
-			}
-
-			// all done, close DB
-			feedDBHelper.close();
-
-			// download icons when finished all feeds
-			DownloadIconService.startDownloadIconAction(this);
-
-			// start image download service as soon as we find an item we haven't downloaded
-			DownloadImageService.startDownloadImageAction(this, false);
-
 		}
 
 		stopSelf();
-
 	}
 
 	private static String parseLinkFromText(String text, String url) {
