@@ -139,7 +139,7 @@ public class FeedItemListView extends AppCompatActivity {
 			String imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_IMAGE_LINK));
 			boolean enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_ENABLED)) == 1;
 
-			final FeedItem item = new FeedItem(id, -1, title, null, null, imageLink, false, enabled, null);
+			final FeedItem item = new FeedItem(id, -1, title, null, null, imageLink, enabled, null);
 
 			TextView titleTextView = (TextView) view.findViewById(R.id.feed_item_title);
 			titleTextView.setText(title);

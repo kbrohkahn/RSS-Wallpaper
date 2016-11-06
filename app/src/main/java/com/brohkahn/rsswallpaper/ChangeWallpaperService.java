@@ -61,7 +61,7 @@ public class ChangeWallpaperService extends IntentService {
 			int currentItemId = settings.getInt(keyCurrentItem, -1);
 
 			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
-			List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItemsWithImages(numberToRotate, currentFeedId);
+			List<FeedItem> itemsToShuffle = feedDBHelper.getRecentItems(numberToRotate, currentFeedId);
 			feedDBHelper.close();
 
 			int availableItems = itemsToShuffle.size();
@@ -69,20 +69,34 @@ public class ChangeWallpaperService extends IntentService {
 				logEvent("No available images to set as wallpaper.", "onHandleIntent()", LogEntry.LogLevel.Warning);
 				DownloadImageService.startDownloadImageAction(this, true);
 			} else {
-
-				// get new random item
-				int newItemIndex = 0;
-				if (shuffle) {
-					Random random = new Random();
-					newItemIndex = random.nextInt(availableItems);
-				} else {
-					for (int i = 0; i < availableItems; i++) {
-						FeedItem item = itemsToShuffle.get(i);
-						if (item.id == currentItemId && i + 1 < availableItems) {
-							newItemIndex = i + 1;
-						}
+				// get old item index
+				int oldItemIndex = -1;
+				for (int i = 0; i < availableItems; i++) {
+					FeedItem item = itemsToShuffle.get(i);
+					if (item.id == currentItemId && i + 1 < availableItems) {
+						oldItemIndex = i;
+						break;
 					}
 				}
+
+				// get new random item
+				int newItemId = currentItemId;
+				int newItemIndex = 0;
+				boolean newItemDownloaded = false;
+
+				Random random = new Random();
+				while (newItemId == currentItemId || !newItemDownloaded) {
+					if (shuffle) {
+						newItemIndex = random.nextInt(availableItems);
+					} else {
+						newItemIndex = (oldItemIndex + 1) % availableItems;
+					}
+
+					FeedItem newItem = itemsToShuffle.get(newItemIndex);
+					newItemDownloaded = newItem.isDownloaded(imageDirectory);
+					newItemId = newItem.id;
+				}
+
 
 				FeedItem newItem = itemsToShuffle.get(newItemIndex);
 

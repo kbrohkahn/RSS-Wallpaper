@@ -1,5 +1,6 @@
 package com.brohkahn.rsswallpaper;
 
+import java.io.File;
 import java.util.Date;
 
 class FeedItem {
@@ -11,8 +12,9 @@ class FeedItem {
 	Date creationDate;
 
 	String imageLink;
-	boolean downloaded;
+
 	boolean enabled;
+
 
 	FeedItem(int id,
 			 int feedId,
@@ -20,7 +22,6 @@ class FeedItem {
 			 String link,
 			 String description,
 			 String imageLink,
-			 boolean downloaded,
 			 boolean enabled,
 			 Date creationDate) {
 		this.id = id;
@@ -29,7 +30,6 @@ class FeedItem {
 		this.link = link;
 		this.description = description;
 		this.imageLink = imageLink;
-		this.downloaded = downloaded;
 		this.enabled = enabled;
 		this.creationDate = creationDate;
 	}
@@ -40,6 +40,12 @@ class FeedItem {
 //		this.imageLink = imageLink;
 //		this.enabled = enabled;
 //	}
+
+	boolean isDownloaded(String folder) {
+		String filePath = folder + getImageName();
+		File file = new File(filePath);
+		return file.exists();
+	}
 
 	String getImageName() {
 		if (imageLink != null) {

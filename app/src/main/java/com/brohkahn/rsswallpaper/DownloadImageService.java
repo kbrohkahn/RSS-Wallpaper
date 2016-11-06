@@ -97,7 +97,7 @@ public class DownloadImageService extends IntentService {
 					feedItemIdsInUse.add(item.id);
 
 					// see if we need to download
-					if (!item.downloaded) {
+					if (!item.isDownloaded(imageDirectory)) {
 						if (item.imageLink != null) {
 							// imagelink is valid
 							downloadFeedImage(item);
@@ -124,18 +124,13 @@ public class DownloadImageService extends IntentService {
 				// purge any other images not in list
 				feedDBHelper = FeedDBHelper.getHelper(this);
 				for (FeedItem item : allItems) {
-					if (item.downloaded && !feedItemIdsInUse.contains(item.id)) {
+					if (item.isDownloaded(imageDirectory) && !feedItemIdsInUse.contains(item.id)) {
 						File file = new File(imageDirectory + item.getImageName());
 						if (!file.delete()) {
 							logEvent(String.format(Locale.US, "Unable to delete image %s.", item.getImageName()),
 									"startImageDownload()",
 									LogEntry.LogLevel.Warning
 							);
-						}
-
-						if (!file.exists()) {
-							// file doesn't exists, mark as deleted in DB
-							feedDBHelper.updateImageDownload(item.id, false);
 						}
 					}
 				}
@@ -176,11 +171,6 @@ public class DownloadImageService extends IntentService {
 			output.flush();
 			output.close();
 			input.close();
-
-			// set downloaded bit in DB
-			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
-			feedDBHelper.updateImageDownload(entry.id, true);
-			feedDBHelper.close();
 
 			logEvent(String.format(Locale.US, "Successfully downloaded and saved feed image for %s.", entry.title),
 					"downloadFeedImage(FeedItem entry)",

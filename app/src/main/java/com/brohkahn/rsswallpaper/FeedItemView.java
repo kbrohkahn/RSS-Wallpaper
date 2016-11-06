@@ -30,6 +30,8 @@ public class FeedItemView extends AppCompatActivity {
 	private FeedItem item;
 	private CheckBox enabledCheckBox;
 
+	private String imageDirectory;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -43,6 +45,12 @@ public class FeedItemView extends AppCompatActivity {
 		if (actionBar != null) {
 			actionBar.setDisplayHomeAsUpEnabled(true);
 		}
+
+		// set icon
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		Resources resources = getResources();
+		imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
+				.getPath() + "/");
 
 		final int ID = getIntent().getIntExtra(EXTRA_KEY_FEED_ITEM_ID, -1);
 
@@ -87,16 +95,10 @@ public class FeedItemView extends AppCompatActivity {
 		enabledCheckBox.setChecked(item.enabled);
 
 		CheckBox downloadedCheckBox = (CheckBox) findViewById(R.id.feed_item_downloaded);
-		downloadedCheckBox.setChecked(item.downloaded);
-
-		// set icon
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		Resources resources = getResources();
-		String imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
-				.getPath() + "/");
-		String imagePath = imageDirectory + item.getIconName();
+		downloadedCheckBox.setChecked(item.isDownloaded(imageDirectory));
 
 		// load imageView, scale bitmap, and set image
+		String imagePath = imageDirectory + item.getIconName();
 		ImageView imageView = (ImageView) findViewById(R.id.feed_item_image);
 		imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath));
 
@@ -111,7 +113,7 @@ public class FeedItemView extends AppCompatActivity {
 	private void setAsCurrentWallpaper() {
 		enabledCheckBox.setChecked(true);
 
-		if (!item.downloaded) {
+		if (!item.isDownloaded(imageDirectory)) {
 			if (!item.enabled) {
 				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 				feedDBHelper.updateImageEnabled(item.id, true);

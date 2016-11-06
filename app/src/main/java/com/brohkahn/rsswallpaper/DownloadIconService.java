@@ -117,7 +117,7 @@ public class DownloadIconService extends IntentService {
 
 				// purge any other images not in list
 				for (FeedItem item : allItems) {
-					if (item.downloaded && !feedItemIdsInUse.contains(item.id)) {
+					if (item.isDownloaded(imageDirectory) && !feedItemIdsInUse.contains(item.id)) {
 						File file = new File(imageDirectory + item.getIconName());
 						if (!file.delete()) {
 							logEvent(String.format(Locale.US, "Unable to delete icon %s.", item.getIconName()),

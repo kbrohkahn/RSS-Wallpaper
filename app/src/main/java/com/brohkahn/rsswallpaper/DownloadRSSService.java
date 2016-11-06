@@ -441,8 +441,7 @@ public class DownloadRSSService extends IntentService {
 					);
 
 					// create item and add to beginning of unsaved items list
-					FeedItem item = new FeedItem(-1, currentFeedId, title, link, description, imageLink, false,
-							true, null);
+					FeedItem item = new FeedItem(-1, currentFeedId, title, link, description, imageLink, true, null);
 
 					newFeedItems.add(0, item);
 				}
