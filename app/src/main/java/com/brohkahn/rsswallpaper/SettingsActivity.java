@@ -1,6 +1,9 @@
 package com.brohkahn.rsswallpaper;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -250,6 +253,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			setHasOptionsMenu(true);
 
 			Resources resources = getResources();
+			final String broadcastTitle = resources.getString(R.string.title_receive_broadcast);
+
+			Preference preference = findPreference(resources.getString(R.string.key_receive_broadcast));
+			preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+				@Override
+				public boolean onPreferenceClick(Preference preference) {
+					ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+					ClipData clip = ClipData.newPlainText(broadcastTitle, Constants.ACTION_CHANGE_WALLPAPER);
+					clipboard.setPrimaryClip(clip);
+					return true;
+				}
+			});
+
+
 			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_number_to_rotate)));
 			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_change_interval)));
 			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_crop_and_scale_type)));

@@ -9,6 +9,8 @@ final class Constants {
 	static final String ACTION_SCHEDULE_ALARMS = PACKAGE_ACTION + "schedule_alarms";
 	static final String ACTION_WALLPAPER_UPDATED = PACKAGE_ACTION + "wallpaper_updated";
 
+	static final String KEY_INTENT_SOURCE = "intentSource";
+
 //	static final String ICON_BITMAP_PREFIX = "icon_";
 
 	//	static final int MAX_URL_CHARS = 2083;

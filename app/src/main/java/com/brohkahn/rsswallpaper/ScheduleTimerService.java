@@ -35,18 +35,6 @@ public class ScheduleTimerService extends IntentService {
 			int rssUpdateTime = Integer.parseInt(preferences.getString(resources.getString(R.string.key_update_time), "3"));
 			int changeWallpaperInterval = Integer.parseInt(preferences.getString(resources.getString(R.string.key_change_interval), "30"));
 
-
-			// create intent and pending intent for ChangeWallpaperReceiver
-			Intent changeWallpaperIntent = new Intent(this, ChangeWallpaperReceiver.class);
-			changeWallpaperIntent.setAction(Constants.ACTION_CHANGE_WALLPAPER);
-			PendingIntent wallpaperScheduleIntent = PendingIntent.getBroadcast(this, 0, changeWallpaperIntent, 0);
-
-			// cancel alarm (if already running), and reschedule
-			AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-			alarmManager.cancel(wallpaperScheduleIntent);
-			alarmManager.setInexactRepeating(AlarmManager.RTC, 0, changeWallpaperInterval * MS_MINUTE,
-					wallpaperScheduleIntent);
-
 			// set RSS update time
 			Calendar downloadTime = Calendar.getInstance();
 			downloadTime.setTimeInMillis(System.currentTimeMillis());
@@ -62,10 +50,23 @@ public class ScheduleTimerService extends IntentService {
 
 
 			// cancel alarm (if already running), and reschedule
+			AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 			alarmManager.cancel(rssScheduleIntent);
 			alarmManager.setInexactRepeating(AlarmManager.RTC, downloadTime.getTimeInMillis(), rssUpdateInterval
 					* MS_HOUR, rssScheduleIntent);
 
+
+			if (changeWallpaperInterval > 0) {
+				// create intent and pending intent for ChangeWallpaperReceiver
+				Intent changeWallpaperIntent = new Intent(this, ChangeWallpaperReceiver.class);
+				changeWallpaperIntent.setAction(Constants.ACTION_CHANGE_WALLPAPER);
+				PendingIntent wallpaperScheduleIntent = PendingIntent.getBroadcast(this, 0, changeWallpaperIntent, 0);
+
+				// cancel alarm (if already running), and reschedule
+				alarmManager.cancel(wallpaperScheduleIntent);
+				alarmManager.setInexactRepeating(AlarmManager.RTC, 0, changeWallpaperInterval * MS_MINUTE,
+						wallpaperScheduleIntent);
+			}
 
 			String message = String.format(Locale.US,
 					"Scheduled downloadRSSIntent every %d hours and changeWallpaperIntent every %d minutes",
@@ -77,8 +78,10 @@ public class ScheduleTimerService extends IntentService {
 			helper.saveLogEntry(message, null, TAG, "onReceive(Context context, Intent intent)", LogEntry.LogLevel.Trace);
 			helper.close();
 
-			BootCompletedReceiver.completeWakefulIntent(intent);
-
+			String intentSource = intent.getStringExtra(Constants.KEY_INTENT_SOURCE);
+			if (intentSource != null && intentSource.equals(BootCompletedReceiver.TAG)) {
+				BootCompletedReceiver.completeWakefulIntent(intent);
+			}
 		}
 	}
 }

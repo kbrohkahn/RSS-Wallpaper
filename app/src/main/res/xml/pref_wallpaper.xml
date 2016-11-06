@@ -1,47 +1,51 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<EditTextPreference
-		android:capitalize="words"
-		android:defaultValue="7"
-		android:inputType="number"
-		android:key="@string/key_number_to_rotate"
-		android:maxLines="1"
-		android:selectAllOnFocus="true"
-		android:singleLine="true"
-		android:title="@string/title_number_to_rotate" />
-
-	<!--<SwitchPreference-->
-	<!--android:defaultValue="true"-->
-	<!--android:key="@string/key_shuffle"-->
-	<!--android:title="@string/title_shuffle" />-->
-
-	<ListPreference
-		android:defaultValue="30"
-		android:entries="@array/titles_array_change_interval"
-		android:entryValues="@array/values_array_change_interval"
-		android:key="@string/key_change_interval"
-		android:negativeButtonText="@null"
-		android:positiveButtonText="@null"
-		android:title="@string/title_change_interval" />
+			android:defaultValue="7"
+			android:inputType="number"
+			android:key="@string/key_number_to_rotate"
+			android:maxLines="1"
+			android:selectAllOnFocus="true"
+			android:singleLine="true"
+			android:title="@string/title_number_to_rotate"/>
 
 	<SwitchPreference
-		android:defaultValue="true"
-		android:key="@string/key_set_home_screen"
-		android:title="@string/title_set_home_screen" />
-
-	<SwitchPreference
-		android:defaultValue="true"
-		android:key="@string/key_set_lock_screen"
-		android:summary="@string/summary_set_lock_screen"
-		android:title="@string/title_set_lock_screen" />
+			android:defaultValue="true"
+			android:key="@string/key_shuffle"
+			android:title="@string/title_shuffle"/>
 
 	<ListPreference
-		android:defaultValue="0"
-		android:entries="@array/titles_array_crop_and_scale_type"
-		android:entryValues="@array/values_array_crop_and_scale_type"
-		android:key="@string/key_crop_and_scale_type"
-		android:negativeButtonText="@null"
-		android:positiveButtonText="@null"
-		android:title="@string/title_crop_and_scale_type" />
+			android:defaultValue="30"
+			android:entries="@array/titles_array_change_interval"
+			android:entryValues="@array/values_array_change_interval"
+			android:key="@string/key_change_interval"
+			android:negativeButtonText="@null"
+			android:positiveButtonText="@null"
+			android:title="@string/title_change_interval"/>
+
+	<Preference
+			android:key="@string/key_receive_broadcast"
+			android:summary="@string/summary_receive_broadcast"
+			android:title="@string/title_receive_broadcast"/>
+
+	<SwitchPreference
+			android:defaultValue="true"
+			android:key="@string/key_set_home_screen"
+			android:title="@string/title_set_home_screen"/>
+
+	<SwitchPreference
+			android:defaultValue="true"
+			android:key="@string/key_set_lock_screen"
+			android:summary="@string/summary_set_lock_screen"
+			android:title="@string/title_set_lock_screen"/>
+
+	<ListPreference
+			android:defaultValue="0"
+			android:entries="@array/titles_array_crop_and_scale_type"
+			android:entryValues="@array/values_array_crop_and_scale_type"
+			android:key="@string/key_crop_and_scale_type"
+			android:negativeButtonText="@null"
+			android:positiveButtonText="@null"
+			android:title="@string/title_crop_and_scale_type"/>
 
 </PreferenceScreen>
