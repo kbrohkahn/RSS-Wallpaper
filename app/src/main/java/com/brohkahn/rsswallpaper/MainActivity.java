@@ -94,7 +94,9 @@ public class MainActivity extends AppCompatActivity {
 
 		// if no initial items, we need to download and restart timers
 		if (noInitialItems) {
-			sendBroadcast(new Intent(Constants.ACTION_DOWNLOAD_RSS));
+			Intent downloadRSSIntent = new Intent(this, DownloadRSSService.class);
+			downloadRSSIntent.setAction(Constants.ACTION_DOWNLOAD_RSS);
+			startService(downloadRSSIntent);
 
 			Intent newIntent = new Intent(this, ScheduleTimerService.class);
 			newIntent.setAction(Constants.ACTION_SCHEDULE_ALARMS);
@@ -146,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 		currentItemId = settings.getInt(resources.getString(R.string.key_current_item), -1);
 		String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 				.getPath() + "/");
-		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "1"));
+		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "-1"));
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 		FeedItem currentItem = feedDBHelper.getFeedItem(currentItemId);
@@ -264,17 +266,12 @@ public class MainActivity extends AppCompatActivity {
 
 		sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
 
-		DownloadImageService.startDownloadImageAction(this, false);
+		DownloadImageService.startDownloadImageAction(this);
 	}
 
 	public void getNewWallpaper(View view) {
 		blockWallpaperButton.setEnabled(false);
 		nextWallpaperButton.setEnabled(false);
-
-		logEvent("Sending " + Constants.ACTION_CHANGE_WALLPAPER + " broadcast"
-				, "onOptionsItemSelected(MenuItem item)"
-				, LogEntry.LogLevel.Trace);
-
 
 		sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
 	}

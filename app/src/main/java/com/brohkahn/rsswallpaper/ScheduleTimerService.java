@@ -64,7 +64,9 @@ public class ScheduleTimerService extends IntentService {
 
 				// cancel alarm (if already running), and reschedule
 				alarmManager.cancel(wallpaperScheduleIntent);
-				alarmManager.setInexactRepeating(AlarmManager.RTC, 0, changeWallpaperInterval * MS_MINUTE,
+				alarmManager.setInexactRepeating(AlarmManager.RTC,
+						changeWallpaperInterval * MS_MINUTE,
+						changeWallpaperInterval * MS_MINUTE,
 						wallpaperScheduleIntent);
 			}
 

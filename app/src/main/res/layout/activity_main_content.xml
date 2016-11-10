@@ -32,10 +32,12 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:layout_marginBottom="@dimen/default_margin"
-				android:gravity="center"/>
+				android:gravity="center"
+				android:text="@string/no_current_wallpaper"/>
 
 		<TextView
 				android:id="@+id/current_item_description"
+				android:text="@string/action_view_logs"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:layout_marginBottom="@dimen/default_margin"

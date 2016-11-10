@@ -103,7 +103,7 @@ public class RSSFeedView extends AppCompatActivity {
 		editor.apply();
 
 		// immediately get new images and icons
-		DownloadImageService.startDownloadImageAction(this, true);
+		DownloadImageService.startDownloadImageAction(this);
 		DownloadIconService.startDownloadIconAction(this);
 	}
 

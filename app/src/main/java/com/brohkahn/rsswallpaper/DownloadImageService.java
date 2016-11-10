@@ -26,33 +26,31 @@ import java.util.Locale;
 public class DownloadImageService extends IntentService {
 	private static final String TAG = "DownloadImageService";
 
-	private static final String EXTRA_SET_NEW_WALLPAPER = "setNewWallpaper";
-
 	private String imageDirectory;
 
 	public DownloadImageService() {
 		super("DownloadImageService");
 	}
 
-	public static void startDownloadImageAction(Context context, boolean setNewWallpaper) {
+	public static void startDownloadImageAction(Context context) {
 		Intent intent = new Intent(context, DownloadImageService.class);
 		intent.setAction(Constants.ACTION_DOWNLOAD_IMAGES);
-		intent.putExtra(EXTRA_SET_NEW_WALLPAPER, setNewWallpaper);
 		context.startService(intent);
 	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		if (intent != null && intent.getAction().equals(Constants.ACTION_DOWNLOAD_IMAGES)) {
-			boolean setNewWallpaper = intent.getBooleanExtra(EXTRA_SET_NEW_WALLPAPER, false);
-
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 			Resources resources = getResources();
 			boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
 			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 					.getPath() + "/");
 			int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
-			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "1"));
+			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed)
+					, "-1"));
+			int currentItemId = preferences.getInt(resources.getString(R.string.key_current_item), -1);
+
 
 			// check if we can download anything based on internet connection
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -108,14 +106,14 @@ public class DownloadImageService extends IntentService {
 							);
 						}
 
-						if (setNewWallpaper) {
+						if (currentItemId == -1) {
 							// immediately set wallpaper to new image
 							logEvent("New image downloaded, setting as wallpaper.",
 									"startImageDownload()",
 									LogEntry.LogLevel.Trace
 							);
 
-							setNewWallpaper = false;
+							currentItemId = item.id;
 							sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
 						}
 					}

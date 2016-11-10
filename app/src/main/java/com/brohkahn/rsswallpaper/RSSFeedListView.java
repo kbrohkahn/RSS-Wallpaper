@@ -112,7 +112,7 @@ public class RSSFeedListView extends AppCompatActivity {
 	protected void onPause() {
 		adapter.getCursor().close();
 
-		DownloadImageService.startDownloadImageAction(this, false);
+		DownloadImageService.startDownloadImageAction(this);
 
 		super.onPause();
 	}
@@ -123,7 +123,7 @@ public class RSSFeedListView extends AppCompatActivity {
 
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
-		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "1"));
+		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "-1"));
 
 		if (adapter.getCursor().isClosed()) {
 			adapter.changeCursor(getCursorLoader().loadInBackground());

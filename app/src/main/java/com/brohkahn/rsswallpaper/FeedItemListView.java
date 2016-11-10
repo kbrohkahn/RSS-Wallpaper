@@ -49,7 +49,7 @@ public class FeedItemListView extends AppCompatActivity {
 
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
-		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "1"));
+		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "-1"));
 
 		CursorLoader cursorLoader = getCursorLoader();
 
@@ -89,7 +89,7 @@ public class FeedItemListView extends AppCompatActivity {
 	protected void onPause() {
 		adapter.getCursor().close();
 
-		DownloadImageService.startDownloadImageAction(this, false);
+		DownloadImageService.startDownloadImageAction(this);
 
 		super.onPause();
 	}
@@ -184,7 +184,7 @@ public class FeedItemListView extends AppCompatActivity {
 		helper.close();
 
 		if (itemId == currentFeedId) {
-			DownloadImageService.startDownloadImageAction(this, false);
+			DownloadImageService.startDownloadImageAction(this);
 		}
 
 	}

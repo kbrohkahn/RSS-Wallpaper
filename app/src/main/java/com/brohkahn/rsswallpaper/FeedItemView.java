@@ -110,7 +110,7 @@ public class FeedItemView extends AppCompatActivity {
 		startActivity(intent);
 	}
 
-	private void setAsCurrentWallpaper() {
+		private void setAsCurrentWallpaper() {
 		enabledCheckBox.setChecked(true);
 
 		if (!item.isDownloaded(imageDirectory)) {
@@ -120,7 +120,7 @@ public class FeedItemView extends AppCompatActivity {
 				feedDBHelper.close();
 			}
 
-			DownloadImageService.startDownloadImageAction(this, true);
+			DownloadImageService.startDownloadImageAction(this);
 		}
 	}
 
@@ -132,7 +132,7 @@ public class FeedItemView extends AppCompatActivity {
 			feedDBHelper.updateImageEnabled(item.id, isEnabled);
 			feedDBHelper.close();
 
-			DownloadImageService.startDownloadImageAction(this, false);
+			DownloadImageService.startDownloadImageAction(this);
 		}
 
 		super.onPause();

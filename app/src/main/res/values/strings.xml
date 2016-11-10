@@ -8,6 +8,7 @@
 	<string name="cancel">Cancel</string>
 	<string name="downloaded_on">Downloaded on %1$s</string>
 	<string name="view_web_page">View on web</string>
+	<string name="starting_download">Downloading images for included RSS feed, this may take a few seconds.</string>
 
 	<!-- Permissions -->
 	<!--<string name="permission_request_title">Internet Access Required</string>-->
@@ -28,6 +29,7 @@
 	<string name="set_feed_dialog_message">Do you want to change your wallpaper according to the %1$s feed?</string>
 
 	<!-- Image and RSSFeed strings -->
+	<string name="no_current_wallpaper">No wallpaper set</string>
 	<string name="current_background">Current wallpaper</string>
 	<string name="current_image">Current image</string>
 	<!--<string name="restart_service">Restart service</string>-->
