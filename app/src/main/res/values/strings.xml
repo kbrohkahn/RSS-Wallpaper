@@ -11,10 +11,11 @@
 	<string name="starting_download">Downloading images for included RSS feed, this may take a few seconds.</string>
 
 	<!-- Permissions -->
-	<!--<string name="permission_request_title">Internet Access Required</string>-->
-	<!--<string name="permission_request_message">This app requires access to the internet to download RSS feeds and new wallpapers. It also sets your wallpaper automatically (which is why you downloaded it). Please allow both permissions.</string>-->
-	<!--<string name="permission_request_positive_button">OK</string>-->
-	<!--<string name="permission_request_negative_button">Uninstall</string>-->
+	<string name="permission_request_title">Storage Access Required</string>
+	<string name="permission_request_message">To set a custom storage location, the app needs permissions to write to
+		your device\'s storage. Please hit continue to grant the permission.</string>
+	<string name="permission_request_positive_button">Continue</string>
+	<string name="permission_request_negative_button">Never mind</string>
 
 	<!-- Request feed dialog -->
 	<string name="request_feed_dialog_title">Request RSS feed</string>
@@ -60,10 +61,13 @@
 	<string name="about_developer_text">Developed by %1$s</string>
 	<string name="about_app_text">Please do not hesitate to send any feedback or questions to %1$s!</string>
 
+	<!-- Directory chooser -->
+	<string name="exit_directory">Back</string>
+	<string name="create_directory">New folder</string>
+
 
 	<!-- App settings keys -->
 	<string name="key_current_item">currentItem</string>
-	<string name="key_image_directory">imageDirectory</string>
 
 	<!-- SETTINGS-->
 
@@ -94,6 +98,8 @@
 	<string name="key_delete_items">deleteItems</string>
 	<string name="key_delete_logs">deleteLogs</string>
 	<string name="key_store_icons">storeIcons</string>
+	<string name="key_purge_unused_images">purgeUnusedImages</string>
+	<string name="key_image_directory">imageDirectory</string>
 
 	<!-- Titles -->
 	<!-- RSS RSSFeed -->
@@ -116,6 +122,8 @@
 	<string name="title_delete_items">Delete Items</string>
 	<string name="title_delete_logs">Delete Logs</string>
 	<string name="title_store_icons">Use Image Icons</string>
+	<string name="title_purge_unused_images">Delete unused images</string>
+	<string name="title_image_directory">Directory to save images</string>
 
 	<!-- Summaries -->
 	<!-- RSS RSSFeed -->
@@ -128,6 +136,7 @@
 	<!-- Storage -->
 	<string name="summary_delete_items">If app not working properly</string>
 	<string name="summary_delete_logs">Logs useful for monitoring app</string>
+	<string name="summary_purge_unused_images">When no longer in wallpaper rotation</string>
 
 	<!-- Values -->
 	<!-- RSS RSSFeed -->

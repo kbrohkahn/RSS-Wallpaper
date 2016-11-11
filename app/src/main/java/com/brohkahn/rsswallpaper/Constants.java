@@ -11,10 +11,13 @@ final class Constants {
 
 	static final String KEY_INTENT_SOURCE = "intentSource";
 
+	static final int CHANGE_WALLPAPER_RECEIVER_CODE = 89232565;
+	static final int DOWNLOAD_RSS_SERVICE_CODE = 32477277;
+
 //	static final String ICON_BITMAP_PREFIX = "icon_";
 
 	//	static final int MAX_URL_CHARS = 2083;
-	static final int APPROXIMATE_FEED_ITEM_COUNT = 2;
+	static final int APPROXIMATE_FEED_ITEM_COUNT = 50;
 	static final int SUPPORTED_FEED_COUNT = 2;
 
 

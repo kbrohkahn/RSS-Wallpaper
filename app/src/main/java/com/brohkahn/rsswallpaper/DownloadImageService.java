@@ -47,10 +47,10 @@ public class DownloadImageService extends IntentService {
 			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 					.getPath() + "/");
 			int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
-			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed)
-					, "-1"));
+			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "-1"));
 			int currentItemId = preferences.getInt(resources.getString(R.string.key_current_item), -1);
-
+			boolean purgeUnusedImages = preferences.getBoolean(resources.getString(R.string.key_purge_unused_images),
+					false);
 
 			// check if we can download anything based on internet connection
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -120,26 +120,25 @@ public class DownloadImageService extends IntentService {
 				}
 
 				// purge any other images not in list
-				feedDBHelper = FeedDBHelper.getHelper(this);
-				for (FeedItem item : allItems) {
-					if (item.isDownloaded(imageDirectory) && !feedItemIdsInUse.contains(item.id)) {
-						File file = new File(imageDirectory + item.getImageName());
-						if (!file.delete()) {
-							logEvent(String.format(Locale.US, "Unable to delete image %s.", item.getImageName()),
-									"startImageDownload()",
-									LogEntry.LogLevel.Warning
-							);
+				if (purgeUnusedImages) {
+					feedDBHelper = FeedDBHelper.getHelper(this);
+					for (FeedItem item : allItems) {
+						if (item.isDownloaded(imageDirectory) && !feedItemIdsInUse.contains(item.id)) {
+							File file = new File(imageDirectory + item.getImageName());
+							if (!file.delete()) {
+								logEvent(String.format(Locale.US, "Unable to delete image %s.", item.getImageName()),
+										"startImageDownload()",
+										LogEntry.LogLevel.Warning
+								);
+							}
 						}
 					}
+					feedDBHelper.close();
 				}
-				feedDBHelper.close();
 
 				logEvent("Image download complete", "startImageDownload()", LogEntry.LogLevel.Trace);
 
 			}
-
-			// download complete, stop service
-			stopSelf();
 		}
 	}
 

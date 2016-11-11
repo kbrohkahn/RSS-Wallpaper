@@ -24,6 +24,7 @@ import java.util.Random;
 public class ChangeWallpaperService extends IntentService {
 	private static final String TAG = "ChangeWallpaperService";
 
+	public static final String KEY_ITEM_ID_TO_SET = "idToSet";
 
 	private static final int SCALE_HEIGHT = 0;
 	private static final int SCALE_HEIGHT_CROP_CENTER = 1;
@@ -40,6 +41,8 @@ public class ChangeWallpaperService extends IntentService {
 			logEvent(String.format(Locale.US, "Received %s broadcast.", Constants.ACTION_CHANGE_WALLPAPER),
 					"onHandleIntent()",
 					LogEntry.LogLevel.Trace);
+
+			int itemIdToSet = intent.getIntExtra(KEY_ITEM_ID_TO_SET, -1);
 
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 			Resources res = getResources();

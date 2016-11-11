@@ -50,8 +50,7 @@ public class DownloadIconService extends IntentService {
 			boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
 			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
 					.getPath() + "/");
-			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed)
-					, "-1"));
+			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "-1"));
 			boolean downloadIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
 			iconSize = resources.getDimension(R.dimen.icon_size);
 

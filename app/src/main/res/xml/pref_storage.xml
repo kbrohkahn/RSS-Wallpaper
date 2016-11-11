@@ -2,18 +2,27 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<Preference
-		android:key="@string/key_delete_items"
-		android:summary="@string/summary_delete_items"
-		android:title="@string/title_delete_items"/>
-
-	<Preference
-		android:key="@string/key_delete_logs"
-		android:summary="@string/summary_delete_logs"
-		android:title="@string/title_delete_logs"/>
+			android:key="@string/key_image_directory"
+			android:title="@string/title_image_directory"/>
 
 	<SwitchPreference
-		android:defaultValue="true"
-		android:key="@string/key_store_icons"
-		android:title="@string/title_store_icons"/>
+			android:defaultValue="false"
+			android:key="@string/key_purge_unused_images"
+			android:summary="@string/summary_purge_unused_images"
+			android:title="@string/title_purge_unused_images"/>
+
+	<SwitchPreference
+			android:defaultValue="true"
+			android:key="@string/key_store_icons"
+			android:title="@string/title_store_icons"/>
+	<Preference
+			android:key="@string/key_delete_items"
+			android:summary="@string/summary_delete_items"
+			android:title="@string/title_delete_items"/>
+
+	<Preference
+			android:key="@string/key_delete_logs"
+			android:summary="@string/summary_delete_logs"
+			android:title="@string/title_delete_logs"/>
 
 </PreferenceScreen>

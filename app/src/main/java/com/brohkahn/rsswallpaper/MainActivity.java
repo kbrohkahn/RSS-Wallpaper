@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
 		// check if any feeds exist, if not save defaults
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
+		List<RSSFeed> f = feedDBHelper.getAllFeeds();
 		if (feedDBHelper.getAllFeeds().size() == 0) {
 
 			// get and save default feed
@@ -208,51 +209,6 @@ public class MainActivity extends AppCompatActivity {
 		nextWallpaperButton.setEnabled(true);
 	}
 
-//    public void showPermissionDialog() {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this)
-//                .setTitle(R.string.permission_request_title)
-//                .setMessage(R.string.permission_request_message)
-//                .setPositiveButton(R.string.permission_request_positive_button, new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialogInterface, int i) {
-//                        requestInternetPermission();
-//                    }
-//                })
-//                .setNegativeButton(R.string.permission_request_negative_button, new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialogInterface, int i) {
-//                        Uri packageUri = Uri.parse("package:" + getApplicationContext().getPackageName());
-//                        Intent uninstallIntent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE, packageUri);
-//                        startActivity(uninstallIntent);
-//                    }
-//                });
-//        builder.create().show();
-//    }
-//
-//    private void requestInternetPermission() {
-//        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET, Manifest.permission.SET_WALLPAPER}, REQUEST_PERMISSIONS);
-//    }
-//
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode,
-//                                           @NonNull String permissions[],
-//                                           @NonNull int[] grantResults) {
-//        switch (requestCode) {
-//            case REQUEST_PERMISSIONS: {
-//                // If request is cancelled, the result arrays are empty.
-//                if (grantResults.length > 0
-//                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                    logEvent("All permissions received :)",
-//                            "onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults)",
-//                            LogEntry.LogLevel.Message);
-//
-//                    restartTimers();
-//                } else {
-//                    showPermissionDialog();
-//                }
-//            }
-//        }
-//    }
 
 	public void blockCurrentWallpaper(View view) {
 		blockWallpaperButton.setEnabled(false);

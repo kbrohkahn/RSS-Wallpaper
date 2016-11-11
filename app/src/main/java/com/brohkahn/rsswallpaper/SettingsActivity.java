@@ -1,5 +1,6 @@
 package com.brohkahn.rsswallpaper;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -7,8 +8,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,6 +22,10 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.view.MenuItem;
@@ -43,6 +51,10 @@ import java.util.Locale;
 public class SettingsActivity extends AppCompatPreferenceActivity {
 	private static final String TAG = "SettingsActivity";
 
+	private static final int REQUEST_PERMISSIONS_CODE = 1;
+	private static final int ACTIVITY_CHOOSE_DIRECTORY = 2;
+
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -52,16 +64,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			actionBar.setDisplayHomeAsUpEnabled(true);
 		}
 	}
-
-	@Override
-	protected void onPause() {
-		Intent newIntent = new Intent(this, ScheduleTimerService.class);
-		newIntent.setAction(Constants.ACTION_SCHEDULE_ALARMS);
-		startService(newIntent);
-
-		super.onPause();
-	}
-
 
 	@Override
 	public boolean onIsMultiPane() {
@@ -173,6 +175,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 	}
 
 	public static class RSSFeedPreferenceFragment extends PreferenceFragment {
+
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
@@ -201,6 +204,15 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			bindPreferenceSummaryToValue(feedListPreference);
 			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_update_interval)));
 			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_update_time)));
+		}
+
+		@Override
+		public void onStop() {
+			Intent newIntent = new Intent(getActivity(), ScheduleTimerService.class);
+			newIntent.setAction(Constants.ACTION_SCHEDULE_ALARMS);
+			getActivity().startService(newIntent);
+
+			super.onStop();
 		}
 
 		@Override
@@ -280,6 +292,15 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		}
 
 		@Override
+		public void onStop() {
+			Intent newIntent = new Intent(getActivity(), ScheduleTimerService.class);
+			newIntent.setAction(Constants.ACTION_SCHEDULE_ALARMS);
+			getActivity().startService(newIntent);
+
+			super.onStop();
+		}
+
+		@Override
 		public boolean onOptionsItemSelected(MenuItem item) {
 			int id = item.getItemId();
 			if (id == android.R.id.home) {
@@ -293,6 +314,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 	public static class StoragePreferenceFragment extends PreferenceFragment {
 		private boolean initiallyStoreIcons;
+		private boolean initiallyPurgeImages;
 		private String imageDirectory;
 
 		@Override
@@ -323,9 +345,22 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 			initiallyStoreIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
+			initiallyPurgeImages = preferences.getBoolean(resources.getString(R.string.key_purge_unused_images), false);
 			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
 					getActivity().getFilesDir().getPath() + "/"
 			);
+
+
+			Preference directoryPreference = findPreference(resources.getString(R.string.key_image_directory));
+			directoryPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+				@Override
+				public boolean onPreferenceClick(Preference preference) {
+					((SettingsActivity) getActivity()).changeDirectory();
+					return false;
+				}
+			});
+
+			bindPreferenceSummaryToValue(directoryPreference);
 
 		}
 
@@ -336,7 +371,16 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			if (storeIconsPreference.isChecked() && !initiallyStoreIcons) {
 				DownloadIconService.startDownloadIconAction(getActivity());
 			} else if (!storeIconsPreference.isChecked() && initiallyStoreIcons) {
-				new DeleteIconsTask(getActivity(), imageDirectory, false, true).execute();
+				new DeleteFileTask(getActivity(), imageDirectory, false, true).execute();
+			}
+
+
+			SwitchPreference purgeImagesPreference = (SwitchPreference) findPreference(getResources()
+					.getString(R.string.key_purge_unused_images));
+			if (purgeImagesPreference.isChecked() && !initiallyPurgeImages) {
+				DownloadImageService.startDownloadImageAction(getActivity());
+			} else if (!purgeImagesPreference.isChecked() && initiallyPurgeImages) {
+				new DeleteFileTask(getActivity(), imageDirectory, true, false).execute();
 			}
 
 			super.onStop();
@@ -393,7 +437,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			feedDbHelper.deleteFeedItems();
 			feedDbHelper.close();
 
-			new DeleteIconsTask(getActivity(), imageDirectory, true, true).execute();
+			new DeleteFileTask(getActivity(), imageDirectory, true, true).execute();
 		}
 
 		@Override
@@ -408,14 +452,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 	}
 
 
-	static class DeleteIconsTask extends AsyncTask<Void, Void, Void> {
+	static class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 		private Activity activity;
 		private String imageDirectory;
 
 		private boolean deleteImages;
 		private boolean deleteIcons;
 
-		DeleteIconsTask(Activity activity, String imageDirectory, boolean deleteImages, boolean deleteIcons) {
+		DeleteFileTask(Activity activity, String imageDirectory, boolean deleteImages, boolean deleteIcons) {
 			this.activity = activity;
 			this.imageDirectory = imageDirectory;
 			this.deleteImages = deleteImages;
@@ -464,7 +508,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 								String.format(Locale.US, "Unable to delete icon %s.", imagePath),
 								"doInBackground()",
 								TAG,
-								LogEntry.LogLevel.Warning);
+								LogEntry.LogLevel.Trace);
 					}
 				}
 			}
@@ -478,5 +522,89 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		}
 	}
 
+	public void changeDirectory() {
+		if (hasStoragePermission()) {
+			startDirectoryChooser();
+		} else {
+			showPermissionDialog();
+		}
+	}
+
+	public boolean hasStoragePermission() {
+		return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+	}
+
+	public void showPermissionDialog() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this)
+				.setTitle(R.string.permission_request_title)
+				.setMessage(R.string.permission_request_message)
+				.setPositiveButton(R.string.permission_request_positive_button, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialogInterface, int i) {
+						requestStoragePermission();
+						dialogInterface.dismiss();
+					}
+				})
+				.setNegativeButton(R.string.permission_request_negative_button, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialogInterface, int i) {
+						dialogInterface.dismiss();
+					}
+				});
+		builder.create().show();
+	}
+
+	private void requestStoragePermission() {
+		ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSIONS_CODE);
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode,
+										   @NonNull String permissions[],
+										   @NonNull int[] grantResults) {
+		switch (requestCode) {
+			case REQUEST_PERMISSIONS_CODE: {
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					startDirectoryChooser();
+				} else {
+					showPermissionDialog();
+				}
+			}
+		}
+	}
+
+	public void startDirectoryChooser() {
+		(new DirectoryChooser(this)).showDialog();
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == REQUEST_PERMISSIONS_CODE) {
+			if (resultCode == RESULT_OK) {
+				Uri uri = data.getData();
+				String path = getRealPathFromURI(uri);
+
+				SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+				editor.putString(getResources().getString(R.string.key_image_directory), path);
+				editor.apply();
+			}
+		} else {
+			super.onActivityResult(requestCode, resultCode, data);
+		}
+	}
+
+	public String getRealPathFromURI(Uri contentUri) {
+		String[] projection = {MediaStore.Images.Media.DATA};
+		Cursor cursor = getContentResolver().query(contentUri, projection, null, null, null);
+
+		String path = null;
+		if (cursor != null) {
+			cursor.moveToFirst();
+			path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
+			cursor.close();
+		}
+		return path;
+	}
 }
 
