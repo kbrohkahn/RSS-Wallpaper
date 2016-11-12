@@ -6,6 +6,7 @@
 	<string name="ok">OK</string>
 	<string name="request">Request</string>
 	<string name="cancel">Cancel</string>
+	<string name="save">Save</string>
 	<string name="downloaded_on">Downloaded on %1$s</string>
 	<string name="view_web_page">View on web</string>
 	<string name="starting_download">Downloading images for included RSS feed, this may take a few seconds.</string>
@@ -64,6 +65,7 @@
 	<!-- Directory chooser -->
 	<string name="exit_directory">Back</string>
 	<string name="create_directory">New folder</string>
+	<string name="create_directory_hint">Enter folder name</string>
 
 
 	<!-- App settings keys -->
@@ -135,7 +137,7 @@
 	<string name="summary_show_error_toasts">Like inability to download an image</string>
 	<!-- Storage -->
 	<string name="summary_delete_items">If app not working properly</string>
-	<string name="summary_delete_logs">Logs useful for monitoring app</string>
+	<string name="summary_delete_logs">Automatically purged after 1 week</string>
 	<string name="summary_purge_unused_images">When no longer in wallpaper rotation</string>
 
 	<!-- Values -->

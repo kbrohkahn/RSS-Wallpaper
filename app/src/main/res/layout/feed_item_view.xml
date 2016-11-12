@@ -25,11 +25,11 @@
     <include layout="@layout/feed_item_view_content"/>
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/feed_item_view_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@drawable/ic_photo_size_select_actual_white_36dp"/>
+            android:id="@+id/feed_item_view_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/large_margin"
+            app:srcCompat="@drawable/ic_photo_size_select_actual_white_36dp"/>
 
 </android.support.design.widget.CoordinatorLayout>

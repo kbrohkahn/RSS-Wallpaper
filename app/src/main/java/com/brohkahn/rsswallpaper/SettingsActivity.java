@@ -1,7 +1,6 @@
 package com.brohkahn.rsswallpaper;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -11,18 +10,13 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -31,28 +25,14 @@ import android.support.v7.app.AlertDialog;
 import android.view.MenuItem;
 
 import com.brohkahn.loggerlibrary.LogDBHelper;
-import com.brohkahn.loggerlibrary.LogEntry;
 
-import java.io.File;
 import java.util.List;
-import java.util.Locale;
 
-/**
- * A {@link PreferenceActivity} that presents a set of application settings. On
- * handset devices, settings are presented as a single list. On tablets,
- * settings are split by category, with category headers shown to the left of
- * the list of settings.
- * <p>
- * See <a href="http://developer.android.com/design/patterns/settings.html">
- * Android Design: Settings</a> for design guidelines and the <a
- * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
- * API Guide</a> for more information on developing a Settings UI.
- */
 public class SettingsActivity extends AppCompatPreferenceActivity {
-	private static final String TAG = "SettingsActivity";
+//	private static final String TAG = "SettingsActivity";
 
 	private static final int REQUEST_PERMISSIONS_CODE = 1;
-	private static final int ACTIVITY_CHOOSE_DIRECTORY = 2;
+	private static final int CHOOSE_DIRECTORY_CODE = 2;
 
 
 	@Override
@@ -69,7 +49,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 	public boolean onIsMultiPane() {
 		return (getResources().getConfiguration().screenLayout
 				& Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_XLARGE;
-
 	}
 
 	@Override
@@ -347,9 +326,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			initiallyStoreIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
 			initiallyPurgeImages = preferences.getBoolean(resources.getString(R.string.key_purge_unused_images), false);
 			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
-					getActivity().getFilesDir().getPath() + "/"
-			);
-
+					Helpers.getDefaultFolder(getActivity()));
 
 			Preference directoryPreference = findPreference(resources.getString(R.string.key_image_directory));
 			directoryPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -366,12 +343,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 		@Override
 		public void onStop() {
+			DeleteFileTask deleteFileTask = new DeleteFileTask(getActivity(), imageDirectory);
+
 			SwitchPreference storeIconsPreference = (SwitchPreference) findPreference(getResources()
 					.getString(R.string.key_store_icons));
 			if (storeIconsPreference.isChecked() && !initiallyStoreIcons) {
 				DownloadIconService.startDownloadIconAction(getActivity());
 			} else if (!storeIconsPreference.isChecked() && initiallyStoreIcons) {
-				new DeleteFileTask(getActivity(), imageDirectory, false, true).execute();
+				deleteFileTask.deleteAllIcons = true;
 			}
 
 
@@ -380,7 +359,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			if (purgeImagesPreference.isChecked() && !initiallyPurgeImages) {
 				DownloadImageService.startDownloadImageAction(getActivity());
 			} else if (!purgeImagesPreference.isChecked() && initiallyPurgeImages) {
-				new DeleteFileTask(getActivity(), imageDirectory, true, false).execute();
+				deleteFileTask.purgeOldImages = true;
+			}
+
+			if (deleteFileTask.deleteAllIcons || deleteFileTask.deleteAllImages || deleteFileTask.purgeOldImages) {
+				deleteFileTask.execute();
 			}
 
 			super.onStop();
@@ -433,11 +416,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		}
 
 		public void deleteItems() {
-			FeedDBHelper feedDbHelper = FeedDBHelper.getHelper(getActivity());
-			feedDbHelper.deleteFeedItems();
-			feedDbHelper.close();
-
-			new DeleteFileTask(getActivity(), imageDirectory, true, true).execute();
+			DeleteFileTask deleteFileTask = new DeleteFileTask(getActivity(), imageDirectory);
+			deleteFileTask.deleteAllItems = true;
+			deleteFileTask.deleteAllIcons = true;
+			deleteFileTask.deleteAllImages = true;
+			deleteFileTask.execute();
 		}
 
 		@Override
@@ -451,76 +434,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		}
 	}
 
-
-	static class DeleteFileTask extends AsyncTask<Void, Void, Void> {
-		private Activity activity;
-		private String imageDirectory;
-
-		private boolean deleteImages;
-		private boolean deleteIcons;
-
-		DeleteFileTask(Activity activity, String imageDirectory, boolean deleteImages, boolean deleteIcons) {
-			this.activity = activity;
-			this.imageDirectory = imageDirectory;
-			this.deleteImages = deleteImages;
-			this.deleteIcons = deleteIcons;
-		}
-
-		@Override
-		protected Void doInBackground(Void... voids) {
-
-			if (deleteIcons && deleteImages) {
-				((MyApplication) (activity.getApplication())).logEvent(
-						"Deleting icons from RSS feed items",
-						"doInBackground",
-						TAG,
-						LogEntry.LogLevel.Message);
-			} else if (deleteIcons) {
-				((MyApplication) (activity.getApplication())).logEvent(
-						"Deleting all images from RSS feed items",
-						"doInBackground",
-						TAG,
-						LogEntry.LogLevel.Message);
-			}
-
-			// delete all icons
-			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(activity);
-			List<FeedItem> allItems = feedDBHelper.getAllItems();
-			feedDBHelper.close();
-
-			for (FeedItem item : allItems) {
-				if (deleteIcons) {
-					String iconPath = imageDirectory + item.getIconName();
-					File iconFile = new File(iconPath);
-					if (!iconFile.delete()) {
-						((MyApplication) (activity.getApplication())).logEvent(
-								String.format(Locale.US, "Unable to delete icon %s.", iconPath),
-								"doInBackground",
-								TAG,
-								LogEntry.LogLevel.Warning);
-					}
-				}
-				if (deleteImages) {
-					String imagePath = imageDirectory + item.getImageName();
-					File imageFile = new File(imagePath);
-					if (!imageFile.delete()) {
-						((MyApplication) (activity.getApplication())).logEvent(
-								String.format(Locale.US, "Unable to delete icon %s.", imagePath),
-								"doInBackground()",
-								TAG,
-								LogEntry.LogLevel.Trace);
-					}
-				}
-			}
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(Void aVoid) {
-			activity = null;
-			super.onPostExecute(aVoid);
-		}
-	}
 
 	public void changeDirectory() {
 		if (hasStoragePermission()) {
@@ -575,36 +488,29 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 	}
 
 	public void startDirectoryChooser() {
-		(new DirectoryChooser(this)).showDialog();
+		startActivityForResult(new Intent(this, DirectoryChooserActivity.class), CHOOSE_DIRECTORY_CODE);
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == REQUEST_PERMISSIONS_CODE) {
-			if (resultCode == RESULT_OK) {
-				Uri uri = data.getData();
-				String path = getRealPathFromURI(uri);
+		if (resultCode == RESULT_OK) {
+			if (requestCode == CHOOSE_DIRECTORY_CODE) {
+				SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+				String oldPath = preferences.getString(getResources().getString(R.string.key_image_directory),
+						Helpers.getDefaultFolder(this));
+				String newPath = data.getStringExtra(DirectoryChooserActivity.RESULT_KEY);
 
-				SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-				editor.putString(getResources().getString(R.string.key_image_directory), path);
-				editor.apply();
+				new ChangeDirectoryTask(this).execute(oldPath, newPath);
+
+//				SharedPreferences.Editor editor = preferences.edit();
+//				editor.putString(getResources().getString(R.string.key_image_directory), newPath);
+//				editor.apply();
+
+
 			}
 		} else {
 			super.onActivityResult(requestCode, resultCode, data);
 		}
-	}
-
-	public String getRealPathFromURI(Uri contentUri) {
-		String[] projection = {MediaStore.Images.Media.DATA};
-		Cursor cursor = getContentResolver().query(contentUri, projection, null, null, null);
-
-		String path = null;
-		if (cursor != null) {
-			cursor.moveToFirst();
-			path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
-			cursor.close();
-		}
-		return path;
 	}
 }
 

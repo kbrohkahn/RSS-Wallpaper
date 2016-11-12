@@ -11,6 +11,8 @@ final class Constants {
 
 	static final String KEY_INTENT_SOURCE = "intentSource";
 
+	static final String ICONS_FOLDER = "icons/";
+
 	static final int CHANGE_WALLPAPER_RECEIVER_CODE = 89232565;
 	static final int DOWNLOAD_RSS_SERVICE_CODE = 32477277;
 

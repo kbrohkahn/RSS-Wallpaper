@@ -56,7 +56,8 @@ public class ChangeWallpaperService extends IntentService {
 			// rss feed
 			int currentFeedId = Integer.parseInt(prefs.getString(res.getString(R.string.key_current_feed), "-1"));
 			// app setting
-			String imageDirectory = prefs.getString(res.getString(R.string.key_image_directory), getFilesDir().getPath() + "/");
+			String imageDirectory = prefs.getString(res.getString(R.string.key_image_directory),
+					Helpers.getDefaultFolder(this));
 
 			String keyCurrentItem = getResources().getString(R.string.key_current_item);
 			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
@@ -119,24 +120,22 @@ public class ChangeWallpaperService extends IntentService {
 					int screenWidth = size.x;
 
 					// get image dimensions
-					BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-					bitmapOptions.inJustDecodeBounds = true;
-					BitmapFactory.decodeFile(imagePath, bitmapOptions);
-
-					// Calculate inSampleSize
-					int imageHeight = bitmapOptions.outHeight;
-					int imageWidth = bitmapOptions.outWidth;
-					int inSampleSize = 1;
-					while (cropAndScaleType != CROP_CENTER && imageHeight > screenHeight) {
-						imageHeight /= 2;
-						imageWidth /= 2;
-						inSampleSize *= 2;
+					int inSampleSize;
+					if (cropAndScaleType == CROP_CENTER) {
+						inSampleSize = 1;
+					} else {
+						inSampleSize = Helpers.getImageScale(imagePath, screenWidth, screenHeight);
 					}
 
 					// Decode bitmap with inSampleSize set
+					BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
 					bitmapOptions.inJustDecodeBounds = false;
 					bitmapOptions.inSampleSize = inSampleSize;
+
 					Bitmap inputBitmap = BitmapFactory.decodeFile(imagePath, bitmapOptions);
+					int imageHeight = inputBitmap.getHeight();
+					int imageWidth = inputBitmap.getWidth();
+
 					Bitmap outputBitmap;
 					int x, y;
 

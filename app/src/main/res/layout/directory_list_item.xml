@@ -3,6 +3,6 @@
 		  android:id="@+id/directory_name"
 		  android:layout_width="match_parent"
 		  android:layout_height="wrap_content"
-		  android:padding="@dimen/default_margin">
+		  android:padding="@dimen/large_margin">
 
 </TextView>

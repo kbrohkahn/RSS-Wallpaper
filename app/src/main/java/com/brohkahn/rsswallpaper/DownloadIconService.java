@@ -48,8 +48,8 @@ public class DownloadIconService extends IntentService {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 			Resources resources = getResources();
 			boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
-			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
-					.getPath() + "/");
+			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
+					Helpers.getDefaultFolder(this));
 			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "-1"));
 			boolean downloadIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
 			iconSize = resources.getDimension(R.dimen.icon_size);
@@ -63,30 +63,12 @@ public class DownloadIconService extends IntentService {
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 			NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
-			String message;
-			boolean canDownload;
-			if (activeNetwork == null) {
-				message = "Not connected to internet, unable to download icons.";
-				canDownload = false;
-			} else {
-				boolean wifiConnection = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
-				if (wifiOnly && !wifiConnection) {
-					message = "Not connected to Wifi, unable to download icons.";
-					canDownload = false;
-				} else {
-					canDownload = true;
-					if (wifiOnly) {
-						message = "Connected to Wifi, starting download of icons.";
-					} else {
-						message = "Connected to internet, starting download of icons.";
-					}
-				}
-			}
+			BooleanMessage response = Helpers.canDownload(activeNetwork, wifiOnly);
 
-			if (!canDownload) {
-				logEvent(message, "startImageDownload()", LogEntry.LogLevel.Message);
+			if (!response.booleanValue) {
+				logEvent(response.message, "onHandleIntent()", LogEntry.LogLevel.Message);
 			} else {
-				logEvent(message, "startImageDownload()", LogEntry.LogLevel.Trace);
+				logEvent(response.message, "onHandleIntent()", LogEntry.LogLevel.Trace);
 
 				List<Integer> feedItemIdsInUse = new ArrayList<>();
 
@@ -95,6 +77,16 @@ public class DownloadIconService extends IntentService {
 				List<FeedItem> recentItems = feedDBHelper.getAllItemsInFeed(currentFeedId);
 				List<FeedItem> allItems = feedDBHelper.getAllItems();
 				feedDBHelper.close();
+
+				File iconDirectory = new File(imageDirectory + Constants.ICONS_FOLDER);
+				if (!iconDirectory.exists()) {
+					if (!iconDirectory.mkdir()) {
+						logEvent("Unable to create icon directory " + iconDirectory.getAbsolutePath(),
+								"onHandleIntent",
+								LogEntry.LogLevel.Error);
+						return;
+					}
+				}
 
 				for (int i = 0; i < recentItems.size(); i++) {
 					FeedItem item = recentItems.get(i);
@@ -132,9 +124,6 @@ public class DownloadIconService extends IntentService {
 
 			}
 		}
-
-		// download complete, stop service
-		stopSelf();
 	}
 
 

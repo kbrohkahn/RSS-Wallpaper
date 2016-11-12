@@ -25,7 +25,6 @@ import java.util.Locale;
 public class DownloadRSSService extends IntentService {
 	private static final String TAG = "DownloadRSSService";
 
-
 	private static final String[] imageSuffices = {".png", ".jpg", ".jpeg"};
 //	private static final String[] absoluteURLPrefixes = {"http://", "https://"};
 //	private static final String[] relativeURLImagePrefixes = {"href=\"", "src=\""};
@@ -42,40 +41,6 @@ public class DownloadRSSService extends IntentService {
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		if (intent != null && intent.getAction().equals(Constants.ACTION_DOWNLOAD_RSS)) {
-//			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-//			Resources resources = getResources();
-//			boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
-//		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "1"));
-//		int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
-
-//			// check if we can download anything based on internet connection
-//			ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-//			NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-//
-//			String message;
-//			boolean canDownload;
-//			if (activeNetwork == null) {
-//				message = "Not connected to internet, unable to download feeds.";
-//				canDownload = false;
-//			} else {
-//				boolean wifiConnection = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
-//				if (wifiOnly && !wifiConnection) {
-//					message = "Not connected to Wifi, unable to download feeds.";
-//					canDownload = false;
-//				} else {
-//					canDownload = true;
-//					if (wifiOnly) {
-//						message = "Connected to Wifi, starting download of feeds.";
-//					} else {
-//						message = "Connected to internet, starting download of feeds.";
-//					}
-//				}
-//			}
-//
-//			logEvent(message, "startDownloadIntent()", LogEntry.LogLevel.Trace);
-//
-//			if (canDownload) {
-
 			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
 			allFeeds = feedDBHelper.getAllFeeds();
 			existingFeedItems = feedDBHelper.getAllItems();
@@ -117,15 +82,14 @@ public class DownloadRSSService extends IntentService {
 			// save all new feed items
 			long updatedFeedItemCount = feedDBHelper.saveFeedItemList(newFeedItems);
 			if (updatedFeedItemCount == newFeedItems.size()) {
-				logEvent(String.format(Locale.US,
-						"Successfully saved %d new feed items.", updatedFeedItemCount
-				), "startDownloadIntent()", LogEntry.LogLevel.Trace);
+				logEvent("Successfully saved " + String.valueOf(updatedFeedItemCount) + " new feed items"
+						, "startDownloadIntent()",
+						LogEntry.LogLevel.Trace);
 			} else {
-				logEvent(String.format(Locale.US,
-						"Failed to save all feed items, wanted to save %d but only saved %d.",
-						newFeedItems.size(),
-						updatedFeedItemCount
-				), "startDownloadIntent()", LogEntry.LogLevel.Warning);
+				logEvent("Failed to save all feed items, wanted to save + " + String.valueOf(newFeedItems.size()) +
+								" but only saved " + String.valueOf(updatedFeedItemCount),
+						"startDownloadIntent()",
+						LogEntry.LogLevel.Warning);
 			}
 
 			// update feeds
@@ -136,11 +100,9 @@ public class DownloadRSSService extends IntentService {
 						LogEntry.LogLevel.Trace
 				);
 			} else {
-				logEvent(String.format(Locale.US,
-						"Failed to save all feeds, wanted to save %d but only saved %d.",
-						allFeeds.size(),
-						updatedFeedCount
-						), "startDownloadIntent()",
+				logEvent("Failed to save all feeds, wanted to save " + String.valueOf(allFeeds.size()) +
+								" but only saved " + String.valueOf(updatedFeedCount),
+						"startDownloadIntent()",
 						LogEntry.LogLevel.Warning
 				);
 			}
@@ -153,7 +115,6 @@ public class DownloadRSSService extends IntentService {
 
 			// start image download service as soon as we find an item we haven't downloaded
 			DownloadImageService.startDownloadImageAction(this);
-
 		}
 	}
 

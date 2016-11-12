@@ -33,9 +33,6 @@ import android.widget.TextView;
 import com.brohkahn.loggerlibrary.LogEntry;
 import com.brohkahn.loggerlibrary.LogViewList;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MainActivity extends AppCompatActivity {
 	private static final String TAG = "MainActivity";
 
@@ -57,40 +54,27 @@ public class MainActivity extends AppCompatActivity {
 		Toolbar toolbar = (Toolbar) findViewById(R.id.activity_main_toolbar);
 		setSupportActionBar(toolbar);
 
-
 		blockWallpaperButton = (Button) findViewById(R.id.block_wallpaper_button);
 		nextWallpaperButton = (Button) findViewById(R.id.next_wallpaper_button);
 
 		imageView = ((ImageView) findViewById(R.id.current_item_image));
 
+		// make sure current feed id is valid
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		Resources resources = getResources();
+		int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "-1"));
+
 		// check if any feeds exist, if not save defaults
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
-		List<RSSFeed> f = feedDBHelper.getAllFeeds();
-		if (feedDBHelper.getAllFeeds().size() == 0) {
-
-			// get and save default feed
-			List<RSSFeed> defaultFeedList = new ArrayList<>();
-			defaultFeedList.add(new RSSFeed(0,
-					"http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
-					"NASA Image of the Day",
-					"enclosure",
-					"url",
-					false,
-					true
-			));
-			feedDBHelper.saveNewFeeds(defaultFeedList);
-
-			// get id of feed we just saved, put it in preferences
-			int currentFeedId = feedDBHelper.getAllFeeds().get(0).id;
-			Resources resources = getResources();
-			SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+		if (feedDBHelper.getFeed(currentFeedId) == null) {
+			currentFeedId = feedDBHelper.getAllFeeds().get(0).id;
+			SharedPreferences.Editor editor = preferences.edit();
 			editor.putString(resources.getString(R.string.key_current_feed), String.valueOf(currentFeedId));
 			editor.apply();
 		}
 
 		// check if we have no initial items before closing helper
 		boolean noInitialItems = feedDBHelper.getAllItems().size() == 0;
-
 		feedDBHelper.close();
 
 		// if no initial items, we need to download and restart timers
@@ -147,8 +131,8 @@ public class MainActivity extends AppCompatActivity {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		currentItemId = settings.getInt(resources.getString(R.string.key_current_item), -1);
-		String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory), getFilesDir()
-				.getPath() + "/");
+		String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory),
+				Helpers.getDefaultFolder(this));
 		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "-1"));
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
@@ -167,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
 
 			String imagePath = imageDirectory + currentItem.getImageName();
 			BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-			bitmapOptions.inSampleSize = MyApplication.getImageScale(imagePath, screenWidth, 0);
+			bitmapOptions.inSampleSize = Helpers.getImageScale(imagePath, screenWidth, 0);
 			currentImage = BitmapFactory.decodeFile(imagePath, bitmapOptions);
 
 			titleText = currentItem.title;
@@ -178,6 +162,14 @@ public class MainActivity extends AppCompatActivity {
 			titleText = "";
 			linkText = "";
 			descriptionText = "";
+
+			Intent downloadRSSIntent = new Intent(this, DownloadRSSService.class);
+			downloadRSSIntent.setAction(Constants.ACTION_DOWNLOAD_RSS);
+			startService(downloadRSSIntent);
+
+			Intent newIntent = new Intent(this, ScheduleTimerService.class);
+			newIntent.setAction(Constants.ACTION_SCHEDULE_ALARMS);
+			startService(newIntent);
 		}
 
 		recycleCurrentBitmap();

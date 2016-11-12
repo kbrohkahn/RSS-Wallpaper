@@ -14,6 +14,8 @@ public class LogDBHelper extends SQLiteOpenHelper {
 	private static final int DATABASE_VERSION = 2;
 //    private static final String TAG = "LogDBHelper";
 
+	private static final int DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
+
 	private static final String DB_NAME = "LOG_ENTRIES.DB";
 
 	private static final String SQL_CREATE_ENTRIES =
@@ -76,14 +78,20 @@ public class LogDBHelper extends SQLiteOpenHelper {
 		values.put(LogDBEntry.COLUMN_LEVEL, level.ordinal());
 
 		SQLiteDatabase db = getWritableDatabase();
+
+		// delete logs older than 1 day
+		String deleteWhere = LogDBEntry.COLUMN_TIME + "<" +
+				String.valueOf(Calendar.getInstance().getTimeInMillis() - DAY_IN_MILLIS * 7);
+		db.delete(LogDBEntry.TABLE_NAME, deleteWhere, null);
+
 		return db.insert(LogDBEntry.TABLE_NAME, null, values);
 	}
 
 	LogEntry getLogEntry(int id) {
 		String query = String.format(Locale.US, "SELECT * FROM %s where %s=%d",
-									 LogDBEntry.TABLE_NAME,
-									 LogDBEntry._ID,
-									 id
+				LogDBEntry.TABLE_NAME,
+				LogDBEntry._ID,
+				id
 		);
 
 		SQLiteDatabase db = getReadableDatabase();

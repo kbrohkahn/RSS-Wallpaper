@@ -29,11 +29,11 @@
 		android:layout_height="match_parent"/>
 
 	<android.support.design.widget.FloatingActionButton
-		android:id="@+id/rss_feed_list_view_fab"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_gravity="bottom|end"
-		android:layout_margin="@dimen/fab_margin"
-		app:srcCompat="@drawable/ic_cached_white_36dp"/>
+			android:id="@+id/rss_feed_list_view_fab"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="bottom|end"
+			android:layout_margin="@dimen/large_margin"
+			app:srcCompat="@drawable/ic_cached_white_36dp"/>
 
 </android.support.design.widget.CoordinatorLayout>

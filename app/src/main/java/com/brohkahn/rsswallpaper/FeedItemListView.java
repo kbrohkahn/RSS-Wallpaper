@@ -129,8 +129,8 @@ public class FeedItemListView extends AppCompatActivity {
 
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 			Resources resources = getResources();
-			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
-					.getPath() + "/");
+			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
+					Helpers.getDefaultFolder(context));
 		}
 
 		public void bindView(View view, Context context, Cursor cursor) {

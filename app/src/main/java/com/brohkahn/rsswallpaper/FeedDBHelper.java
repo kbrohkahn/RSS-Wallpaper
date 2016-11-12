@@ -66,6 +66,18 @@ class FeedDBHelper extends SQLiteOpenHelper {
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL(SQL_CREATE_ENTRIES_TABLE);
 		db.execSQL(SQL_CREATE_FEEDS_TABLE);
+
+		// get and save default feed
+		List<RSSFeed> defaultFeedList = new ArrayList<>();
+		defaultFeedList.add(new RSSFeed(0,
+				"http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
+				"NASA Image of the Day",
+				"enclosure",
+				"url",
+				false,
+				true
+		));
+		saveNewFeeds(defaultFeedList);
 	}
 
 	@Override

@@ -42,14 +42,13 @@ class FeedItem {
 //	}
 
 	boolean isDownloaded(String folder) {
-		String filePath = folder + getImageName();
-		File file = new File(filePath);
+		File file = new File(folder + getImageName());
 		return file.exists();
 	}
 
 	String getImageName() {
 		if (imageLink != null) {
-			return String.valueOf(id) + imageLink.substring(imageLink.lastIndexOf('.'));
+			return String.valueOf(id) + imageLink.substring(imageLink.lastIndexOf('/') + 1);
 		} else {
 			return "";
 		}
@@ -57,7 +56,7 @@ class FeedItem {
 
 	String getIconName() {
 		if (imageLink != null) {
-			return "icon_" + String.valueOf(id) + imageLink.substring(imageLink.lastIndexOf('.'));
+			return Constants.ICONS_FOLDER + imageLink.substring(imageLink.lastIndexOf('/') + 1);
 		} else {
 			return "";
 		}

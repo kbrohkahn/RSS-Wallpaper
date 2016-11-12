@@ -44,8 +44,7 @@ public class DownloadImageService extends IntentService {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 			Resources resources = getResources();
 			boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
-			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), getFilesDir()
-					.getPath() + "/");
+			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), Helpers.getDefaultFolder(this));
 			int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
 			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "-1"));
 			int currentItemId = preferences.getInt(resources.getString(R.string.key_current_item), -1);
@@ -56,30 +55,12 @@ public class DownloadImageService extends IntentService {
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 			NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
-			String message;
-			boolean canDownload;
-			if (activeNetwork == null) {
-				message = "Not connected to internet, unable to download images.";
-				canDownload = false;
-			} else {
-				boolean wifiConnection = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
-				if (wifiOnly && !wifiConnection) {
-					message = "Not connected to Wifi, unable to download images.";
-					canDownload = false;
-				} else {
-					canDownload = true;
-					if (wifiOnly) {
-						message = "Connected to Wifi, starting download of images.";
-					} else {
-						message = "Connected to internet, starting download of images.";
-					}
-				}
-			}
+			BooleanMessage response = Helpers.canDownload(activeNetwork, wifiOnly);
 
-			if (!canDownload) {
-				logEvent(message, "startImageDownload()", LogEntry.LogLevel.Message);
+			if (!response.booleanValue) {
+				logEvent(response.message, "onHandleIntent()", LogEntry.LogLevel.Message);
 			} else {
-				logEvent(message, "startImageDownload()", LogEntry.LogLevel.Trace);
+				logEvent(response.message, "onHandleIntent()", LogEntry.LogLevel.Trace);
 				List<Integer> feedItemIdsInUse = new ArrayList<>();
 
 				// get list of recent entries and all entries
@@ -101,7 +82,7 @@ public class DownloadImageService extends IntentService {
 							downloadFeedImage(item);
 						} else {
 							logEvent(String.format(Locale.US, "No image link for %s found.", item.title),
-									"startImageDownload()",
+									"onHandleIntent()",
 									LogEntry.LogLevel.Warning
 							);
 						}
@@ -109,7 +90,7 @@ public class DownloadImageService extends IntentService {
 						if (currentItemId == -1) {
 							// immediately set wallpaper to new image
 							logEvent("New image downloaded, setting as wallpaper.",
-									"startImageDownload()",
+									"onHandleIntent()",
 									LogEntry.LogLevel.Trace
 							);
 
@@ -127,7 +108,7 @@ public class DownloadImageService extends IntentService {
 							File file = new File(imageDirectory + item.getImageName());
 							if (!file.delete()) {
 								logEvent(String.format(Locale.US, "Unable to delete image %s.", item.getImageName()),
-										"startImageDownload()",
+										"onHandleIntent()",
 										LogEntry.LogLevel.Warning
 								);
 							}
@@ -136,7 +117,7 @@ public class DownloadImageService extends IntentService {
 					feedDBHelper.close();
 				}
 
-				logEvent("Image download complete", "startImageDownload()", LogEntry.LogLevel.Trace);
+				logEvent("Image download complete", "onHandleIntent()", LogEntry.LogLevel.Trace);
 
 			}
 		}

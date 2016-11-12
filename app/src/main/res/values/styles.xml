@@ -1,19 +1,25 @@
 <resources>
 
-	<!-- Base application theme. -->
-	<style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-		<!-- Customize your theme here. -->
+	<!-- Activity themes -->
+	<style name="Theme" parent="Theme.AppCompat.Light.NoActionBar">
 		<item name="colorPrimary">@color/colorPrimary</item>
 		<item name="colorPrimaryDark">@color/colorPrimaryDark</item>
 		<item name="colorAccent">@color/colorAccent</item>
 	</style>
 
-	<style name="AppTheme_WithActionBar" parent="Theme.AppCompat.Light.DarkActionBar">
-		<!-- Customize your theme here. -->
+	<style name="Theme_WithActionBar" parent="Theme.AppCompat.Light.DarkActionBar">
 		<item name="colorPrimary">@color/colorPrimary</item>
 		<item name="colorPrimaryDark">@color/colorPrimaryDark</item>
 		<item name="colorAccent">@color/colorAccent</item>
 	</style>
+
+	<style name="Theme_Dialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+		<item name="colorPrimary">@color/colorPrimary</item>
+		<item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+		<item name="colorAccent">@color/colorAccent</item>
+	</style>
+
+	<!-- Widget themes -->
 
 	<style name="large_text" parent="Base.TextAppearance.AppCompat.Large">
 		<item name="android:gravity">center_horizontal</item>
@@ -26,7 +32,7 @@
 		<item name="android:layout_height">wrap_content</item>
 	</style>
 
-	<style name="AppTheme.NoActionBar">
+	<style name="Theme.NoActionBar">
 		<item name="windowActionBar">false</item>
 		<item name="windowNoTitle">true</item>
 	</style>
@@ -35,7 +41,6 @@
 
 	<style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 
-	<style name="ImageButton" parent="Widget.AppCompat.Button.Borderless">
-	</style>
+	<style name="ImageButton" parent="Widget.AppCompat.Button.Borderless"/>
 
 </resources>
