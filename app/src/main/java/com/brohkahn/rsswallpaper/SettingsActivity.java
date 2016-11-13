@@ -23,6 +23,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.brohkahn.loggerlibrary.LogDBHelper;
 
@@ -253,6 +254,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 					ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
 					ClipData clip = ClipData.newPlainText(broadcastTitle, Constants.ACTION_CHANGE_WALLPAPER);
 					clipboard.setPrimaryClip(clip);
+
+					Toast.makeText(getActivity(), "Text copied", Toast.LENGTH_SHORT).show();
 					return true;
 				}
 			});
