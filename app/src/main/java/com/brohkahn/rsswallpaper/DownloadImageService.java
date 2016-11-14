@@ -95,7 +95,10 @@ public class DownloadImageService extends IntentService {
 							);
 
 							currentItemId = item.id;
-							sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
+
+							Intent newIntent = new Intent(this, ChangeWallpaperService.class);
+							newIntent.setAction(Constants.ACTION_CHANGE_WALLPAPER);
+							startService(newIntent);
 						}
 					}
 				}

@@ -68,8 +68,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 		db.execSQL(SQL_CREATE_FEEDS_TABLE);
 
 		// get and save default feed
-		List<RSSFeed> defaultFeedList = new ArrayList<>();
-		defaultFeedList.add(new RSSFeed(0,
+		ContentValues values = getContentValuesForFeed(new RSSFeed(0,
 				"http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
 				"NASA Image of the Day",
 				"enclosure",
@@ -77,7 +76,8 @@ class FeedDBHelper extends SQLiteOpenHelper {
 				false,
 				true
 		));
-		saveNewFeeds(defaultFeedList);
+		db.insert(FeedDBEntry.TABLE_NAME, null, values);
+
 	}
 
 	@Override
@@ -132,6 +132,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 
 		return inserted;
 	}
+
 
 	boolean updateImageEnabled(int id, boolean enabled) {
 		String query = "UPDATE " + FeedItemDBEntry.TABLE_NAME +
@@ -342,14 +343,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 
 		long totalInserts = 0;
 		for (RSSFeed feed : feedList) {
-			ContentValues values = new ContentValues();
-
-			values.put(FeedDBEntry.COLUMN_TITLE, feed.title);
-			values.put(FeedDBEntry.COLUMN_SOURCE, feed.source);
-			values.put(FeedDBEntry.COLUMN_ENABLED, feed.enabled);
-			values.put(FeedDBEntry.COLUMN_IMAGE_ON_WEB_PAGE, feed.imageOnWebPage);
-			values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_TAG, feed.entryImageLinkTag);
-			values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_ATTRIBUTE, feed.entryImageLinkAttribute);
+			ContentValues values = getContentValuesForFeed(feed);
 
 			// try to update first
 			long updatedRows = db.update(FeedDBEntry.TABLE_NAME,
@@ -364,6 +358,19 @@ class FeedDBHelper extends SQLiteOpenHelper {
 			}
 		}
 		return totalInserts;
+	}
+
+	private ContentValues getContentValuesForFeed(RSSFeed feed) {
+		ContentValues values = new ContentValues();
+
+		values.put(FeedDBEntry.COLUMN_TITLE, feed.title);
+		values.put(FeedDBEntry.COLUMN_SOURCE, feed.source);
+		values.put(FeedDBEntry.COLUMN_ENABLED, feed.enabled);
+		values.put(FeedDBEntry.COLUMN_IMAGE_ON_WEB_PAGE, feed.imageOnWebPage);
+		values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_TAG, feed.entryImageLinkTag);
+		values.put(FeedDBEntry.COLUMN_ENTRY_IMAGE_LINK_ATTRIBUTE, feed.entryImageLinkAttribute);
+
+		return values;
 	}
 
 //	boolean updateFeedInfo(int id, String title, String link, String description) {

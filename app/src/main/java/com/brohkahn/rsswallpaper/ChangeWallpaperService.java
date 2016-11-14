@@ -24,6 +24,7 @@ import java.util.Random;
 public class ChangeWallpaperService extends IntentService {
 	private static final String TAG = "ChangeWallpaperService";
 
+	public static final String KEY_INTENT_SOURCE = "intentSource";
 	public static final String KEY_ITEM_ID_TO_SET = "idToSet";
 
 	private static final int SCALE_HEIGHT = 0;
@@ -38,9 +39,6 @@ public class ChangeWallpaperService extends IntentService {
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		if (intent != null && intent.getAction().equals(Constants.ACTION_CHANGE_WALLPAPER)) {
-			logEvent(String.format(Locale.US, "Received %s broadcast.", Constants.ACTION_CHANGE_WALLPAPER),
-					"onHandleIntent()",
-					LogEntry.LogLevel.Trace);
 
 			int itemIdToSet = intent.getIntExtra(KEY_ITEM_ID_TO_SET, -1);
 
@@ -204,7 +202,10 @@ public class ChangeWallpaperService extends IntentService {
 
 			sendBroadcast(new Intent(Constants.ACTION_WALLPAPER_UPDATED));
 
-			ChangeWallpaperReceiver.completeWakefulIntent(intent);
+			String intentSource = intent.getStringExtra(KEY_INTENT_SOURCE);
+			if (intentSource != null && intentSource.equals(ChangeWallpaperReceiver.TAG)) {
+				ChangeWallpaperReceiver.completeWakefulIntent(intent);
+			}
 		}
 	}
 
