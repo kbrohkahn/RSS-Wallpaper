@@ -9,6 +9,7 @@ import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
 
 import java.io.File;
+import java.util.List;
 
 class ChangeDirectoryTask extends AsyncTask<String, Void, Boolean> {
 	private static final String TAG = "ChangeDirectoryTask";
@@ -45,12 +46,31 @@ class ChangeDirectoryTask extends AsyncTask<String, Void, Boolean> {
 		} else {
 			boolean success = true;
 
-			File oldDirectory = new File(oldPath);
-			for (File file : oldDirectory.listFiles()) {
-				File newFile = new File(newPath + file.getName());
-				if (!file.renameTo(newFile)) {
-					logEvent("Error moving file " + file.getAbsolutePath(), LogEntry.LogLevel.Error);
-					success = false;
+			FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(context);
+			List<FeedItem> allItems = feedDBHelper.getAllItems();
+			feedDBHelper.close();
+
+			// move all images
+			for (FeedItem item : allItems) {
+				File oldImageFile = new File(oldPath + item.getImageName());
+				if (oldImageFile.exists()) {
+					File newImageFile = new File(newPath + item.getImageName());
+					if (!oldImageFile.renameTo(newImageFile)) {
+						logEvent("Error moving file " + oldImageFile.getAbsolutePath(), LogEntry.LogLevel.Error);
+						success = false;
+					}
+				}
+			}
+
+			// move all icons
+			for (FeedItem item : allItems) {
+				File oldImageFile = new File(oldPath + Constants.ICONS_FOLDER + item.getIconName());
+				if (oldImageFile.exists()) {
+					File newImageFile = new File(newPath + Constants.ICONS_FOLDER + item.getIconName());
+					if (!oldImageFile.renameTo(newImageFile)) {
+						logEvent("Error moving file " + oldImageFile.getAbsolutePath(), LogEntry.LogLevel.Error);
+						success = false;
+					}
 				}
 			}
 

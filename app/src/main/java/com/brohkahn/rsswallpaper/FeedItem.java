@@ -41,14 +41,14 @@ class FeedItem {
 //		this.enabled = enabled;
 //	}
 
-	boolean isDownloaded(String folder) {
+	boolean imageIsDownloaded(String folder) {
 		File file = new File(folder + getImageName());
 		return file.exists();
 	}
 
 	String getImageName() {
 		if (imageLink != null) {
-			return String.valueOf(id) + imageLink.substring(imageLink.lastIndexOf('/') + 1);
+			return String.valueOf(id) + "_" + imageLink.substring(imageLink.lastIndexOf('/') + 1);
 		} else {
 			return "";
 		}
@@ -56,7 +56,7 @@ class FeedItem {
 
 	String getIconName() {
 		if (imageLink != null) {
-			return Constants.ICONS_FOLDER + imageLink.substring(imageLink.lastIndexOf('/') + 1);
+			return "icon_" + String.valueOf(id) + "_" + imageLink.substring(imageLink.lastIndexOf('/') + 1);
 		} else {
 			return "";
 		}

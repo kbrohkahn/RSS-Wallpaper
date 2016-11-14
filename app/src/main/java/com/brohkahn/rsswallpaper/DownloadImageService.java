@@ -76,7 +76,7 @@ public class DownloadImageService extends IntentService {
 					feedItemIdsInUse.add(item.id);
 
 					// see if we need to download
-					if (!item.isDownloaded(imageDirectory)) {
+					if (!item.imageIsDownloaded(imageDirectory)) {
 						if (item.imageLink != null) {
 							// imagelink is valid
 							downloadFeedImage(item);
@@ -107,7 +107,7 @@ public class DownloadImageService extends IntentService {
 				if (purgeUnusedImages) {
 					feedDBHelper = FeedDBHelper.getHelper(this);
 					for (FeedItem item : allItems) {
-						if (item.isDownloaded(imageDirectory) && !feedItemIdsInUse.contains(item.id)) {
+						if (item.imageIsDownloaded(imageDirectory) && !feedItemIdsInUse.contains(item.id)) {
 							File file = new File(imageDirectory + item.getImageName());
 							if (!file.delete()) {
 								logEvent(String.format(Locale.US, "Unable to delete image %s.", item.getImageName()),

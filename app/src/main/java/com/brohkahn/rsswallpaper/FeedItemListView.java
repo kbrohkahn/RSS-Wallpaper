@@ -154,7 +154,7 @@ public class FeedItemListView extends AppCompatActivity {
 			});
 
 			ImageView imageView = (ImageView) view.findViewById(R.id.feed_item_icon);
-			String imagePath = imageDirectory + item.getIconName();
+			String imagePath = imageDirectory + Constants.ICONS_FOLDER + item.getIconName();
 			Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
 			if (bitmap == null) {
 				imageView.setVisibility(View.GONE);

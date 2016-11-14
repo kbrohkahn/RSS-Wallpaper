@@ -95,10 +95,10 @@ public class FeedItemView extends AppCompatActivity {
 		enabledCheckBox.setChecked(item.enabled);
 
 		CheckBox downloadedCheckBox = (CheckBox) findViewById(R.id.feed_item_downloaded);
-		downloadedCheckBox.setChecked(item.isDownloaded(imageDirectory));
+		downloadedCheckBox.setChecked(item.imageIsDownloaded(imageDirectory));
 
 		// load imageView, scale bitmap, and set image
-		String imagePath = imageDirectory + item.getIconName();
+		String imagePath = imageDirectory + Constants.ICONS_FOLDER + item.getIconName();
 		ImageView imageView = (ImageView) findViewById(R.id.feed_item_image);
 		imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath));
 
@@ -113,7 +113,7 @@ public class FeedItemView extends AppCompatActivity {
 		private void setAsCurrentWallpaper() {
 		enabledCheckBox.setChecked(true);
 
-		if (!item.isDownloaded(imageDirectory)) {
+			if (!item.imageIsDownloaded(imageDirectory)) {
 			if (!item.enabled) {
 				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 				feedDBHelper.updateImageEnabled(item.id, true);

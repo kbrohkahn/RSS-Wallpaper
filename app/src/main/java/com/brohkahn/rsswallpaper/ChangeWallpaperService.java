@@ -97,7 +97,7 @@ public class ChangeWallpaperService extends IntentService {
 					}
 
 					FeedItem newItem = itemsToShuffle.get(newItemIndex);
-					newItemDownloaded = newItem.isDownloaded(imageDirectory);
+					newItemDownloaded = newItem.imageIsDownloaded(imageDirectory);
 					newItemId = newItem.id;
 				}
 

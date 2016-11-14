@@ -101,7 +101,7 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 	@Override
 	protected Void doInBackground(Void... voids) {
 		for (FeedItem item : itemIconsToDelete) {
-			String iconPath = imageDirectory + item.getIconName();
+			String iconPath = imageDirectory + Constants.ICONS_FOLDER + item.getIconName();
 
 			File iconFile = new File(iconPath);
 			if (!iconFile.delete()) {

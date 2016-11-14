@@ -94,7 +94,7 @@ public class DownloadIconService extends IntentService {
 					// add id to list of recent items
 					feedItemIdsInUse.add(item.id);
 
-					File iconFile = new File(imageDirectory + item.getIconName());
+					File iconFile = new File(imageDirectory + Constants.ICONS_FOLDER + item.getIconName());
 					if (!iconFile.exists()) {
 						if (item.imageLink == null) {
 							logEvent(String.format(Locale.US, "No image link for %s found.", item.title),
@@ -109,8 +109,8 @@ public class DownloadIconService extends IntentService {
 
 				// purge any other images not in list
 				for (FeedItem item : allItems) {
-					if (item.isDownloaded(imageDirectory) && !feedItemIdsInUse.contains(item.id)) {
-						File file = new File(imageDirectory + item.getIconName());
+					if (item.imageIsDownloaded(imageDirectory) && !feedItemIdsInUse.contains(item.id)) {
+						File file = new File(imageDirectory + Constants.ICONS_FOLDER + item.getIconName());
 						if (!file.delete()) {
 							logEvent(String.format(Locale.US, "Unable to delete icon %s.", item.getIconName()),
 									"startIconDownload()",
@@ -165,7 +165,7 @@ public class DownloadIconService extends IntentService {
 			inputStreamToDownload.close();
 
 			// write bitmap to file
-			String outputFilePath = imageDirectory + entry.getIconName();
+			String outputFilePath = imageDirectory + Constants.ICONS_FOLDER + entry.getIconName();
 			OutputStream output = new FileOutputStream(outputFilePath);
 			bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
 
