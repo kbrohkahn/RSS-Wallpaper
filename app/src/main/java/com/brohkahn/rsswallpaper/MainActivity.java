@@ -221,7 +221,10 @@ public class MainActivity extends AppCompatActivity {
 		blockWallpaperButton.setEnabled(false);
 		nextWallpaperButton.setEnabled(false);
 
-		sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
+		Intent newIntent = new Intent(this, ChangeWallpaperService.class);
+		newIntent.setAction(Constants.ACTION_CHANGE_WALLPAPER);
+		startService(newIntent);
+
 	}
 
 //    private void showToast(String message) {

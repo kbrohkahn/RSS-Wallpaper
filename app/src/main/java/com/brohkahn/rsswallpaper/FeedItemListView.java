@@ -88,6 +88,7 @@ public class FeedItemListView extends AppCompatActivity {
 	@Override
 	protected void onPause() {
 		adapter.getCursor().close();
+		adapter.changeCursor(null);
 
 		DownloadImageService.startDownloadImageAction(this);
 
@@ -178,6 +179,7 @@ public class FeedItemListView extends AppCompatActivity {
 		}
 	}
 
+
 	private void updateItemEnabled(int itemId, boolean enabled) {
 		FeedDBHelper helper = FeedDBHelper.getHelper(getApplicationContext());
 		helper.updateImageEnabled(itemId, enabled);
@@ -185,6 +187,10 @@ public class FeedItemListView extends AppCompatActivity {
 
 		if (itemId == currentFeedId) {
 			DownloadImageService.startDownloadImageAction(this);
+
+			Intent newIntent = new Intent(this, ChangeWallpaperService.class);
+			newIntent.setAction(Constants.ACTION_CHANGE_WALLPAPER);
+			startService(newIntent);
 		}
 
 	}

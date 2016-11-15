@@ -104,16 +104,25 @@ public class FeedItemView extends AppCompatActivity {
 
 	}
 
+//	public void openInFileExplorer() {
+//		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+//		Uri uri = Uri.parse(Environment.getExternalStorageDirectory().getPath()
+//				+ "/myFolder/");
+//		intent.setDataAndType(uri, "text/csv");
+//		startActivity(Intent.createChooser(intent, "Show file on device"));
+//
+//	}
+
 	public void openLink(View view) {
 		Intent intent = new Intent(Intent.ACTION_VIEW);
 		intent.setData(Uri.parse(item.link));
 		startActivity(intent);
 	}
 
-		private void setAsCurrentWallpaper() {
+	private void setAsCurrentWallpaper() {
 		enabledCheckBox.setChecked(true);
 
-			if (!item.imageIsDownloaded(imageDirectory)) {
+		if (!item.imageIsDownloaded(imageDirectory)) {
 			if (!item.enabled) {
 				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 				feedDBHelper.updateImageEnabled(item.id, true);
@@ -133,6 +142,17 @@ public class FeedItemView extends AppCompatActivity {
 			feedDBHelper.close();
 
 			DownloadImageService.startDownloadImageAction(this);
+
+			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+			Resources resources = getResources();
+			int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed),
+					"-1"));
+			if (item.id == currentFeedId) {
+				Intent newIntent = new Intent(this, ChangeWallpaperService.class);
+				newIntent.setAction(Constants.ACTION_CHANGE_WALLPAPER);
+				startService(newIntent);
+			}
+
 		}
 
 		super.onPause();
