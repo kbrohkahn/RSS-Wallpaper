@@ -114,7 +114,7 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 
 			File iconFile = new File(iconPath);
 			if (!iconFile.delete()) {
-				logEvent("Unable to delete icon " + iconFile, LogEntry.LogLevel.Trace);
+				logEvent("Unable to delete image " + iconFile, LogEntry.LogLevel.Trace);
 			}
 		}
 

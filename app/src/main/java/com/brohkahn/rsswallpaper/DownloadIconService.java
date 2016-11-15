@@ -20,7 +20,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -70,14 +69,12 @@ public class DownloadIconService extends IntentService {
 			} else {
 				logEvent(response.message, "onHandleIntent()", LogEntry.LogLevel.Trace);
 
-				List<Integer> feedItemIdsInUse = new ArrayList<>();
-
 				// get items in current feed and all items
 				FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(this);
-				List<FeedItem> recentItems = feedDBHelper.getAllItemsInFeed(currentFeedId);
 				List<FeedItem> allItems = feedDBHelper.getAllItems();
 				feedDBHelper.close();
 
+				// make sure icon directory exists
 				File iconDirectory = new File(imageDirectory + Constants.ICONS_FOLDER);
 				if (!iconDirectory.exists()) {
 					if (!iconDirectory.mkdir()) {
@@ -88,12 +85,7 @@ public class DownloadIconService extends IntentService {
 					}
 				}
 
-				for (int i = 0; i < recentItems.size(); i++) {
-					FeedItem item = recentItems.get(i);
-
-					// add id to list of recent items
-					feedItemIdsInUse.add(item.id);
-
+				for (FeedItem item : allItems) {
 					File iconFile = new File(imageDirectory + Constants.ICONS_FOLDER + item.getIconName());
 					if (!iconFile.exists()) {
 						if (item.imageLink == null) {
@@ -103,19 +95,6 @@ public class DownloadIconService extends IntentService {
 							);
 						} else {
 							downloadFeedIcon(item);
-						}
-					}
-				}
-
-				// purge any other images not in list
-				for (FeedItem item : allItems) {
-					if (item.imageIsDownloaded(imageDirectory) && !feedItemIdsInUse.contains(item.id)) {
-						File file = new File(imageDirectory + Constants.ICONS_FOLDER + item.getIconName());
-						if (!file.delete()) {
-							logEvent(String.format(Locale.US, "Unable to delete icon %s.", item.getIconName()),
-									"startIconDownload()",
-									LogEntry.LogLevel.Warning
-							);
 						}
 					}
 				}
