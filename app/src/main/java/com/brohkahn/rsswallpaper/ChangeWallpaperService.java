@@ -122,7 +122,7 @@ public class ChangeWallpaperService extends IntentService {
 					if (cropAndScaleType == CROP_CENTER) {
 						inSampleSize = 1;
 					} else {
-						inSampleSize = Helpers.getImageScale(imagePath, screenWidth, screenHeight);
+						inSampleSize = Helpers.getImageScale(imagePath, 0, screenHeight);
 					}
 
 					// Decode bitmap with inSampleSize set
