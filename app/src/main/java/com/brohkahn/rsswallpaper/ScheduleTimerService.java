@@ -60,9 +60,10 @@ public class ScheduleTimerService extends IntentService {
 
 			if (changeWallpaperInterval > 0) {
 				// create intent and pending intent for ChangeWallpaperReceiver
-				Intent changeWallpaperIntent = new Intent(this, ChangeWallpaperReceiver.class);
+				Intent changeWallpaperIntent = new Intent(this, ChangeWallpaperService.class);
 				changeWallpaperIntent.setAction(Constants.ACTION_CHANGE_WALLPAPER);
-				PendingIntent wallpaperScheduleIntent = PendingIntent.getBroadcast(this,
+				changeWallpaperIntent.putExtra(Constants.KEY_INTENT_SOURCE, TAG);
+				PendingIntent wallpaperScheduleIntent = PendingIntent.getService(this,
 						Constants.CHANGE_WALLPAPER_RECEIVER_CODE,
 						changeWallpaperIntent,
 						PendingIntent.FLAG_UPDATE_CURRENT);
