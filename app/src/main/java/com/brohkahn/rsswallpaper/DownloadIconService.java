@@ -120,9 +120,9 @@ public class DownloadIconService extends IntentService {
 			BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
 			bitmapOptions.inJustDecodeBounds = true;
 
-			InputStream inputStreamToGetSize = url.openStream();
-			BitmapFactory.decodeStream(inputStreamToGetSize, null, bitmapOptions);
-			inputStreamToGetSize.close();
+			InputStream inputStream = url.openStream();
+			BitmapFactory.decodeStream(inputStream, null, bitmapOptions);
+			inputStream.close();
 
 			int imageHeight = bitmapOptions.outHeight;
 			int imageWidth = bitmapOptions.outWidth;
@@ -139,9 +139,8 @@ public class DownloadIconService extends IntentService {
 			bitmapOptions.inJustDecodeBounds = false;
 			bitmapOptions.inSampleSize = inSampleSize;
 
-			InputStream inputStreamToDownload = url.openStream();
-			Bitmap bitmap = BitmapFactory.decodeStream(inputStreamToDownload, null, bitmapOptions);
-			inputStreamToDownload.close();
+			Bitmap bitmap = BitmapFactory.decodeStream(inputStream, null, bitmapOptions);
+			inputStream.close();
 
 			// write bitmap to file
 			String outputFilePath = imageDirectory + Constants.ICONS_FOLDER + entry.getIconName();
