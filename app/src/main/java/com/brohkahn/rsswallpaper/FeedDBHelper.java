@@ -166,7 +166,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 	List<FeedItem> getRecentItems(int count, int feedId) {
 		String query = "SELECT *" +
 				" FROM " + FeedItemDBEntry.TABLE_NAME +
-				" WHERE " + FeedItemDBEntry.COLUMN_ENABLED + " =1" +
+				" WHERE " + FeedItemDBEntry.COLUMN_ENABLED + "=1" +
 				" AND " + FeedItemDBEntry.COLUMN_RELATED_FEED + "=" + String.valueOf(feedId) +
 				" AND " + FeedItemDBEntry.COLUMN_IMAGE_LINK + " IS NOT NULL" +
 				" ORDER BY " + FeedItemDBEntry.COLUMN_CREATION_DATE + " DESC" +

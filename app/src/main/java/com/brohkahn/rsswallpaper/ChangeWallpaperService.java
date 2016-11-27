@@ -18,7 +18,6 @@ import com.brohkahn.loggerlibrary.LogEntry;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
 
 public class ChangeWallpaperService extends IntentService {
@@ -73,41 +72,37 @@ public class ChangeWallpaperService extends IntentService {
 				downloadRSSIntent.setAction(Constants.ACTION_DOWNLOAD_RSS);
 				startService(downloadRSSIntent);
 			} else {
-				// get old item index
-				int oldItemIndex = -1;
-				for (int i = 0; i < availableItems; i++) {
-					FeedItem item = itemsToShuffle.get(i);
-					if (item.id == currentItemId && i + 1 < availableItems) {
-						oldItemIndex = i;
-						break;
-					}
-				}
-
-				// get new random item
-				int newItemId = currentItemId;
-				int newItemIndex = 0;
-				boolean newItemDownloaded = false;
-
-				Random random = new Random();
-				while (newItemId == currentItemId || !newItemDownloaded) {
-					if (shuffle) {
-						newItemIndex = random.nextInt(availableItems);
-					} else {
-						newItemIndex = (oldItemIndex + 1) % availableItems;
+				int newItemIndex;
+				if (shuffle) {
+					// get new random item
+					Random random = new Random();
+					newItemIndex = random.nextInt(availableItems);
+				} else {
+					// get old item index
+					int oldItemIndex = -1;
+					for (int i = 0; i < availableItems; i++) {
+						FeedItem item = itemsToShuffle.get(i);
+						if (item.id == currentItemId && i + 1 < availableItems) {
+							oldItemIndex = i;
+							break;
+						}
 					}
 
-					FeedItem newItem = itemsToShuffle.get(newItemIndex);
-					newItemDownloaded = newItem.imageIsDownloaded(imageDirectory);
-					newItemId = newItem.id;
+					// get item that is immediately after old item
+					newItemIndex = (oldItemIndex + 1) % availableItems;
 				}
 
 				FeedItem newItem = itemsToShuffle.get(newItemIndex);
 
-				logEvent(String.format(Locale.US, "Setting wallpaper(s) to %s.", newItem.title),
-						"onHandleIntent()",
-						LogEntry.LogLevel.Message
-				);
-				try {
+				if (!newItem.imageIsDownloaded(imageDirectory)) {
+					logEvent("Item " + newItem.title + " not downloaded!", "onHandleIntent()", LogEntry.LogLevel.Warning);
+
+					Intent downloadRSSIntent = new Intent(this, DownloadImageService.class);
+					downloadRSSIntent.setAction(Constants.ACTION_DOWNLOAD_IMAGES);
+					startService(downloadRSSIntent);
+				} else {
+					logEvent("Setting wallpaper(s) to " + newItem.title, "onHandleIntent()", LogEntry.LogLevel.Message);
+
 					String imagePath = imageDirectory + newItem.getImageName();
 
 					// get screen height (output wallpaper height)
@@ -131,76 +126,88 @@ public class ChangeWallpaperService extends IntentService {
 					bitmapOptions.inSampleSize = inSampleSize;
 
 					Bitmap inputBitmap = BitmapFactory.decodeFile(imagePath, bitmapOptions);
-					int imageHeight = inputBitmap.getHeight();
-					int imageWidth = inputBitmap.getWidth();
 
-					Bitmap outputBitmap;
-					int x, y;
+					if (inputBitmap == null) {
+						logEvent("Unable to get Bitmap " + imagePath, "onHandleIntent()", LogEntry.LogLevel.Warning);
 
-					switch (cropAndScaleType) {
-						case SCALE_HEIGHT:
-							outputBitmap = inputBitmap;
-							break;
-						case SCALE_HEIGHT_CROP_CENTER:
-							x = imageWidth / 2 - screenWidth / 2;
-							if (x > 0) {
-								outputBitmap = Bitmap.createBitmap(inputBitmap, x, 0, screenWidth, imageHeight);
-							} else {
-								outputBitmap = inputBitmap;
+						Intent downloadRSSIntent = new Intent(this, DownloadImageService.class);
+						downloadRSSIntent.setAction(Constants.ACTION_DOWNLOAD_IMAGES);
+						startService(downloadRSSIntent);
+
+					} else {
+						try {
+							int imageHeight = inputBitmap.getHeight();
+							int imageWidth = inputBitmap.getWidth();
+
+							Bitmap outputBitmap;
+							int x, y;
+
+							switch (cropAndScaleType) {
+								case SCALE_HEIGHT:
+									outputBitmap = inputBitmap;
+									break;
+								case SCALE_HEIGHT_CROP_CENTER:
+									x = imageWidth / 2 - screenWidth / 2;
+									if (x > 0) {
+										outputBitmap = Bitmap.createBitmap(inputBitmap, x, 0, screenWidth, imageHeight);
+									} else {
+										outputBitmap = inputBitmap;
+									}
+									break;
+								case SCALE_WIDTH_AND_HEIGHT:
+									outputBitmap = Bitmap.createScaledBitmap(inputBitmap, screenWidth, screenHeight, false);
+									break;
+								case CROP_CENTER:
+
+									x = imageWidth / 2 - screenWidth / 2;
+									y = imageHeight / 2 - screenHeight / 2;
+									if (x > 0 && y > 0) {
+										outputBitmap = Bitmap.createBitmap(inputBitmap, x, y, screenWidth, screenHeight);
+									} else {
+										outputBitmap = inputBitmap;
+									}
+									break;
+								default:
+									outputBitmap = inputBitmap;
 							}
-							break;
-						case SCALE_WIDTH_AND_HEIGHT:
-							outputBitmap = Bitmap.createScaledBitmap(inputBitmap, screenWidth, screenHeight, false);
-							break;
-						case CROP_CENTER:
 
-							x = imageWidth / 2 - screenWidth / 2;
-							y = imageHeight / 2 - screenHeight / 2;
-							if (x > 0 && y > 0) {
-								outputBitmap = Bitmap.createBitmap(inputBitmap, x, y, screenWidth, screenHeight);
-							} else {
-								outputBitmap = inputBitmap;
+							WallpaperManager myWallpaperManager = WallpaperManager.getInstance(this);
+							if (setHomeWallpaper) {
+								if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+									myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_SYSTEM);
+								} else {
+									myWallpaperManager.setBitmap(outputBitmap);
+								}
+
+								logEvent(String.format("Successfully set wallpaper to %s.", newItem.title),
+										"onHandleIntent()",
+										LogEntry.LogLevel.Trace
+								);
 							}
-							break;
-						default:
-							outputBitmap = inputBitmap;
-					}
 
-					WallpaperManager myWallpaperManager = WallpaperManager.getInstance(this);
-					if (setHomeWallpaper) {
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-							myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_SYSTEM);
-						} else {
-							myWallpaperManager.setBitmap(outputBitmap);
+							if (setLockWallpaper && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+								myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_LOCK);
+								logEvent(String.format("Successfully set lock screen wallpaper to %s.", newItem.title),
+										"onHandleIntent()",
+										LogEntry.LogLevel.Trace
+								);
+							}
+
+							inputBitmap.recycle();
+							outputBitmap.recycle();
+						} catch (IOException e) {
+							e.printStackTrace();
+							logException(e, "onHandleIntent()");
+						} finally {
+							SharedPreferences.Editor editor = settings.edit();
+							editor.putInt(keyCurrentItem, newItem.id);
+							editor.apply();
 						}
-
-						logEvent(String.format("Successfully set wallpaper to %s.", newItem.title),
-								"onHandleIntent()",
-								LogEntry.LogLevel.Trace
-						);
 					}
 
-					if (setLockWallpaper && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-						myWallpaperManager.setBitmap(outputBitmap, null, true, WallpaperManager.FLAG_LOCK);
-						logEvent(String.format("Successfully set lock screen wallpaper to %s.", newItem.title),
-								"onHandleIntent()",
-								LogEntry.LogLevel.Trace
-						);
-					}
-
-					inputBitmap.recycle();
-					outputBitmap.recycle();
-				} catch (IOException e) {
-					e.printStackTrace();
-					logException(e, "onHandleIntent()");
-				} finally {
-					SharedPreferences.Editor editor = settings.edit();
-					editor.putInt(keyCurrentItem, newItem.id);
-					editor.apply();
+					sendBroadcast(new Intent(Constants.ACTION_WALLPAPER_UPDATED));
 				}
 			}
-
-			sendBroadcast(new Intent(Constants.ACTION_WALLPAPER_UPDATED));
 
 			String intentSource = intent.getStringExtra(KEY_INTENT_SOURCE);
 			if (intentSource != null && intentSource.equals(ChangeWallpaperReceiver.TAG)) {
