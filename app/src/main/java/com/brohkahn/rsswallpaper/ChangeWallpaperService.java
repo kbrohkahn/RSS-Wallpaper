@@ -16,6 +16,7 @@ import android.view.WindowManager;
 
 import com.brohkahn.loggerlibrary.LogEntry;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
@@ -47,7 +48,7 @@ public class ChangeWallpaperService extends IntentService {
 			// wallpaper
 			int numberToRotate = Integer.parseInt(prefs.getString(res.getString(R.string.key_number_to_rotate), "7"));
 			boolean shuffle = prefs.getBoolean(res.getString(R.string.key_shuffle), true);
-			boolean setHomeWallpaper = prefs.getBoolean(res.getString(R.string.key_set_home_screen), true);
+			boolean setHomeWallpaper = prefs.getBoolean(res.getString(R.string.key_set_home_screen), false);
 			boolean setLockWallpaper = prefs.getBoolean(res.getString(R.string.key_set_lock_screen), false);
 			int cropAndScaleType = Integer.parseInt(prefs.getString(res.getString(R.string.key_crop_and_scale_type), "0"));
 			// rss feed
@@ -128,7 +129,13 @@ public class ChangeWallpaperService extends IntentService {
 					Bitmap inputBitmap = BitmapFactory.decodeFile(imagePath, bitmapOptions);
 
 					if (inputBitmap == null) {
-						logEvent("Unable to get Bitmap " + imagePath, "onHandleIntent()", LogEntry.LogLevel.Warning);
+						File imageFile = new File(imagePath);
+						logEvent("Invalid image file " + imagePath, "onHandleIntent()", LogEntry.LogLevel
+								.Warning);
+						if (!imageFile.delete()) {
+							logEvent("Unable to delete Bitmap " + imagePath, "onHandleIntent()", LogEntry.LogLevel
+									.Warning);
+						}
 
 						Intent downloadRSSIntent = new Intent(this, DownloadImageService.class);
 						downloadRSSIntent.setAction(Constants.ACTION_DOWNLOAD_IMAGES);

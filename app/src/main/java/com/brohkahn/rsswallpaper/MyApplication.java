@@ -24,8 +24,8 @@ public class MyApplication extends Application {
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources res = getResources();
-		showMessageToasts = prefs.getBoolean(res.getString(R.string.key_show_message_toasts), true);
-		showErrorToasts = prefs.getBoolean(res.getString(R.string.key_show_error_toasts), true);
+		showMessageToasts = prefs.getBoolean(res.getString(R.string.key_show_message_toasts), false);
+		showErrorToasts = prefs.getBoolean(res.getString(R.string.key_show_error_toasts), false);
 	}
 
 	private static class ToastHandler extends Handler {
