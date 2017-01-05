@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
@@ -132,35 +134,56 @@ public class DownloadImageService extends IntentService {
 				LogEntry.LogLevel.Trace
 		);
 
-		try {
-			URL url = new URL(entry.imageLink);
-			URLConnection connection = url.openConnection();
-			connection.connect();
+		boolean successfulDownload = false;
+		for (int tryCount = 0; tryCount < 3 && !successfulDownload; tryCount++) {
+			try {
+				URL url = new URL(entry.imageLink);
+				URLConnection connection = url.openConnection();
+				connection.connect();
 
-			InputStream input = new BufferedInputStream(url.openStream(), 8192);
+				InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
-			String outputFilePath = imageDirectory + entry.getImageName();
-			OutputStream output = new FileOutputStream(outputFilePath);
+				String outputFilePath = imageDirectory + entry.getImageName();
+				OutputStream output = new FileOutputStream(outputFilePath);
 
-			byte data[] = new byte[1024];
+				byte data[] = new byte[1024];
 
-			int count;
-			while ((count = input.read(data)) != -1) {
-				output.write(data, 0, count);
+				int count;
+				while ((count = input.read(data)) != -1) {
+					output.write(data, 0, count);
+				}
+
+				output.flush();
+				output.close();
+				input.close();
+
+				logEvent("Successfully downloaded and saved feed image for " + entry.title,
+						"downloadFeedImage(FeedItem entry)",
+						LogEntry.LogLevel.Trace
+				);
+
+				BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+				bitmapOptions.inJustDecodeBounds = true;
+				Bitmap bitmap = BitmapFactory.decodeFile(outputFilePath, bitmapOptions);
+				if (bitmap != null && bitmap.getHeight() > 0 && bitmap.getWidth() > 0) {
+					successfulDownload = true;
+				} else {
+					File outputFile = new File(outputFilePath);
+					if (!outputFile.delete()) {
+						logEvent("Unable to delete file at path " + outputFilePath,
+								"downloadFeedImage()",
+								LogEntry.LogLevel.Error);
+					}
+
+					logEvent("Bitmap is null for " + entry.title + ", deleting and trying again.",
+							"downloadFeedImage(FeedItem entry)",
+							LogEntry.LogLevel.Warning);
+				}
+
+			} catch (Exception e) {
+				Log.e("Error: ", e.getMessage());
+				logException(e, "downloadFeedImage(FeedItem entry)");
 			}
-
-			output.flush();
-			output.close();
-			input.close();
-
-			logEvent(String.format(Locale.US, "Successfully downloaded and saved feed image for %s.", entry.title),
-					"downloadFeedImage(FeedItem entry)",
-					LogEntry.LogLevel.Trace
-			);
-
-		} catch (Exception e) {
-			Log.e("Error: ", e.getMessage());
-			logException(e, "downloadFeedImage(FeedItem entry)");
 		}
 	}
 
