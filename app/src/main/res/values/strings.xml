@@ -99,7 +99,7 @@
 	<!-- Storage -->
 	<string name="key_delete_items">deleteItems</string>
 	<string name="key_delete_logs">deleteLogs</string>
-	<string name="key_store_icons">storeIcons</string>
+	<!--<string name="key_store_icons">storeIcons</string>-->
 	<string name="key_purge_unused_images">purgeUnusedImages</string>
 	<string name="key_image_directory">imageDirectory</string>
 

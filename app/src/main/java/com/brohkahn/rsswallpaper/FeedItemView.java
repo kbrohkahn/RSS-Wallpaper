@@ -98,7 +98,7 @@ public class FeedItemView extends AppCompatActivity {
 		downloadedCheckBox.setChecked(item.imageIsDownloaded(imageDirectory));
 
 		// load imageView, scale bitmap, and set image
-		String imagePath = imageDirectory + Constants.ICONS_FOLDER + item.getIconName();
+		String imagePath = imageDirectory + item.getImageName();
 		ImageView imageView = (ImageView) findViewById(R.id.feed_item_image);
 		imageView.setImageBitmap(BitmapFactory.decodeFile(imagePath));
 

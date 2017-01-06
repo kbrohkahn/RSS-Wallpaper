@@ -19,8 +19,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -137,16 +137,24 @@ public class DownloadImageService extends IntentService {
 		boolean successfulDownload = false;
 		for (int tryCount = 0; tryCount < 3 && !successfulDownload; tryCount++) {
 			try {
-				URL url = new URL(entry.imageLink);
-				URLConnection connection = url.openConnection();
+				URL url = new URL(entry.imageLink.replace("http:", "https:"));
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestProperty("Accept-Encoding", "identity");
 				connection.connect();
 
-				InputStream input = new BufferedInputStream(url.openStream(), 8192);
+				if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+					logEvent("Server returned HTTP " + connection.getResponseCode(), "downloadFeedImage", LogEntry.LogLevel.Warning);
+				}
+				if (connection.getContentLength() <= 0) {
+					logEvent("Invalid content length for " + entry.imageLink, "downloadFeedImage", LogEntry.LogLevel.Warning);
+				}
+
+				InputStream input = new BufferedInputStream(connection.getInputStream(), 8192);
 
 				String outputFilePath = imageDirectory + entry.getImageName();
 				OutputStream output = new FileOutputStream(outputFilePath);
 
-				byte data[] = new byte[1024];
+				byte data[] = new byte[8192];
 
 				int count;
 				while ((count = input.read(data)) != -1) {
@@ -162,23 +170,25 @@ public class DownloadImageService extends IntentService {
 						LogEntry.LogLevel.Trace
 				);
 
-				BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-				bitmapOptions.inJustDecodeBounds = true;
-				Bitmap bitmap = BitmapFactory.decodeFile(outputFilePath, bitmapOptions);
+//				BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+//				bitmapOptions.inJustDecodeBounds = true;
+				Bitmap bitmap = BitmapFactory.decodeFile(outputFilePath);
 				if (bitmap != null && bitmap.getHeight() > 0 && bitmap.getWidth() > 0) {
 					successfulDownload = true;
 				} else {
+					logEvent("Bitmap is null for " + entry.title + ", deleting and trying again.",
+							"downloadFeedImage(FeedItem entry)",
+							LogEntry.LogLevel.Warning);
+
 					File outputFile = new File(outputFilePath);
 					if (!outputFile.delete()) {
 						logEvent("Unable to delete file at path " + outputFilePath,
 								"downloadFeedImage()",
 								LogEntry.LogLevel.Error);
 					}
-
-					logEvent("Bitmap is null for " + entry.title + ", deleting and trying again.",
-							"downloadFeedImage(FeedItem entry)",
-							LogEntry.LogLevel.Warning);
 				}
+
+				connection.disconnect();
 
 			} catch (Exception e) {
 				Log.e("Error: ", e.getMessage());

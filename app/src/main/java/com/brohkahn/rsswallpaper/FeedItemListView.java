@@ -124,12 +124,15 @@ public class FeedItemListView extends AppCompatActivity {
 
 	public class FeedItemListAdapter extends CursorAdapter {
 		private String imageDirectory;
+		private float iconSize;
 
 		private FeedItemListAdapter(Context context, Cursor cursor, int flags) {
 			super(context, cursor, flags);
 
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 			Resources resources = getResources();
+
+			iconSize = resources.getDimension(R.dimen.icon_size);
 			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
 					Helpers.getDefaultFolder(context));
 		}
@@ -155,8 +158,12 @@ public class FeedItemListView extends AppCompatActivity {
 			});
 
 			ImageView imageView = (ImageView) view.findViewById(R.id.feed_item_icon);
-			String imagePath = imageDirectory + Constants.ICONS_FOLDER + item.getIconName();
-			Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+			String imagePath = imageDirectory + item.getImageName();
+
+			BitmapFactory.Options options = new BitmapFactory.Options();
+			options.inSampleSize = Helpers.getImageScale(imagePath, iconSize, iconSize);
+			Bitmap bitmap = BitmapFactory.decodeFile(imagePath, options);
+
 			if (bitmap == null) {
 				imageView.setVisibility(View.GONE);
 				imageView.setImageBitmap(null);

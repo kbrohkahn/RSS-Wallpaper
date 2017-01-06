@@ -54,11 +54,11 @@ class FeedItem {
 		}
 	}
 
-	String getIconName() {
-		if (imageLink != null) {
-			return "icon_" + String.valueOf(id) + "_" + imageLink.substring(imageLink.lastIndexOf('/') + 1);
-		} else {
-			return "";
-		}
-	}
+//	String getIconName() {
+//		if (imageLink != null) {
+//			return "icon_" + String.valueOf(id) + "_" + imageLink.substring(imageLink.lastIndexOf('/') + 1);
+//		} else {
+//			return "";
+//		}
+//	}
 }

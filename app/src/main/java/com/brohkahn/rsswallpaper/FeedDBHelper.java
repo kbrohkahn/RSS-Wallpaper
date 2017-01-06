@@ -69,7 +69,7 @@ class FeedDBHelper extends SQLiteOpenHelper {
 
 		// get and save default feed
 		ContentValues values = getContentValuesForFeed(new RSSFeed(0,
-				"http://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
+				"https://www.nasa.gov/rss/dyn/lg_image_of_the_day.rss",
 				"NASA Image of the Day",
 				"enclosure",
 				"url",

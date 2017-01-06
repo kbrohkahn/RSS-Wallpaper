@@ -29,7 +29,7 @@ class Helpers {
 		return response;
 	}
 
-	static int getImageScale(String imagePath, int outputWidth, int outputHeight) {
+	static int getImageScale(String imagePath, float outputWidth, float outputHeight) {
 		BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
 		bitmapOptions.inJustDecodeBounds = true;
 		BitmapFactory.decodeFile(imagePath, bitmapOptions);

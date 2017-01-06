@@ -98,9 +98,9 @@ public class ChangeWallpaperService extends IntentService {
 				if (!newItem.imageIsDownloaded(imageDirectory)) {
 					logEvent("Item " + newItem.title + " not downloaded!", "onHandleIntent()", LogEntry.LogLevel.Warning);
 
-					Intent downloadRSSIntent = new Intent(this, DownloadImageService.class);
-					downloadRSSIntent.setAction(Constants.ACTION_DOWNLOAD_IMAGES);
-					startService(downloadRSSIntent);
+//					Intent downloadRSSIntent = new Intent(this, DownloadImageService.class);
+//					downloadRSSIntent.setAction(Constants.ACTION_DOWNLOAD_IMAGES);
+//					startService(downloadRSSIntent);
 				} else {
 					logEvent("Setting wallpaper(s) to " + newItem.title, "onHandleIntent()", LogEntry.LogLevel.Message);
 

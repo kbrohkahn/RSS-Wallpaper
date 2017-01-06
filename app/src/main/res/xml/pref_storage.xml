@@ -11,10 +11,10 @@
 			android:summary="@string/summary_purge_unused_images"
 			android:title="@string/title_purge_unused_images"/>
 
-	<SwitchPreference
-			android:defaultValue="true"
-			android:key="@string/key_store_icons"
-			android:title="@string/title_store_icons"/>
+	<!--<SwitchPreference-->
+	<!--android:defaultValue="true"-->
+	<!--android:key="@string/key_store_icons"-->
+	<!--android:title="@string/title_store_icons"/>-->
 	<Preference
 			android:key="@string/key_delete_items"
 			android:summary="@string/summary_delete_items"

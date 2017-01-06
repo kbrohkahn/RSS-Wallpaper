@@ -51,6 +51,7 @@ public class DownloadRSSService extends IntentService {
 			// download all feeds and feed items
 			for (int i = 0; i < allFeeds.size(); i++) {
 				try {
+
 					URL url = new URL(allFeeds.get(i).source);
 					URLConnection connection = url.openConnection();
 					connection.connect();
@@ -111,7 +112,7 @@ public class DownloadRSSService extends IntentService {
 			feedDBHelper.close();
 
 			// download icons when finished all feeds
-			DownloadIconService.startDownloadIconAction(this);
+//			DownloadIconService.startDownloadIconAction(this);
 
 			// start image download service as soon as we find an item we haven't downloaded
 			DownloadImageService.startDownloadImageAction(this);

@@ -63,16 +63,16 @@ class ChangeDirectoryTask extends AsyncTask<String, Void, Boolean> {
 			}
 
 			// move all icons
-			for (FeedItem item : allItems) {
-				File oldImageFile = new File(oldPath + Constants.ICONS_FOLDER + item.getIconName());
-				if (oldImageFile.exists()) {
-					File newImageFile = new File(newPath + Constants.ICONS_FOLDER + item.getIconName());
-					if (!oldImageFile.renameTo(newImageFile)) {
-						logEvent("Error moving file " + oldImageFile.getAbsolutePath(), LogEntry.LogLevel.Error);
-						success = false;
-					}
-				}
-			}
+//			for (FeedItem item : allItems) {
+//				File oldImageFile = new File(oldPath + Constants.ICONS_FOLDER + item.getIconName());
+//				if (oldImageFile.exists()) {
+//					File newImageFile = new File(newPath + Constants.ICONS_FOLDER + item.getIconName());
+//					if (!oldImageFile.renameTo(newImageFile)) {
+//						logEvent("Error moving file " + oldImageFile.getAbsolutePath(), LogEntry.LogLevel.Error);
+//						success = false;
+//					}
+//				}
+//			}
 
 			SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
 			editor.putString(context.getResources().getString(R.string.key_image_directory), newPath);

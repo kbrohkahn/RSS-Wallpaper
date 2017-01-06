@@ -22,7 +22,7 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 	boolean deleteAllItems;
 	boolean purgeOldImages;
 	boolean deleteAllImages;
-	boolean deleteAllIcons;
+//	boolean deleteAllIcons;
 
 	private List<FeedItem> itemImagesToDelete;
 	private List<FeedItem> itemIconsToDelete;
@@ -63,20 +63,21 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 		}
 
 		itemIconsToDelete = new ArrayList<>();
-		if (deleteAllIcons) {
-			itemIconsToDelete.addAll(allItems);
-		}
+//		if (deleteAllIcons) {
+//			itemIconsToDelete.addAll(allItems);
+//		}
 
 		String which;
-		if (deleteAllIcons) {
-			if (deleteAllImages) {
-				which = "all icons and images";
-			} else if (purgeOldImages) {
-				which = "icons and old images";
-			} else {
-				which = "icons";
-			}
-		} else if (purgeOldImages) {
+//		if (deleteAllIcons) {
+//			if (deleteAllImages) {
+//				which = "all icons and images";
+//			} else if (purgeOldImages) {
+//				which = "icons and old images";
+//			} else {
+//				which = "icons";
+//			}
+//		} else
+		if (purgeOldImages) {
 			which = "old images";
 		} else {
 			which = "no";
@@ -100,14 +101,14 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 
 	@Override
 	protected Void doInBackground(Void... voids) {
-		for (FeedItem item : itemIconsToDelete) {
-			String iconPath = imageDirectory + Constants.ICONS_FOLDER + item.getIconName();
-
-			File iconFile = new File(iconPath);
-			if (!iconFile.delete()) {
-				logEvent("Unable to delete icon " + iconFile, LogEntry.LogLevel.Trace);
-			}
-		}
+//		for (FeedItem item : itemIconsToDelete) {
+//			String iconPath = imageDirectory + Constants.ICONS_FOLDER + item.getIconName();
+//
+//			File iconFile = new File(iconPath);
+//			if (!iconFile.delete()) {
+//				logEvent("Unable to delete icon " + iconFile, LogEntry.LogLevel.Trace);
+//			}
+//		}
 
 		for (FeedItem item : itemImagesToDelete) {
 			String iconPath = imageDirectory + item.getImageName();

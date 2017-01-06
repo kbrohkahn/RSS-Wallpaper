@@ -295,7 +295,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 
 	public static class StoragePreferenceFragment extends PreferenceFragment {
-		private boolean initiallyStoreIcons;
+		//		private boolean initiallyStoreIcons;
 		private boolean initiallyPurgeImages;
 		private String imageDirectory;
 
@@ -326,7 +326,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			});
 
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-			initiallyStoreIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
+//			initiallyStoreIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
 			initiallyPurgeImages = preferences.getBoolean(resources.getString(R.string.key_purge_unused_images), false);
 			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
 					Helpers.getDefaultFolder(getActivity()));
@@ -348,13 +348,15 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		public void onStop() {
 			DeleteFileTask deleteFileTask = new DeleteFileTask(getActivity(), imageDirectory);
 
-			SwitchPreference storeIconsPreference = (SwitchPreference) findPreference(getResources()
-					.getString(R.string.key_store_icons));
-			if (storeIconsPreference.isChecked() && !initiallyStoreIcons) {
-				DownloadIconService.startDownloadIconAction(getActivity());
-			} else if (!storeIconsPreference.isChecked() && initiallyStoreIcons) {
-				deleteFileTask.deleteAllIcons = true;
-			}
+//			SwitchPreference storeIconsPreference = (SwitchPreference) findPreference(getResources()
+//					.getString(R.string.key_store_icons));
+//			if (storeIconsPreference.isChecked() && !initiallyStoreIcons)
+//			{
+//				DownloadIconService.startDownloadIconAction(getActivity());
+//			}
+//			else if (!storeIconsPreference.isChecked() && initiallyStoreIcons) {
+//				deleteFileTask.deleteAllIcons = true;
+//			}
 
 
 			SwitchPreference purgeImagesPreference = (SwitchPreference) findPreference(getResources()
@@ -365,7 +367,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 				deleteFileTask.purgeOldImages = true;
 			}
 
-			if (deleteFileTask.deleteAllIcons || deleteFileTask.deleteAllImages || deleteFileTask.purgeOldImages) {
+			if (deleteFileTask.deleteAllImages || deleteFileTask.purgeOldImages) {
 				deleteFileTask.execute();
 			}
 
@@ -421,7 +423,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 		public void deleteItems() {
 			DeleteFileTask deleteFileTask = new DeleteFileTask(getActivity(), imageDirectory);
 			deleteFileTask.deleteAllItems = true;
-			deleteFileTask.deleteAllIcons = true;
+//			deleteFileTask.deleteAllIcons = true;
 			deleteFileTask.deleteAllImages = true;
 			deleteFileTask.execute();
 		}
