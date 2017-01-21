@@ -133,8 +133,9 @@ public class FeedItemListView extends AppCompatActivity {
 			Resources resources = getResources();
 
 			iconSize = resources.getDimension(R.dimen.icon_size);
-			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
-					Helpers.getDefaultFolder(context));
+			imageDirectory = Helpers.getStoragePath(context,
+					preferences.getString(resources.getString(R.string.key_image_storage), "LOCAL"));
+
 		}
 
 		public void bindView(View view, Context context, Cursor cursor) {

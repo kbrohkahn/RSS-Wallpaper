@@ -4,6 +4,9 @@ import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Environment;
+
+import java.io.File;
 
 class Helpers {
 	static BooleanMessage canDownload(NetworkInfo activeNetwork, boolean wifiOnly) {
@@ -48,7 +51,35 @@ class Helpers {
 		return inSampleSize;
 	}
 
-	static String getDefaultFolder(Context context) {
-		return context.getFilesDir().getPath() + "/";
+//	static String getDefaultFolder(Context context) {
+//		return context.getFilesDir().getPath() + "/";
+//	}
+
+	static String getStoragePath(Context context, String which) {
+		String path = null;
+
+		switch (which) {
+			case "LOCAL":
+				path = context.getFilesDir().getPath() + "/";
+				break;
+			case "INTERNAL":
+				String internalPath = "/storage/sdcard0";
+				if (new File(internalPath).exists()) {
+					path = internalPath + "/RSS Images";
+				}
+				break;
+			case "EXTERNAL":
+				File externalStorageDirectory = Environment.getExternalStorageDirectory();
+				if (externalStorageDirectory.exists()) {
+					path = externalStorageDirectory.getPath() + "/RSS Images";
+				}
+				break;
+		}
+
+		if (path == null) {
+			path = context.getFilesDir().getPath() + "/";
+		}
+
+		return path;
 	}
 }

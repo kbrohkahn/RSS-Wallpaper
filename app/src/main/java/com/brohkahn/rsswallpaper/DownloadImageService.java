@@ -30,6 +30,14 @@ public class DownloadImageService extends IntentService {
 
 	private String imageDirectory;
 
+	enum ImageCompressFormat {
+		PNG,
+		JPEG,
+		NONE
+	}
+
+	private ImageCompressFormat imageCompressFormat;
+
 	public DownloadImageService() {
 		super("DownloadImageService");
 	}
@@ -46,12 +54,14 @@ public class DownloadImageService extends IntentService {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 			Resources resources = getResources();
 			boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
-			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory), Helpers.getDefaultFolder(this));
+			imageDirectory = Helpers.getStoragePath(this,
+					preferences.getString(resources.getString(R.string.key_image_storage), "LOCAL"));
+			imageCompressFormat = ImageCompressFormat.valueOf(preferences.getString(resources.getString(R.string
+					.key_compression_type), "PNG"));
 			int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
 			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "-1"));
 			int currentItemId = preferences.getInt(resources.getString(R.string.key_current_item), -1);
-			boolean purgeUnusedImages = preferences.getBoolean(resources.getString(R.string.key_purge_unused_images),
-					false);
+			boolean purgeUnusedImages = preferences.getBoolean(resources.getString(R.string.key_purge_unused_images), false);
 
 			// check if we can download anything based on internet connection
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -149,21 +159,53 @@ public class DownloadImageService extends IntentService {
 					logEvent("Invalid content length for " + entry.imageLink, "downloadFeedImage", LogEntry.LogLevel.Warning);
 				}
 
-				InputStream input = new BufferedInputStream(connection.getInputStream(), 8192);
-
 				String outputFilePath = imageDirectory + entry.getImageName();
 				OutputStream output = new FileOutputStream(outputFilePath);
 
-				byte data[] = new byte[8192];
+				if (imageCompressFormat == ImageCompressFormat.NONE) {
+					InputStream input = new BufferedInputStream(connection.getInputStream(), 8192);
+					byte data[] = new byte[8192];
 
-				int count;
-				while ((count = input.read(data)) != -1) {
-					output.write(data, 0, count);
+					int count;
+					while ((count = input.read(data)) != -1) {
+						output.write(data, 0, count);
+					}
+
+					output.flush();
+					output.close();
+					input.close();
+
+					Bitmap bitmap = BitmapFactory.decodeFile(outputFilePath);
+					if (bitmap != null && bitmap.getHeight() > 0 && bitmap.getWidth() > 0) {
+						successfulDownload = true;
+					} else {
+						logEvent("Bitmap is null for " + entry.title + ", deleting and trying again.",
+								"downloadFeedImage(FeedItem entry)",
+								LogEntry.LogLevel.Warning);
+
+						File outputFile = new File(outputFilePath);
+						if (!outputFile.delete()) {
+							logEvent("Unable to delete file at path " + outputFilePath,
+									"downloadFeedImage()",
+									LogEntry.LogLevel.Error);
+						}
+					}
+				} else {
+					Bitmap bitmap = BitmapFactory.decodeStream(connection.getInputStream());
+
+					Bitmap.CompressFormat compressFormat;
+					if (imageCompressFormat == ImageCompressFormat.JPEG) {
+						compressFormat = Bitmap.CompressFormat.JPEG;
+					} else if (imageCompressFormat == ImageCompressFormat.PNG) {
+						compressFormat = Bitmap.CompressFormat.PNG;
+					} else {
+						compressFormat = null;
+					}
+
+					bitmap.compress(compressFormat, 100, output);
+
+					bitmap.recycle();
 				}
-
-				output.flush();
-				output.close();
-				input.close();
 
 				logEvent("Successfully downloaded and saved feed image for " + entry.title,
 						"downloadFeedImage(FeedItem entry)",
@@ -172,21 +214,6 @@ public class DownloadImageService extends IntentService {
 
 //				BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
 //				bitmapOptions.inJustDecodeBounds = true;
-				Bitmap bitmap = BitmapFactory.decodeFile(outputFilePath);
-				if (bitmap != null && bitmap.getHeight() > 0 && bitmap.getWidth() > 0) {
-					successfulDownload = true;
-				} else {
-					logEvent("Bitmap is null for " + entry.title + ", deleting and trying again.",
-							"downloadFeedImage(FeedItem entry)",
-							LogEntry.LogLevel.Warning);
-
-					File outputFile = new File(outputFilePath);
-					if (!outputFile.delete()) {
-						logEvent("Unable to delete file at path " + outputFilePath,
-								"downloadFeedImage()",
-								LogEntry.LogLevel.Error);
-					}
-				}
 
 				connection.disconnect();
 

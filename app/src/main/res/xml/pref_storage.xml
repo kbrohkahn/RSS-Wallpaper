@@ -1,15 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-	<Preference
-			android:key="@string/key_image_directory"
-			android:title="@string/title_image_directory"/>
+	<ListPreference
+			android:defaultValue="LOCAL"
+			android:entries="@array/titles_array_image_storage"
+			android:entryValues="@array/values_array_image_storage"
+			android:key="@string/key_image_storage"
+			android:title="@string/title_image_storage"/>
 
 	<SwitchPreference
 			android:defaultValue="false"
 			android:key="@string/key_purge_unused_images"
 			android:summary="@string/summary_purge_unused_images"
 			android:title="@string/title_purge_unused_images"/>
+
+	<ListPreference
+			android:defaultValue="PNG"
+			android:entries="@array/titles_array_compression_type"
+			android:entryValues="@array/values_array_compression_type"
+			android:key="@string/key_compression_type"
+			android:title="@string/title_compression_type"/>
 
 	<!--<SwitchPreference-->
 	<!--android:defaultValue="true"-->

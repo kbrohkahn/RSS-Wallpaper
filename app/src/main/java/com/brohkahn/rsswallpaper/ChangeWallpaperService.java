@@ -54,8 +54,8 @@ public class ChangeWallpaperService extends IntentService {
 			// rss feed
 			int currentFeedId = Integer.parseInt(prefs.getString(res.getString(R.string.key_current_feed), "-1"));
 			// app setting
-			String imageDirectory = prefs.getString(res.getString(R.string.key_image_directory),
-					Helpers.getDefaultFolder(this));
+			String imageDirectory = Helpers.getStoragePath(this,
+					prefs.getString(res.getString(R.string.key_image_storage), "LOCAL"));
 
 			String keyCurrentItem = getResources().getString(R.string.key_current_item);
 			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);

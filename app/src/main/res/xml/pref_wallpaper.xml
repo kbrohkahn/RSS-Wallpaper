@@ -15,7 +15,7 @@
 			android:title="@string/title_shuffle"/>
 
 	<ListPreference
-			android:defaultValue="30"
+			android:defaultValue="-1"
 			android:entries="@array/titles_array_change_interval"
 			android:entryValues="@array/values_array_change_interval"
 			android:key="@string/key_change_interval"

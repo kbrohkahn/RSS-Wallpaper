@@ -32,7 +32,8 @@ public class ScheduleTimerService extends IntentService {
 			Resources resources = getResources();
 			int rssUpdateInterval = Integer.parseInt(preferences.getString(resources.getString(R.string.key_update_interval), "24"));
 			int rssUpdateTime = Integer.parseInt(preferences.getString(resources.getString(R.string.key_update_time), "3"));
-			int changeWallpaperInterval = Integer.parseInt(preferences.getString(resources.getString(R.string.key_change_interval), "30"));
+			int changeWallpaperInterval = Integer.parseInt(preferences.getString(resources.getString(R.string
+					.key_change_interval), "-1"));
 			long firstExecutionTime = Long.MAX_VALUE;
 
 			// set RSS update time

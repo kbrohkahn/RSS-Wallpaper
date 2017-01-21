@@ -48,9 +48,10 @@ public class FeedItemView extends AppCompatActivity {
 
 		// set icon
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
 		Resources resources = getResources();
-		imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
-				Helpers.getDefaultFolder(this));
+		imageDirectory = Helpers.getStoragePath(this,
+				preferences.getString(resources.getString(R.string.key_image_storage), "LOCAL"));
 
 		final int ID = getIntent().getIntExtra(EXTRA_KEY_FEED_ITEM_ID, -1);
 

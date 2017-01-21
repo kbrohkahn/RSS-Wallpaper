@@ -2,6 +2,7 @@ package com.brohkahn.rsswallpaper;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -15,6 +16,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
@@ -87,6 +89,30 @@ public class MainActivity extends AppCompatActivity {
 			newIntent.setAction(Constants.ACTION_SCHEDULE_ALARMS);
 			startService(newIntent);
 
+			// show wallpaper dialog
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle(R.string.set_wallpaper_title)
+					.setMessage(R.string.set_wallpaper_message)
+					.setPositiveButton(R.string.set_wallpaper_positive_button, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialogInterface, int i) {
+							SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getParent())
+									.edit();
+							editor.putString(getResources().getString(R.string.key_change_interval), "30");
+							editor.apply();
+
+							getNewWallpaper(null);
+
+							dialogInterface.dismiss();
+						}
+					})
+					.setNegativeButton(R.string.set_wallpaper_negative_button, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialogInterface, int i) {
+							dialogInterface.dismiss();
+						}
+					});
+			builder.create().show();
 		} else {
 			updateCurrentItem();
 		}
@@ -131,8 +157,10 @@ public class MainActivity extends AppCompatActivity {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		currentItemId = settings.getInt(resources.getString(R.string.key_current_item), -1);
-		String imageDirectory = settings.getString(resources.getString(R.string.key_image_directory),
-				Helpers.getDefaultFolder(this));
+		String imageDirectory = Helpers.getStoragePath(this,
+				settings.getString(resources.getString(R.string.key_image_storage), "LOCAL"));
+
+
 		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "-1"));
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());

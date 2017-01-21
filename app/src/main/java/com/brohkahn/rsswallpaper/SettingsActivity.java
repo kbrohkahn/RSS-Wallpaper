@@ -33,12 +33,16 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 //	private static final String TAG = "SettingsActivity";
 
 	private static final int REQUEST_PERMISSIONS_CODE = 1;
-	private static final int CHOOSE_DIRECTORY_CODE = 2;
+//	private static final int CHOOSE_DIRECTORY_CODE = 2;
 
+	private String originalImageLocation;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		originalImageLocation = preferences.getString(getResources().getString(R.string.key_image_storage), "LOCAL");
 
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
@@ -328,19 +332,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 //			initiallyStoreIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
 			initiallyPurgeImages = preferences.getBoolean(resources.getString(R.string.key_purge_unused_images), false);
-			imageDirectory = preferences.getString(resources.getString(R.string.key_image_directory),
-					Helpers.getDefaultFolder(getActivity()));
+			imageDirectory = preferences.getString(resources.getString(R.string.key_image_storage), "LOCAL");
 
-			Preference directoryPreference = findPreference(resources.getString(R.string.key_image_directory));
-			directoryPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+			Preference directoryPreference = findPreference(resources.getString(R.string.key_image_storage));
+			directoryPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 				@Override
-				public boolean onPreferenceClick(Preference preference) {
-					((SettingsActivity) getActivity()).changeDirectory();
+				public boolean onPreferenceChange(Preference preference, Object newValue) {
+					changeDirectory(newValue.toString());
 					return false;
 				}
 			});
 
+
 			bindPreferenceSummaryToValue(directoryPreference);
+			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_compression_type)));
 
 		}
 
@@ -437,85 +442,106 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			}
 			return super.onOptionsItemSelected(item);
 		}
-	}
 
-
-	public void changeDirectory() {
-		if (hasStoragePermission()) {
-			startDirectoryChooser();
-		} else {
-			showPermissionDialog();
+		public void changeDirectory(String newValue) {
+			if (!newValue.equals("LOCAL") && !hasStoragePermission()) {
+				showPermissionDialog();
+			}
 		}
-	}
 
-	public boolean hasStoragePermission() {
-		return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-	}
+		public boolean hasStoragePermission() {
+			return ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager
+					.PERMISSION_GRANTED;
+		}
 
-	public void showPermissionDialog() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this)
-				.setTitle(R.string.permission_request_title)
-				.setMessage(R.string.permission_request_message)
-				.setPositiveButton(R.string.permission_request_positive_button, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialogInterface, int i) {
-						requestStoragePermission();
-						dialogInterface.dismiss();
+		public void showPermissionDialog() {
+			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+					.setTitle(R.string.permission_request_title)
+					.setMessage(R.string.permission_request_message)
+					.setPositiveButton(R.string.permission_request_positive_button, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialogInterface, int i) {
+							requestStoragePermission();
+							dialogInterface.dismiss();
+						}
+					})
+					.setNegativeButton(R.string.permission_request_negative_button, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialogInterface, int i) {
+							dialogInterface.dismiss();
+						}
+					});
+			builder.create().show();
+		}
+
+		private void requestStoragePermission() {
+			ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSIONS_CODE);
+		}
+
+		@Override
+		public void onRequestPermissionsResult(int requestCode,
+											   @NonNull String permissions[],
+											   @NonNull int[] grantResults) {
+			switch (requestCode) {
+				case REQUEST_PERMISSIONS_CODE: {
+					// If request is cancelled, the result arrays are empty.
+					if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+						showPermissionDialog();
+
+						// permission denied, change value to local
+						SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
+						editor.putString(getResources().getString(R.string.key_image_storage), "LOCAL");
+						editor.apply();
 					}
-				})
-				.setNegativeButton(R.string.permission_request_negative_button, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialogInterface, int i) {
-						dialogInterface.dismiss();
-					}
-				});
-		builder.create().show();
-	}
-
-	private void requestStoragePermission() {
-		ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSIONS_CODE);
-	}
-
-	@Override
-	public void onRequestPermissionsResult(int requestCode,
-										   @NonNull String permissions[],
-										   @NonNull int[] grantResults) {
-		switch (requestCode) {
-			case REQUEST_PERMISSIONS_CODE: {
-				// If request is cancelled, the result arrays are empty.
-				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					startDirectoryChooser();
-				} else {
-					showPermissionDialog();
 				}
 			}
 		}
 	}
 
-	public void startDirectoryChooser() {
-		startActivityForResult(new Intent(this, DirectoryChooserActivity.class), CHOOSE_DIRECTORY_CODE);
-	}
-
 	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (resultCode == RESULT_OK) {
-			if (requestCode == CHOOSE_DIRECTORY_CODE) {
-				SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-				String oldPath = preferences.getString(getResources().getString(R.string.key_image_directory),
-						Helpers.getDefaultFolder(this));
-				String newPath = data.getStringExtra(DirectoryChooserActivity.RESULT_KEY);
+	protected void onStop() {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		String newImageLocation = preferences.getString(getResources().getString(R.string.key_image_storage),
+				"LOCAL");
 
-				new ChangeDirectoryTask(this).execute(oldPath, newPath);
 
+		if (!originalImageLocation.equals(newImageLocation)) {
+			String originalPath = Helpers.getStoragePath(this, originalImageLocation);
+			String newPath = Helpers.getStoragePath(this, newImageLocation);
+			new ChangeDirectoryTask(this).execute(originalPath, newPath);
+		}
 //				SharedPreferences.Editor editor = preferences.edit();
-//				editor.putString(getResources().getString(R.string.key_image_directory), newPath);
+//				editor.putString(getResources().getString(R.string.key_image_location), newPath);
 //				editor.apply();
 
 
-			}
-		} else {
-			super.onActivityResult(requestCode, resultCode, data);
-		}
+		super.onStop();
 	}
+
+	//	public void startDirectoryChooser() {
+//		startActivityForResult(new Intent(this, DirectoryChooserActivity.class), CHOOSE_DIRECTORY_CODE);
+//	}
+
+//	@Override
+//	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//		if (resultCode == RESULT_OK) {
+//			if (requestCode == CHOOSE_DIRECTORY_CODE) {
+//				SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+//				String oldPath = preferences.getString(getResources().getString(R.string.key_image_location),
+//						Helpers.getDefaultFolder(this));
+//				String newPath = data.getStringExtra(DirectoryChooserActivity.RESULT_KEY);
+//
+//				new ChangeDirectoryTask(this).execute(oldPath, newPath);
+//
+////				SharedPreferences.Editor editor = preferences.edit();
+////				editor.putString(getResources().getString(R.string.key_image_location), newPath);
+////				editor.apply();
+//
+//
+//			}
+//		} else {
+//			super.onActivityResult(requestCode, resultCode, data);
+//		}
+//	}
 }
 

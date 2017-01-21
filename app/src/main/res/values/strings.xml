@@ -12,6 +12,14 @@
 	<string name="starting_download">Downloading images for included RSS feed, this may take a few seconds.</string>
 
 	<!-- Permissions -->
+	<string name="set_wallpaper_title">Change Wallpaper</string>
+	<string name="set_wallpaper_message">RSS Wallpaper was designed to change your wallpaper to new images from RSS
+		feeds, however you can ignore this feature and use the app to merely download images. Do you want to keep
+		your current wallpaper or let RSS Wallpaper change it?</string>
+	<string name="set_wallpaper_positive_button">Set Wallpaper</string>
+	<string name="set_wallpaper_negative_button">Don\'t change</string>
+
+	<!-- Permissions -->
 	<string name="permission_request_title">Storage Access Required</string>
 	<string name="permission_request_message">To set a custom storage location, the app needs permissions to write to
 		your device\'s storage. Please hit continue to grant the permission.</string>
@@ -101,7 +109,8 @@
 	<string name="key_delete_logs">deleteLogs</string>
 	<!--<string name="key_store_icons">storeIcons</string>-->
 	<string name="key_purge_unused_images">purgeUnusedImages</string>
-	<string name="key_image_directory">imageDirectory</string>
+	<string name="key_image_storage">imageLocation</string>
+	<string name="key_compression_type">compressionType</string>
 
 	<!-- Titles -->
 	<!-- RSS RSSFeed -->
@@ -125,7 +134,8 @@
 	<string name="title_delete_logs">Delete Logs</string>
 	<string name="title_store_icons">Use Image Icons</string>
 	<string name="title_purge_unused_images">Delete unused images</string>
-	<string name="title_image_directory">Directory to save images</string>
+	<string name="title_image_storage">Location to save images</string>
+	<string name="title_compression_type">Image Compression Type</string>
 
 	<!-- Summaries -->
 	<!-- RSS RSSFeed -->
@@ -214,6 +224,7 @@
 		<item>720</item>
 		<item>1440</item>
 	</string-array>
+
 	<string-array name="titles_array_crop_and_scale_type">
 		<item>Scale height</item>
 		<item>Scale height and crop center</item>
@@ -225,6 +236,28 @@
 		<item>1</item>
 		<item>2</item>
 		<item>3</item>
+	</string-array>
+
+	<string-array name="titles_array_image_storage">
+		<item>Application folder</item>
+		<item>Internal storage</item>
+		<item>External SD card</item>
+	</string-array>
+	<string-array name="values_array_image_storage">
+		<item>LOCAL</item>
+		<item>INTERNAL</item>
+		<item>EXTERNAL</item>
+	</string-array>
+
+	<string-array name="titles_array_compression_type">
+		<item>PNG</item>
+		<item>JPEG</item>
+		<item>None (High storage use)</item>
+	</string-array>
+	<string-array name="values_array_compression_type">
+		<item>PNG</item>
+		<item>JPEF</item>
+		<item>NONE</item>
 	</string-array>
 
 	<!-- Delete dialogs  -->

@@ -75,7 +75,7 @@ class ChangeDirectoryTask extends AsyncTask<String, Void, Boolean> {
 //			}
 
 			SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
-			editor.putString(context.getResources().getString(R.string.key_image_directory), newPath);
+			editor.putString(context.getResources().getString(R.string.key_image_storage), newPath);
 			editor.apply();
 
 			return success;

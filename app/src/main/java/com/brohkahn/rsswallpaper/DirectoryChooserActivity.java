@@ -48,8 +48,8 @@ public class DirectoryChooserActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		String originalPath = preferences.getString(getResources().getString(R.string.key_image_directory),
-				Helpers.getDefaultFolder(this));
+		String originalPath = Helpers.getStoragePath(this,
+				preferences.getString(getResources().getString(R.string.key_image_storage), "LOCAL"));
 
 		currentPath = new ArrayList<>(Arrays.asList(originalPath.substring(1).split("/")));
 
