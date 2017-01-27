@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
 
 import com.brohkahn.loggerlibrary.LogDBHelper;
 import com.brohkahn.loggerlibrary.LogEntry;
@@ -89,6 +90,8 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 		dialog.setMax(itemImagesToDelete.size() + itemIconsToDelete.size());
 		dialog.setTitle(message);
+		dialog.show();
+		;
 
 		logEvent(message, LogEntry.LogLevel.Trace);
 
@@ -131,7 +134,11 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 		}
 
 		dialog.dismiss();
+
+		Toast.makeText(context, "Files successfully deleted.", Toast.LENGTH_SHORT).show();
+
 		context = null;
+
 		super.onPostExecute(aVoid);
 	}
 

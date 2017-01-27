@@ -19,7 +19,14 @@
 			android:entries="@array/titles_array_compression_type"
 			android:entryValues="@array/values_array_compression_type"
 			android:key="@string/key_compression_type"
-			android:title="@string/title_compression_type"/>
+			android:title="@string/title_compression_type"/>3
+
+
+	<SwitchPreference
+			android:defaultValue="true"
+			android:key="@string/key_resize_images"
+			android:summary="@string/summary_resize_images"
+			android:title="@string/title_resize_images"/>
 
 	<!--<SwitchPreference-->
 	<!--android:defaultValue="true"-->

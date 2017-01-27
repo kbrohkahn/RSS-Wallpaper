@@ -111,6 +111,7 @@
 	<string name="key_purge_unused_images">purgeUnusedImages</string>
 	<string name="key_image_storage">imageLocation</string>
 	<string name="key_compression_type">compressionType</string>
+	<string name="key_resize_images">resizeImages</string>
 
 	<!-- Titles -->
 	<!-- RSS RSSFeed -->
@@ -136,6 +137,7 @@
 	<string name="title_purge_unused_images">Delete unused images</string>
 	<string name="title_image_storage">Location to save images</string>
 	<string name="title_compression_type">Image Compression Type</string>
+	<string name="title_resize_images">Shrink Downloaded Images</string>
 
 	<!-- Summaries -->
 	<!-- RSS RSSFeed -->
@@ -149,6 +151,7 @@
 	<string name="summary_delete_items">If app not working properly</string>
 	<string name="summary_delete_logs">Automatically purged after 1 week</string>
 	<string name="summary_purge_unused_images">When no longer in wallpaper rotation</string>
+	<string name="summary_resize_images">Down to screen height</string>
 
 	<!-- Values -->
 	<!-- RSS RSSFeed -->

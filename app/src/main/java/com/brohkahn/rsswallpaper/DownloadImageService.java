@@ -7,10 +7,13 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 
 import com.brohkahn.loggerlibrary.LogEntry;
 
@@ -28,7 +31,6 @@ import java.util.Locale;
 public class DownloadImageService extends IntentService {
 	private static final String TAG = "DownloadImageService";
 
-	private String imageDirectory;
 
 	enum ImageCompressFormat {
 		PNG,
@@ -37,6 +39,8 @@ public class DownloadImageService extends IntentService {
 	}
 
 	private ImageCompressFormat imageCompressFormat;
+	private String imageDirectory;
+	private boolean resizeImages;
 
 	public DownloadImageService() {
 		super("DownloadImageService");
@@ -54,13 +58,13 @@ public class DownloadImageService extends IntentService {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 			Resources resources = getResources();
 			boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
-			imageDirectory = Helpers.getStoragePath(this,
-					preferences.getString(resources.getString(R.string.key_image_storage), "LOCAL"));
-			imageCompressFormat = ImageCompressFormat.valueOf(preferences.getString(resources.getString(R.string
-					.key_compression_type), "PNG"));
+			imageDirectory = Helpers.getStoragePath(this, preferences.getString(resources.getString(R.string.key_image_storage), "LOCAL"));
+			resizeImages = preferences.getBoolean(resources.getString(R.string.key_resize_images), true);
+			imageCompressFormat = ImageCompressFormat.valueOf(preferences.getString(resources.getString(R.string.key_compression_type), "PNG"));
 			int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
 			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "-1"));
 			int currentItemId = preferences.getInt(resources.getString(R.string.key_current_item), -1);
+
 			boolean purgeUnusedImages = preferences.getBoolean(resources.getString(R.string.key_purge_unused_images), false);
 
 			// check if we can download anything based on internet connection
@@ -192,6 +196,22 @@ public class DownloadImageService extends IntentService {
 					}
 				} else {
 					Bitmap bitmap = BitmapFactory.decodeStream(connection.getInputStream());
+
+					if (resizeImages) {
+						Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+						Point size = new Point();
+						display.getSize(size);
+						int screenHeight = size.y;
+
+						int bitmapHeight = bitmap.getHeight();
+						int bitmapWidth = bitmap.getWidth();
+						while (bitmapHeight / 2 > screenHeight) {
+							bitmapHeight /= 2;
+							bitmapWidth /= 2;
+						}
+
+						bitmap = Bitmap.createScaledBitmap(bitmap, bitmapWidth, bitmapHeight, false);
+					}
 
 					Bitmap.CompressFormat compressFormat;
 					if (imageCompressFormat == ImageCompressFormat.JPEG) {
