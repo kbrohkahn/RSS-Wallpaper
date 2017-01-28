@@ -26,7 +26,7 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 //	boolean deleteAllIcons;
 
 	private List<FeedItem> itemImagesToDelete;
-	private List<FeedItem> itemIconsToDelete;
+//	private List<FeedItem> itemIconsToDelete;
 
 	private Context context;
 	private ProgressDialog dialog;
@@ -63,23 +63,11 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 			}
 		}
 
-		itemIconsToDelete = new ArrayList<>();
-//		if (deleteAllIcons) {
-//			itemIconsToDelete.addAll(allItems);
-//		}
-
 		String which;
-//		if (deleteAllIcons) {
-//			if (deleteAllImages) {
-//				which = "all icons and images";
-//			} else if (purgeOldImages) {
-//				which = "icons and old images";
-//			} else {
-//				which = "icons";
-//			}
-//		} else
-		if (purgeOldImages) {
-			which = "old images";
+		if (deleteAllImages) {
+			which = "all " + String.valueOf(itemImagesToDelete.size()) + " images";
+		} else if (purgeOldImages) {
+			which = String.valueOf(itemImagesToDelete.size()) + " old images";
 		} else {
 			which = "no";
 		}
@@ -88,10 +76,9 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 		dialog = new ProgressDialog(context);
 		dialog.setProgress(0);
 		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		dialog.setMax(itemImagesToDelete.size() + itemIconsToDelete.size());
+		dialog.setMax(itemImagesToDelete.size() /*+ itemIconsToDelete.size()*/);
 		dialog.setTitle(message);
 		dialog.show();
-		;
 
 		logEvent(message, LogEntry.LogLevel.Trace);
 
@@ -104,15 +91,6 @@ class DeleteFileTask extends AsyncTask<Void, Void, Void> {
 
 	@Override
 	protected Void doInBackground(Void... voids) {
-//		for (FeedItem item : itemIconsToDelete) {
-//			String iconPath = imageDirectory + Constants.ICONS_FOLDER + item.getIconName();
-//
-//			File iconFile = new File(iconPath);
-//			if (!iconFile.delete()) {
-//				logEvent("Unable to delete icon " + iconFile, LogEntry.LogLevel.Trace);
-//			}
-//		}
-
 		for (FeedItem item : itemImagesToDelete) {
 			String iconPath = imageDirectory + item.getImageName();
 

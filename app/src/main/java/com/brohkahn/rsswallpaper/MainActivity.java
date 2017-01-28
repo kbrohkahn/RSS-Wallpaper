@@ -45,6 +45,10 @@ public class MainActivity extends AppCompatActivity {
 	private Button blockWallpaperButton;
 	private Button nextWallpaperButton;
 
+	private AlertDialog changeWallpaperDialog;
+
+//	private Snackbar changeWallpaperSnackbar;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -60,6 +64,16 @@ public class MainActivity extends AppCompatActivity {
 		nextWallpaperButton = (Button) findViewById(R.id.next_wallpaper_button);
 
 		imageView = ((ImageView) findViewById(R.id.current_item_image));
+
+		changeWallpaperDialog = new AlertDialog.Builder(this)
+				.setTitle(R.string.change_wallpaper_title)
+				.setMessage(R.string.change_wallpaper_message)
+				.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				}).create();
 
 		// make sure current feed id is valid
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -120,6 +134,17 @@ public class MainActivity extends AppCompatActivity {
 		// listen for wallpaper updates while active
 		IntentFilter mStatusIntentFilter = new IntentFilter(Constants.ACTION_WALLPAPER_UPDATED);
 		registerReceiver(wallpaperUpdated, mStatusIntentFilter);
+
+//		changeWallpaperSnackbar = Snackbar.make(getWindow().getDecorView(), R.string.change_wallpaper_message, Snackbar
+//				.LENGTH_INDEFINITE);
+//		changeWallpaperSnackbar.setAction(R.string.change_wallpaper_retry, new View.OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				getNewWallpaper(null);
+//			}
+//		})
+
+
 	}
 
 	@Override
@@ -154,12 +179,15 @@ public class MainActivity extends AppCompatActivity {
 	};
 
 	public void updateCurrentItem() {
+		if (changeWallpaperDialog.isShowing()) {
+			changeWallpaperDialog.dismiss();
+		}
+
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		currentItemId = settings.getInt(resources.getString(R.string.key_current_item), -1);
 		String imageDirectory = Helpers.getStoragePath(this,
 				settings.getString(resources.getString(R.string.key_image_storage), "LOCAL"));
-
 
 		int currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "-1"));
 
@@ -231,16 +259,13 @@ public class MainActivity extends AppCompatActivity {
 
 
 	public void blockCurrentWallpaper(View view) {
-		blockWallpaperButton.setEnabled(false);
-		nextWallpaperButton.setEnabled(false);
-
 		logEvent("Disabling current item", "onOptionsItemSelected(MenuItem item)", LogEntry.LogLevel.Trace);
 
 		FeedDBHelper feedDBHelper = FeedDBHelper.getHelper(getApplicationContext());
 		feedDBHelper.updateImageEnabled(currentItemId, false);
 		feedDBHelper.close();
 
-		sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
+		getNewWallpaper(null);
 
 		DownloadImageService.startDownloadImageAction(this);
 	}
@@ -249,10 +274,20 @@ public class MainActivity extends AppCompatActivity {
 		blockWallpaperButton.setEnabled(false);
 		nextWallpaperButton.setEnabled(false);
 
+//		sendBroadcast(new Intent(Constants.ACTION_CHANGE_WALLPAPER));
+
 		Intent newIntent = new Intent(this, ChangeWallpaperService.class);
 		newIntent.setAction(Constants.ACTION_CHANGE_WALLPAPER);
 		startService(newIntent);
 
+
+		if (!changeWallpaperDialog.isShowing()) {
+			changeWallpaperDialog.show();
+		}
+
+//		if (!changeWallpaperSnackbar.isShownOrQueued()) {
+//			changeWallpaperSnackbar.show();
+//		}
 	}
 
 //    private void showToast(String message) {

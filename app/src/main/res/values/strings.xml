@@ -38,6 +38,10 @@
 	<string name="set_feed_dialog_title">Set new RSS feed</string>
 	<string name="set_feed_dialog_message">Do you want to change your wallpaper according to the %1$s feed?</string>
 
+	<!-- Change wallpaper dialog -->
+	<string name="change_wallpaper_title">Changing wallpaper, please wait&#8230;</string>
+	<string name="change_wallpaper_message">Image may need to be resized or downloaded before being set as wallpaper.</string>
+
 	<!-- Image and RSSFeed strings -->
 	<string name="no_current_wallpaper">No wallpaper set</string>
 	<string name="current_background">Current wallpaper</string>
