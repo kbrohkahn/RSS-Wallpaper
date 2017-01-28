@@ -35,14 +35,10 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 	private static final int REQUEST_PERMISSIONS_CODE = 1;
 //	private static final int CHOOSE_DIRECTORY_CODE = 2;
 
-	private String originalImageLocation;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		originalImageLocation = preferences.getString(getResources().getString(R.string.key_image_storage), "LOCAL");
 
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
@@ -94,47 +90,26 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			String stringValue = value.toString();
 
 			if (preference instanceof ListPreference) {
-				// For list preferences, look up the correct display value in
-				// the preference's 'entries' list.
-				ListPreference listPreference = (ListPreference) preference;
-				int index = listPreference.findIndexOfValue(stringValue);
-
-				// Set the summary to reflect the new value.
-				preference.setSummary(
-						index >= 0
-								? listPreference.getEntries()[index]
-								: null);
-
-			}
-//            else if (preference instanceof RingtonePreference) {
-//                // For ringtone preferences, look up the correct display value
-//                // using RingtoneManager.
-//                if (TextUtils.isEmpty(stringValue)) {
-//                    // Empty values correspond to 'silent' (no ringtone).
-//                    preference.setSummary(R.string.pref_ringtone_silent);
-//
-//                } else {
-//                    Ringtone ringtone = RingtoneManager.getRingtone(
-//                            preference.getContext(), Uri.parse(stringValue));
-//
-//                    if (ringtone == null) {
-//                        // Clear the summary if there was a lookup error.
-//                        preference.setSummary(null);
-//                    } else {
-//                        // Set the summary to reflect the new ringtone display
-//                        // name.
-//                        String name = ringtone.getTitle(preference.getContext());
-//                        preference.setSummary(name);
-//                    }
-//                }
-//
-//            }
-			else {
+				setListPreferenceSummary(preference, stringValue);
+			} else {
 				preference.setSummary(stringValue);
 			}
 			return true;
 		}
 	};
+
+	public static void setListPreferenceSummary(Preference preference, String newValue) {
+		// For list preferences, look up the correct display value in
+		// the preference's 'entries' list.
+		ListPreference listPreference = (ListPreference) preference;
+		int index = listPreference.findIndexOfValue(newValue);
+
+		// Set the summary to reflect the new value.
+		preference.setSummary(
+				index >= 0
+						? listPreference.getEntries()[index]
+						: null);
+	}
 
 	/**
 	 * This method stops fragment injection in malicious applications.
@@ -299,16 +274,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
 
 	public static class StoragePreferenceFragment extends PreferenceFragment {
-		//		private boolean initiallyStoreIcons;
-		private boolean initiallyPurgeImages;
-		private String imageDirectory;
+		private String desiredStorageLocation;
+		private String originalImageLocation;
 
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
 			addPreferencesFromResource(R.xml.pref_storage);
 			setHasOptionsMenu(true);
-
 
 			Resources resources = getResources();
 			Preference deleteLogsPreference = findPreference(resources.getString(R.string.key_delete_logs));
@@ -324,59 +297,45 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			deleteItemsPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 				@Override
 				public boolean onPreferenceClick(Preference preference) {
-					showDeleteItemsDialog();
+					showDeleteItemsDialog(false, true);
 					return false;
 				}
 			});
 
-			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-//			initiallyStoreIcons = preferences.getBoolean(resources.getString(R.string.key_store_icons), true);
-			initiallyPurgeImages = preferences.getBoolean(resources.getString(R.string.key_purge_unused_images), false);
-			imageDirectory = preferences.getString(resources.getString(R.string.key_image_storage), "LOCAL");
+			Preference purgeImagesPreference = findPreference(resources.getString(R.string.key_purge_unused_images));
+			purgeImagesPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+				@Override
+				public boolean onPreferenceChange(Preference preference, Object newValue) {
+					purgeImagesPreferenceChanged((boolean) newValue);
+					return true;
+				}
+			});
 
 			Preference directoryPreference = findPreference(resources.getString(R.string.key_image_storage));
 			directoryPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 				@Override
 				public boolean onPreferenceChange(Preference preference, Object newValue) {
-					changeDirectory(newValue.toString());
-					return false;
+					setListPreferenceSummary(preference, desiredStorageLocation);
+
+					desiredStorageLocation = newValue.toString();
+					changeDirectory();
+					return true;
 				}
 			});
 
 
-			bindPreferenceSummaryToValue(directoryPreference);
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+			originalImageLocation = preferences.getString(getResources().getString(R.string.key_image_storage), "LOCAL");
+			setListPreferenceSummary(directoryPreference, originalImageLocation);
 			bindPreferenceSummaryToValue(findPreference(resources.getString(R.string.key_compression_type)));
-
 		}
 
-		@Override
-		public void onStop() {
-			DeleteFileTask deleteFileTask = new DeleteFileTask(getActivity(), imageDirectory);
-
-//			SwitchPreference storeIconsPreference = (SwitchPreference) findPreference(getResources()
-//					.getString(R.string.key_store_icons));
-//			if (storeIconsPreference.isChecked() && !initiallyStoreIcons)
-//			{
-//				DownloadIconService.startDownloadIconAction(getActivity());
-//			}
-//			else if (!storeIconsPreference.isChecked() && initiallyStoreIcons) {
-//				deleteFileTask.deleteAllIcons = true;
-//			}
-
-
-			SwitchPreference purgeImagesPreference = (SwitchPreference) findPreference(getResources()
-					.getString(R.string.key_purge_unused_images));
-			if (purgeImagesPreference.isChecked() && !initiallyPurgeImages) {
+		public void purgeImagesPreferenceChanged(boolean newValue) {
+			if (newValue) {
+				showDeleteItemsDialog(true, false);
+			} else {
 				DownloadImageService.startDownloadImageAction(getActivity());
-			} else if (!purgeImagesPreference.isChecked() && initiallyPurgeImages) {
-				deleteFileTask.purgeOldImages = true;
 			}
-
-			if (deleteFileTask.deleteAllImages || deleteFileTask.purgeOldImages) {
-				deleteFileTask.execute();
-			}
-
-			super.onStop();
 		}
 
 		public void showDeleteLogsDialog() {
@@ -405,14 +364,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			logDbHelper.close();
 		}
 
-		public void showDeleteItemsDialog() {
+		public void showDeleteItemsDialog(final boolean purgeOld, final boolean deleteAll) {
 			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 			builder.setTitle(R.string.title_delete_items)
 					.setMessage(R.string.delete_items_dialog_message)
 					.setPositiveButton(R.string.delete_dialog_positive, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialogInterface, int i) {
-							deleteItems();
+							deleteItems(purgeOld, deleteAll);
 							dialogInterface.dismiss();
 						}
 					})
@@ -425,11 +384,10 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			builder.create().show();
 		}
 
-		public void deleteItems() {
-			DeleteFileTask deleteFileTask = new DeleteFileTask(getActivity(), imageDirectory);
-			deleteFileTask.deleteAllItems = true;
-//			deleteFileTask.deleteAllIcons = true;
-			deleteFileTask.deleteAllImages = true;
+		public void deleteItems(boolean purgeOld, boolean deleteAll) {
+			DeleteFileTask deleteFileTask = new DeleteFileTask(getActivity());
+			deleteFileTask.purgeOldImages = purgeOld;
+			deleteFileTask.deleteAllItems = deleteAll;
 			deleteFileTask.execute();
 		}
 
@@ -443,11 +401,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 			return super.onOptionsItemSelected(item);
 		}
 
-		public void changeDirectory(String newValue) {
-			if (!newValue.equals("LOCAL") && !hasStoragePermission()) {
+		public void changeDirectory() {
+			if (!hasStoragePermission()) {
 				showPermissionDialog();
+			} else {
+				startChangeDirectoryTask();
 			}
 		}
+
 
 		public boolean hasStoragePermission() {
 			return ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager
@@ -468,6 +429,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 					.setNegativeButton(R.string.permission_request_negative_button, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialogInterface, int i) {
+							resetStorageLocation();
 							dialogInterface.dismiss();
 						}
 					});
@@ -486,36 +448,31 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 				case REQUEST_PERMISSIONS_CODE: {
 					// If request is cancelled, the result arrays are empty.
 					if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-						showPermissionDialog();
-
-						// permission denied, change value to local
-						SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
-						editor.putString(getResources().getString(R.string.key_image_storage), "LOCAL");
-						editor.apply();
+						resetStorageLocation();
+					} else {
+						startChangeDirectoryTask();
 					}
 				}
 			}
 		}
-	}
 
-	@Override
-	protected void onStop() {
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		String newImageLocation = preferences.getString(getResources().getString(R.string.key_image_storage),
-				"LOCAL");
-
-
-		if (!originalImageLocation.equals(newImageLocation)) {
-			String originalPath = Helpers.getStoragePath(this, originalImageLocation);
-			String newPath = Helpers.getStoragePath(this, newImageLocation);
-			new ChangeDirectoryTask(this).execute(originalPath, newPath);
+		public void resetStorageLocation() {
+			SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
+			editor.putString(getResources().getString(R.string.key_image_storage), "LOCAL");
+			editor.apply();
 		}
-//				SharedPreferences.Editor editor = preferences.edit();
-//				editor.putString(getResources().getString(R.string.key_image_location), newPath);
-//				editor.apply();
 
+		public void startChangeDirectoryTask() {
+			if (!originalImageLocation.equals(desiredStorageLocation)) {
+				String originalPath = Helpers.getStoragePath(getActivity(), originalImageLocation);
+				String newPath = Helpers.getStoragePath(getActivity(), desiredStorageLocation);
 
-		super.onStop();
+				new ChangeDirectoryTask(getActivity(), originalPath, newPath).execute();
+
+				originalImageLocation = desiredStorageLocation;
+
+			}
+		}
 	}
 
 	//	public void startDirectoryChooser() {

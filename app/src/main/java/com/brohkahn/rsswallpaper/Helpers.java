@@ -56,28 +56,26 @@ class Helpers {
 //	}
 
 	static String getStoragePath(Context context, String which) {
-		String path = null;
+		String path = context.getFilesDir().getPath() + "/";
 
 		switch (which) {
 			case "LOCAL":
-				path = context.getFilesDir().getPath() + "/";
+				// already set as default
 				break;
 			case "INTERNAL":
-				String internalPath = "/storage/sdcard0";
-				if (new File(internalPath).exists()) {
-					path = internalPath + "/RSS Images";
+				File externalStorageDirectory = Environment.getExternalStorageDirectory();
+				if (externalStorageDirectory.exists()) {
+					String desiredPath = externalStorageDirectory.getPath() + "/rssImages/";
+
+					File rssImageDirectory = new File(desiredPath);
+					if (rssImageDirectory.exists() || rssImageDirectory.mkdirs()) {
+						path = desiredPath;
+					}
 				}
 				break;
 			case "EXTERNAL":
-				File externalStorageDirectory = Environment.getExternalStorageDirectory();
-				if (externalStorageDirectory.exists()) {
-					path = externalStorageDirectory.getPath() + "/RSS Images";
-				}
+				// not implemented
 				break;
-		}
-
-		if (path == null) {
-			path = context.getFilesDir().getPath() + "/";
 		}
 
 		return path;

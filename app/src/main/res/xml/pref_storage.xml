@@ -19,7 +19,7 @@
 			android:entries="@array/titles_array_compression_type"
 			android:entryValues="@array/values_array_compression_type"
 			android:key="@string/key_compression_type"
-			android:title="@string/title_compression_type"/>3
+			android:title="@string/title_compression_type"/>
 
 
 	<SwitchPreference

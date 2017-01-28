@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -68,6 +69,8 @@ public class LogDBHelper extends SQLiteOpenHelper {
 							 String logClass,
 							 String logFunction,
 							 LogEntry.LogLevel level) {
+
+		Log.d("Logger", "Message: " + message + "\nFrom: " + logClass + "." + logFunction);
 
 		ContentValues values = new ContentValues();
 		values.put(LogDBEntry.COLUMN_MESSAGE, message);

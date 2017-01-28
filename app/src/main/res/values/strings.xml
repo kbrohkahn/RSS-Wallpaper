@@ -42,6 +42,10 @@
 	<string name="change_wallpaper_title">Changing wallpaper, please wait&#8230;</string>
 	<string name="change_wallpaper_message">Image may need to be resized or downloaded before being set as wallpaper.</string>
 
+	<!-- Change directory dialog -->
+	<string name="change_directory_title">Moving images to new directory, please wait&#8230;</string>
+	<!--<string name="change_directory_message">Image may need to be resized or downloaded before being set as wallpaper.</string>-->
+
 	<!-- Image and RSSFeed strings -->
 	<string name="no_current_wallpaper">No wallpaper set</string>
 	<string name="current_background">Current wallpaper</string>
@@ -130,7 +134,7 @@
 	<string name="title_set_home_screen">Set home wallpaper</string>
 	<string name="title_set_lock_screen">Set lock wallpaper</string>
 	<string name="title_crop_and_scale_type">Crop and scale</string>
-	<string name="title_receive_broadcast">Change Wallpaper using intent (i.e. with Tasker)</string>
+	<string name="title_receive_broadcast">Change Wallpaper using intent</string>
 	<!-- Notifications -->
 	<string name="title_show_message_toasts">Show basic messages</string>
 	<string name="title_show_error_toasts">Show error messages</string>
@@ -139,7 +143,7 @@
 	<string name="title_delete_logs">Delete Logs</string>
 	<string name="title_store_icons">Use Image Icons</string>
 	<string name="title_purge_unused_images">Delete unused images</string>
-	<string name="title_image_storage">Location to save images</string>
+	<string name="title_image_storage">Image storage location</string>
 	<string name="title_compression_type">Image Compression Type</string>
 	<string name="title_resize_images">Shrink Downloaded Images</string>
 
@@ -147,7 +151,7 @@
 	<!-- RSS RSSFeed -->
 	<!-- Wallpaper -->
 	<string name="summary_set_lock_screen">Must have Android 7.0 or later</string>
-	<string name="summary_receive_broadcast">Click to copy intent action name to be broadcast</string>
+	<string name="summary_receive_broadcast">Copy intent action name to be broadcast</string>
 	<!-- Notifications -->
 	<string name="summary_show_message_toasts">Like when wallpaper is changing</string>
 	<string name="summary_show_error_toasts">Like inability to download an image</string>
@@ -248,12 +252,12 @@
 	<string-array name="titles_array_image_storage">
 		<item>Application folder</item>
 		<item>Internal storage</item>
-		<item>External SD card</item>
+		<!--<item>External SD card</item>-->
 	</string-array>
 	<string-array name="values_array_image_storage">
 		<item>LOCAL</item>
 		<item>INTERNAL</item>
-		<item>EXTERNAL</item>
+		<!--<item>EXTERNAL</item>-->
 	</string-array>
 
 	<string-array name="titles_array_compression_type">
@@ -268,7 +272,8 @@
 	</string-array>
 
 	<!-- Delete dialogs  -->
-	<string name="delete_items_dialog_message">Recent RSS feed items will be downloaded again, but old ones will be lost. Do you want to delete all the items from the RSS feeds?</string>
+	<string name="delete_items_dialog_message">Recent RSS feed items will be downloaded again, but old ones may be
+		lost. Do you want to delete all the items from the RSS feeds?</string>
 
 
 </resources>

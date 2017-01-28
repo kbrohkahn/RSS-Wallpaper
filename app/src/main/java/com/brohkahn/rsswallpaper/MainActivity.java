@@ -53,8 +53,6 @@ public class MainActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-//        Thread.setDefaultUncaughtExceptionHandler(new ErrorHandler(this, true));
-
 		setContentView(R.layout.activity_main);
 
 		Toolbar toolbar = (Toolbar) findViewById(R.id.activity_main_toolbar);
