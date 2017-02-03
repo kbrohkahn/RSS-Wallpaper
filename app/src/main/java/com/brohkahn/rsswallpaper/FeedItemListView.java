@@ -33,6 +33,7 @@ public class FeedItemListView extends AppCompatActivity {
 
 	public FeedItemListAdapter adapter;
 	private int currentFeedId;
+	private int currentFeedITem;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +51,7 @@ public class FeedItemListView extends AppCompatActivity {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "-1"));
+		currentFeedITem = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_item), "-1"));
 
 		CursorLoader cursorLoader = getCursorLoader();
 
@@ -193,7 +195,8 @@ public class FeedItemListView extends AppCompatActivity {
 		helper.updateImageEnabled(itemId, enabled);
 		helper.close();
 
-		if (itemId == currentFeedId) {
+		// item is current
+		if (itemId == currentFeedITem) {
 			DownloadImageService.startDownloadImageAction(this);
 
 			Intent newIntent = new Intent(this, ChangeWallpaperService.class);
