@@ -40,7 +40,7 @@ public class ChangeWallpaperService extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 		if (intent != null && intent.getAction().equals(Constants.ACTION_CHANGE_WALLPAPER)) {
 
-			int itemIdToSet = intent.getIntExtra(KEY_ITEM_ID_TO_SET, -1);
+//			int itemIdToSet = intent.getIntExtra(KEY_ITEM_ID_TO_SET, -1);
 
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 			Resources res = getResources();

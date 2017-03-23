@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-		  package="com.brohkahn.rsswallpaper">
+		  package="com.brohkahn.rsswallpaper"
+		  android:versionCode="250900000"
+		  android:versionName="0.9.0">
 
 	<uses-permission android:name="android.permission.INTERNET"/>
 	<uses-permission android:name="android.permission.SET_WALLPAPER"/>
@@ -63,7 +65,7 @@
 		<service android:name=".ChangeWallpaperService"/>
 		<service android:name=".DownloadRSSService"/>
 		<service android:name=".DownloadImageService"/>
-		<service android:name=".DownloadIconService"/>
+		<!--<service android:name=".DownloadIconService"/>-->
 		<service android:name=".ScheduleTimerService"/>
 
 	</application>

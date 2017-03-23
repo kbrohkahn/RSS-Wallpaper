@@ -108,13 +108,7 @@ public class MainActivity extends AppCompatActivity {
 					.setPositiveButton(R.string.set_wallpaper_positive_button, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialogInterface, int i) {
-							SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getParent())
-									.edit();
-							editor.putString(getResources().getString(R.string.key_change_interval), "30");
-							editor.apply();
-
-							getNewWallpaper(null);
-
+							turnOffWallpaperChanger();
 							dialogInterface.dismiss();
 						}
 					})
@@ -142,6 +136,16 @@ public class MainActivity extends AppCompatActivity {
 //			}
 //		})
 
+
+	}
+
+	public void turnOffWallpaperChanger() {
+		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this)
+				.edit();
+		editor.putString(getResources().getString(R.string.key_change_interval), "30");
+		editor.apply();
+
+		getNewWallpaper(null);
 
 	}
 

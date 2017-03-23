@@ -6,8 +6,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -51,7 +49,7 @@ public class FeedItemListView extends AppCompatActivity {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources resources = getResources();
 		currentFeedId = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_feed), "-1"));
-		currentFeedITem = Integer.parseInt(settings.getString(resources.getString(R.string.key_current_item), "-1"));
+		currentFeedITem = settings.getInt(resources.getString(R.string.key_current_item), -1);
 
 		CursorLoader cursorLoader = getCursorLoader();
 
@@ -140,13 +138,21 @@ public class FeedItemListView extends AppCompatActivity {
 
 		}
 
+		@Override
+		public boolean hasStableIds() {
+			return false;
+		}
+
+		@Override
+		public long getItemId(int position) {
+			return super.getItemId(position);
+		}
+
 		public void bindView(View view, Context context, Cursor cursor) {
 			final int id = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry._ID));
 			String title = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_TITLE));
-			String imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_IMAGE_LINK));
+//			String imageLink = cursor.getString(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_IMAGE_LINK));
 			boolean enabled = cursor.getInt(cursor.getColumnIndexOrThrow(FeedDBHelper.FeedItemDBEntry.COLUMN_ENABLED)) == 1;
-
-			final FeedItem item = new FeedItem(id, -1, title, null, null, imageLink, enabled, null);
 
 			TextView titleTextView = (TextView) view.findViewById(R.id.feed_item_title);
 			titleTextView.setText(title);
@@ -161,19 +167,23 @@ public class FeedItemListView extends AppCompatActivity {
 			});
 
 			ImageView imageView = (ImageView) view.findViewById(R.id.feed_item_icon);
-			String imagePath = imageDirectory + item.getImageName();
+			imageView.setVisibility(View.GONE);
+			imageView.setImageBitmap(null);
 
-			BitmapFactory.Options options = new BitmapFactory.Options();
-			options.inSampleSize = Helpers.getImageScale(imagePath, iconSize, iconSize);
-			Bitmap bitmap = BitmapFactory.decodeFile(imagePath, options);
-
-			if (bitmap == null) {
-				imageView.setVisibility(View.GONE);
-				imageView.setImageBitmap(null);
-			} else {
-				imageView.setVisibility(View.VISIBLE);
-				imageView.setImageBitmap(bitmap);
-			}
+			// TODO fix this process
+//			final FeedItem item = new FeedItem(id, -1, title, null, null, imageLink, enabled, null);
+//			String imagePath = imageDirectory + item.getImageName();
+//			BitmapFactory.Options options = new BitmapFactory.Options();
+//			options.inSampleSize = Helpers.getImageScale(imagePath, iconSize, iconSize);
+//			Bitmap bitmap = BitmapFactory.decodeFile(imagePath, options);
+//
+//			if (bitmap == null) {
+//				imageView.setVisibility(View.GONE);
+//				imageView.setImageBitmap(null);
+//			} else {
+//				imageView.setVisibility(View.VISIBLE);
+//				imageView.setImageBitmap(bitmap);
+//			}
 
 			view.setOnClickListener(new View.OnClickListener() {
 				@Override

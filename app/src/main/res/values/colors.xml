@@ -8,21 +8,21 @@
 	<color name="transparent">#00ffffff</color>
 
 	<color name="primary">#AA8739</color>
-	<color name="primary_1">#FFE5AA</color>
-	<color name="primary_2">#D4B46A</color>
-	<color name="primary_3">#805F15</color>
-	<color name="primary_4">#553B00</color>
+	<!--<color name="primary_1">#FFE5AA</color>-->
+	<!--<color name="primary_2">#D4B46A</color>-->
+	<!--<color name="primary_3">#805F15</color>-->
+	<!--<color name="primary_4">#553B00</color>-->
 
 	<color name="secondary_1">#442F74</color>
-	<color name="secondary_1_1">#8A7BAF</color>
-	<color name="secondary_1_2">#645092</color>
-	<color name="secondary_1_3">#2A1657</color>
+	<!--<color name="secondary_1_1">#8A7BAF</color>-->
+	<!--<color name="secondary_1_2">#645092</color>-->
+	<!--<color name="secondary_1_3">#2A1657</color>-->
 	<color name="secondary_1_4">#16063A</color>
 
 	<color name="secondary_2">#255C69</color>
-	<color name="secondary_2_1">#6B949E</color>
-	<color name="secondary_2_2">#447784</color>
-	<color name="secondary_2_3">#0F434F</color>
-	<color name="secondary_2_4">#012B35</color>
+	<!--<color name="secondary_2_1">#6B949E</color>-->
+	<!--<color name="secondary_2_2">#447784</color>-->
+	<!--<color name="secondary_2_3">#0F434F</color>-->
+	<!--<color name="secondary_2_4">#012B35</color>-->
 
 </resources>
