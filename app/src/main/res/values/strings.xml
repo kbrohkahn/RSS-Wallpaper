@@ -161,6 +161,13 @@
 	<string name="summary_purge_unused_images">When no longer in wallpaper rotation</string>
 	<string name="summary_resize_images">Down to screen height</string>
 
+
+	<!-- defaults -->
+	<string name="compression_type_default">NONE</string>
+	<string name="image_storage_default">LOCAL</string>
+
+
+
 	<!-- Values -->
 	<!-- RSS RSSFeed -->
 	<string-array name="titles_array_update_interval">

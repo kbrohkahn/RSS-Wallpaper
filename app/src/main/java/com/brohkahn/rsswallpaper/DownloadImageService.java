@@ -60,7 +60,8 @@ public class DownloadImageService extends IntentService {
 			boolean wifiOnly = preferences.getBoolean(resources.getString(R.string.key_update_wifi_only), false);
 			imageDirectory = Helpers.getStoragePath(this, preferences.getString(resources.getString(R.string.key_image_storage), "LOCAL"));
 			resizeImages = preferences.getBoolean(resources.getString(R.string.key_resize_images), false);
-			imageCompressFormat = ImageCompressFormat.valueOf(preferences.getString(resources.getString(R.string.key_compression_type), "PNG"));
+			imageCompressFormat = ImageCompressFormat.valueOf(preferences.getString(resources.getString(R.string
+					.key_compression_type), ImageCompressFormat.NONE.toString()));
 			int numberToDownload = Integer.parseInt(preferences.getString(resources.getString(R.string.key_number_to_rotate), "7"));
 			int currentFeedId = Integer.parseInt(preferences.getString(resources.getString(R.string.key_current_feed), "-1"));
 			int currentItemId = preferences.getInt(resources.getString(R.string.key_current_item), -1);

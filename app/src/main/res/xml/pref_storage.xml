@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<ListPreference
-			android:defaultValue="LOCAL"
+			android:defaultValue="@string/image_storage_default"
 			android:entries="@array/titles_array_image_storage"
 			android:entryValues="@array/values_array_image_storage"
 			android:key="@string/key_image_storage"
@@ -15,7 +15,7 @@
 			android:title="@string/title_purge_unused_images"/>
 
 	<ListPreference
-			android:defaultValue="PNG"
+			android:defaultValue="@string/compression_type_default"
 			android:entries="@array/titles_array_compression_type"
 			android:entryValues="@array/values_array_compression_type"
 			android:key="@string/key_compression_type"
